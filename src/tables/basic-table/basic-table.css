@@ -9,9 +9,11 @@
   border: 1px solid #e2e8f0;
   padding: 4px 8px;
   text-align: left;
-  overflow: hidden;
   vertical-align: top;
   word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
 }
 
 .basic-table th {
