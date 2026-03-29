@@ -23,30 +23,14 @@
 
 /* ── Scroll container ──────────────────────────────────────────────────────── */
 
-.rt-scroll {
-  overflow-x: auto;
-  overflow-y: visible;
+.rt-base.bt-wrapper > .bt-scroll {
   /* Subtle inner left border to echo the accent without overwhelming */
   border-left: 3px solid var(--rt-accent);
 }
 
-/* ── Table shell ───────────────────────────────────────────────────────────── */
-
-.rt-table {
-  border-collapse: collapse;
-  /* Table width is driven by explicit column widths set via inline styles */
-  table-layout: fixed;
-}
-
 /* ── Header row ────────────────────────────────────────────────────────────── */
 
-.rt-thead {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.rt-th {
+.rt-base .bt-th {
   background: var(--rt-header-bg);
   color: var(--rt-header-ink);
   padding: 0 16px;
@@ -56,23 +40,13 @@
   font-style: italic;
   font-weight: 400;
   letter-spacing: 0.03em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* Height set via inline style for consistency with body rows */
-  vertical-align: middle;
   /* Subtle bottom line separating header from body */
   border-bottom: 2px solid var(--rt-accent);
-  /* Needed so the absolutely-positioned resize handle can anchor to the th */
-  position: relative;
 }
 
 /* ── Column resize handle ──────────────────────────────────────────────────── */
 
-.rt-th-label {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.rt-base .bt-th-label {
   /* Leave 8px gap so the handle never overlaps the label text */
   padding-right: 8px;
 }
@@ -111,48 +85,41 @@
   transform: scaleX(1.5);
 }
 
-.rt-th:first-child {
+.rt-base .bt-th:first-child {
   /* Accent nub on leftmost header cell */
   border-left: none;
 }
 
 /* ── Body ──────────────────────────────────────────────────────────────────── */
 
-.rt-tbody tr {
+.rt-base .bt-tbody tr {
   border-bottom: 1px solid var(--rt-rule);
   transition: background 180ms ease-out;
 }
 
-.rt-tbody tr:first-child {
+.rt-base .bt-tbody tr:first-child {
   border-top: none;
 }
 
-.rt-tbody tr:hover {
+.rt-base .bt-tbody tr:hover {
   background: var(--rt-hover);
 }
 
-.rt-tbody tr:last-child {
+.rt-base .bt-tbody tr:last-child {
   border-bottom: 2px solid var(--rt-rule-strong);
 }
 
-.rt-td {
+.rt-base .bt-td {
   padding: 12px 16px;
-  vertical-align: top;
   color: var(--rt-ink);
-  /* overflow hidden + word-break so long words don't blow column widths */
-  overflow: hidden;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  /* Height is set via inline style from pretext computation */
-  box-sizing: border-box;
   /* Smooth height reflow when column is resized */
   transition: height 0.15s ease, width 0.15s ease;
 }
 
 /* ── Row index column (first col) ──────────────────────────────────────────── */
 
-.rt-td:first-child,
-.rt-th:first-child {
+.rt-base .bt-td:first-child,
+.rt-base .bt-th:first-child {
   color: var(--rt-ink-muted);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
@@ -217,10 +184,10 @@
 /* ── Reduced-motion overrides ──────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .rt-tbody tr {
+  .rt-base .bt-tbody tr {
     transition: none;
   }
-  .rt-td {
+  .rt-base .bt-td {
     transition: none;
   }
   .rt-skeleton-cell {
