@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Column, DataRecord } from '../../shared/types'
+import type { Column, TableRow } from '../../shared/types'
+import { useFontsReady } from '../../shared/hooks'
 import { BODY_FONT, BODY_LINE_HEIGHT } from '../../shared/fonts'
 import { prepareRows, computeRowHeights } from './measure'
 import './resizable-table.css'
@@ -12,7 +13,7 @@ const HEADER_HEIGHT = 44
 
 export interface ResizableTableProps {
   columns: Column[]
-  rows: DataRecord[]
+  rows: TableRow[]
 }
 
 /**
@@ -37,15 +38,7 @@ export function ResizableTable({ columns, rows }: ResizableTableProps): React.JS
   // ── Wait for fonts before measuring ────────────────────────────────────────
   // Measuring before fonts load silently falls back to a system font,
   // producing wrong widths. We flip fontsReady only after document.fonts.ready.
-  const [fontsReady, setFontsReady] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    document.fonts.ready.then(() => {
-      if (!cancelled) setFontsReady(true)
-    })
-    return () => { cancelled = true }
-  }, [])
+  const fontsReady = useFontsReady()
 
   // ── Container ref + ResizeObserver for container width ─────────────────────
   // ResizeObserver fires when the wrapper element changes size. We use this

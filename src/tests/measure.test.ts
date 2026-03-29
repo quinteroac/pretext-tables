@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { measureCellHeight, measureRowHeights, LINE_HEIGHT } from '../tables/basic-table/measure.js'
+import type { Column, TableRow } from '../shared/types.js'
 
 // ---------------------------------------------------------------------------
 // measureCellHeight — pure function, no DOM calls
@@ -30,10 +31,6 @@ describe('measureCellHeight', () => {
   })
 
   it('is a pure function — does not touch any DOM measurement API', () => {
-    // We verify pureness by confirming that no DOM measurement properties exist
-    // on the global object during the call. In Node.js test environment the
-    // real DOM is absent; the only document shim is the minimal canvas polyfill
-    // we installed, which has no measurement APIs.
     const domApis = [
       'getBoundingClientRect',
       'offsetHeight',
@@ -44,15 +41,11 @@ describe('measureCellHeight', () => {
       'scrollWidth',
     ] as const
 
-    // None of these should exist as own properties on the minimal document
-    // polyfill (they are not needed and must not be called).
     const doc = (globalThis as Record<string, unknown>)['document'] as Record<string, unknown>
     for (const api of domApis) {
       expect(Object.prototype.hasOwnProperty.call(doc, api)).toBe(false)
     }
 
-    // The function must execute without throwing, confirming it doesn't attempt
-    // to call any DOM measurement API that would blow up in a Node.js context.
     expect(() => measureCellHeight('Some text content', 150)).not.toThrow()
   })
 })
@@ -63,90 +56,95 @@ describe('measureCellHeight', () => {
 
 describe('measureRowHeights', () => {
   it('returns an array with the same length as the rows array', () => {
-    const rows = [
-      { id: 'r1', cells: ['Alpha', 'Beta'] },
-      { id: 'r2', cells: ['Gamma', 'Delta'] },
-      { id: 'r3', cells: ['Epsilon', 'Zeta'] },
+    const columns: Column[] = [
+      { key: 'a', header: 'A', width: 200 },
+      { key: 'b', header: 'B', width: 200 },
     ]
-    const columnWidths = [200, 200]
+    const rows: TableRow[] = [
+      { id: 'r1', a: 'Alpha', b: 'Beta' },
+      { id: 'r2', a: 'Gamma', b: 'Delta' },
+      { id: 'r3', a: 'Epsilon', b: 'Zeta' },
+    ]
 
-    const heights = measureRowHeights(rows, columnWidths)
+    const heights = measureRowHeights(rows, columns)
     expect(heights).toHaveLength(3)
   })
 
   it('returns at least LINE_HEIGHT for every row', () => {
-    const rows = [
-      { id: 'r1', cells: ['Short'] },
-      { id: 'r2', cells: [''] },
+    const columns: Column[] = [{ key: 'a', header: 'A', width: 300 }]
+    const rows: TableRow[] = [
+      { id: 'r1', a: 'Short' },
+      { id: 'r2', a: '' },
     ]
-    const columnWidths = [300]
 
-    const heights = measureRowHeights(rows, columnWidths)
+    const heights = measureRowHeights(rows, columns)
     for (const h of heights) {
-      // measureRowHeights starts maxHeight at LINE_HEIGHT, so each row is >= LINE_HEIGHT.
       expect(h).toBeGreaterThanOrEqual(LINE_HEIGHT)
     }
   })
 
   it('returns a height equal to LINE_HEIGHT for a single-line row', () => {
-    const rows = [{ id: 'r1', cells: ['Hi'] }]
-    const columnWidths = [400]
+    const columns: Column[] = [{ key: 'a', header: 'A', width: 400 }]
+    const rows: TableRow[] = [{ id: 'r1', a: 'Hi' }]
 
-    const [height] = measureRowHeights(rows, columnWidths)
+    const [height] = measureRowHeights(rows, columns)
     expect(height).toBe(LINE_HEIGHT)
   })
 
   it('returns the max cell height across all columns in a row', () => {
     const shortText = 'Short'
-    // Force a wrap by using a very narrow column.
     const longText =
       'This sentence is deliberately long so it wraps when the column is narrow.'
     const narrowWidth = 60
     const wideWidth = 400
 
-    const rows = [{ id: 'r1', cells: [longText, shortText] }]
-    const columnWidths = [narrowWidth, wideWidth]
+    const columns: Column[] = [
+      { key: 'a', header: 'A', width: narrowWidth },
+      { key: 'b', header: 'B', width: wideWidth },
+    ]
+    const rows: TableRow[] = [{ id: 'r1', a: longText, b: shortText }]
 
-    const [rowHeight] = measureRowHeights(rows, columnWidths)
+    const [rowHeight] = measureRowHeights(rows, columns)
     const tallCellHeight = measureCellHeight(longText, narrowWidth)
     const shortCellHeight = measureCellHeight(shortText, wideWidth)
 
-    // Row height must equal the tallest cell.
     expect(rowHeight).toBe(Math.max(tallCellHeight, shortCellHeight))
     expect(rowHeight).toBeGreaterThan(shortCellHeight)
   })
 
   it('handles multiple rows independently', () => {
-    const rows = [
-      { id: 'r1', cells: ['One line'] },
+    const columns: Column[] = [{ key: 'a', header: 'A', width: 80 }]
+    const rows: TableRow[] = [
+      { id: 'r1', a: 'One line' },
       {
         id: 'r2',
-        cells: [
-          'A much longer piece of text that will definitely wrap when rendered in a narrow column.',
-        ],
+        a: 'A much longer piece of text that will definitely wrap when rendered in a narrow column.',
       },
     ]
-    const columnWidths = [80]
 
-    const heights = measureRowHeights(rows, columnWidths)
-
-    // Second row (long text, narrow column) must be taller than the first.
+    const heights = measureRowHeights(rows, columns)
     expect(heights[1]).toBeGreaterThan(heights[0]!)
   })
 
-  it('falls back to width 100 when columnWidths is shorter than cells array', () => {
-    const rows = [{ id: 'r1', cells: ['A', 'B', 'C'] }]
-    // Only provide width for the first column; the rest should fall back to 100.
-    const columnWidths = [200]
+  it('falls back to width 100 when column has no explicit width', () => {
+    const columns: Column[] = [
+      { key: 'a', header: 'A', width: 200 },
+      { key: 'b', header: 'B' },   // no width — falls back to 100
+      { key: 'c', header: 'C' },
+    ]
+    const rows: TableRow[] = [{ id: 'r1', a: 'A', b: 'B', c: 'C' }]
 
-    // Should not throw.
-    expect(() => measureRowHeights(rows, columnWidths)).not.toThrow()
-    const [height] = measureRowHeights(rows, columnWidths)
+    expect(() => measureRowHeights(rows, columns)).not.toThrow()
+    const [height] = measureRowHeights(rows, columns)
     expect(height).toBeGreaterThanOrEqual(LINE_HEIGHT)
   })
 
   it('returns an empty array when rows is empty', () => {
-    const heights = measureRowHeights([], [200, 200])
+    const columns: Column[] = [
+      { key: 'a', header: 'A', width: 200 },
+      { key: 'b', header: 'B', width: 200 },
+    ]
+    const heights = measureRowHeights([], columns)
     expect(heights).toEqual([])
   })
 
@@ -166,10 +164,14 @@ describe('measureRowHeights', () => {
       expect(Object.prototype.hasOwnProperty.call(doc, api)).toBe(false)
     }
 
-    const rows = [
-      { id: 'r1', cells: ['Hello', 'World'] },
-      { id: 'r2', cells: ['Foo', 'Bar'] },
+    const columns: Column[] = [
+      { key: 'a', header: 'A', width: 200 },
+      { key: 'b', header: 'B', width: 200 },
     ]
-    expect(() => measureRowHeights(rows, [200, 200])).not.toThrow()
+    const rows: TableRow[] = [
+      { id: 'r1', a: 'Hello', b: 'World' },
+      { id: 'r2', a: 'Foo', b: 'Bar' },
+    ]
+    expect(() => measureRowHeights(rows, columns)).not.toThrow()
   })
 })

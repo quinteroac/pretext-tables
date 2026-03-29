@@ -1,39 +1,45 @@
-import { useMemo, useState, useEffect } from 'react'
-import type { Row } from '../../shared/types.js'
+import { useMemo } from 'react'
+import type { Column, TableRow } from '../../shared/types.js'
+import { useFontsReady } from '../../shared/hooks.js'
 import { measureRowHeights, LINE_HEIGHT } from './measure.js'
 import { BODY_FONT } from '../../shared/fonts.js'
 import './basic-table.css'
 
 export interface BasicTableProps {
-  rows: Row[]
-  columnWidths: number[]
+  rows: TableRow[]
+  columns: Column[]
 }
 
-export function BasicTable({ rows, columnWidths }: BasicTableProps) {
-  const [fontsReady, setFontsReady] = useState(false)
+export function BasicTable({ rows, columns }: BasicTableProps) {
+  const fontsReady = useFontsReady()
 
-  useEffect(() => {
-    document.fonts.ready.then(() => {
-      setFontsReady(true)
-    })
-  }, [])
+  const columnWidths = columns.map(c => c.width ?? 0)
 
   const rowHeights = useMemo(() => {
     if (!fontsReady) return rows.map(() => LINE_HEIGHT)
-    return measureRowHeights(rows, columnWidths)
-  }, [rows, columnWidths, fontsReady])
+    return measureRowHeights(rows, columns)
+  }, [rows, columns, fontsReady])
 
   return (
     <table className="basic-table" style={{ '--basic-table-font': BODY_FONT } as React.CSSProperties}>
+      <thead>
+        <tr>
+          {columns.map((col, colIndex) => (
+            <th key={col.key} style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}>
+              {col.header}
+            </th>
+          ))}
+        </tr>
+      </thead>
       <tbody>
         {rows.map((row, rowIndex) => (
           <tr key={row.id} style={{ height: rowHeights[rowIndex] }}>
-            {row.cells.map((cell, colIndex) => (
+            {columns.map((col, colIndex) => (
               <td
-                key={colIndex}
+                key={col.key}
                 style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}
               >
-                {cell}
+                {row[col.key] ?? ''}
               </td>
             ))}
           </tr>
