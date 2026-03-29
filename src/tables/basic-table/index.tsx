@@ -3,6 +3,7 @@ import type { Column, TableRow } from '../../shared/types.js'
 import { useFontsReady } from '../../shared/hooks.js'
 import { measureRowHeights, LINE_HEIGHT } from './measure.js'
 import { BODY_FONT } from '../../shared/fonts.js'
+import { BaseTable } from '../base-table'
 import './basic-table.css'
 
 export interface BasicTableProps {
@@ -21,30 +22,14 @@ export function BasicTable({ rows, columns }: BasicTableProps) {
   }, [rows, columns, fontsReady])
 
   return (
-    <table className="basic-table" style={{ '--basic-table-font': BODY_FONT } as React.CSSProperties}>
-      <thead>
-        <tr>
-          {columns.map((col, colIndex) => (
-            <th key={col.key} style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}>
-              {col.header}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, rowIndex) => (
-          <tr key={row.id} style={{ height: rowHeights[rowIndex] }}>
-            {columns.map((col, colIndex) => (
-              <td
-                key={col.key}
-                style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}
-              >
-                {row[col.key] ?? ''}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="basic-table-wrapper" style={{ '--basic-table-font': BODY_FONT } as React.CSSProperties}>
+      <BaseTable
+        columns={columns}
+        columnWidths={columnWidths}
+        rows={rows}
+        rowHeights={rowHeights}
+        className="basic-table-base"
+      />
+    </div>
   )
 }

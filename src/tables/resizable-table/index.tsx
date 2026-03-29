@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type { Column, TableRow } from '../../shared/types'
 import { useFontsReady } from '../../shared/hooks'
+import { useColumnResize } from '../../shared/hooks/useColumnResize'
 import { BODY_FONT, BODY_LINE_HEIGHT } from '../../shared/fonts'
 import { prepareRows, computeRowHeights } from './measure'
+import { BaseTable } from '../base-table'
 import './resizable-table.css'
 
 // ── Padding constants (must match CSS .rt-td padding) ────────────────────────
@@ -67,11 +69,9 @@ export function ResizableTable({ columns, rows }: ResizableTableProps): React.JS
   // ── Determine whether all columns have explicit widths ──────────────────────
   const hasAutoColumns = columns.some(c => !(c.width && c.width > 0))
 
-  // ── Column widths in state so drag updates trigger re-render ────────────────
-  // When columns have explicit widths, initialize immediately.
-  // When there are auto columns, initialize to 0 and wait for container width.
-  const [columnWidths, setColumnWidths] = useState<number[]>(
-    () => columns.map(c => c.width ?? 0)
+  // ── Column widths via useColumnResize hook ──────────────────────────────────
+  const { columnWidths, setColumnWidths, startResize } = useColumnResize(
+    columns.map(c => c.width ?? 0)
   )
 
   // Track whether container-width distribution has been applied for current columns.
@@ -104,7 +104,7 @@ export function ResizableTable({ columns, rows }: ResizableTableProps): React.JS
 
     widthsResolvedRef.current = true
     setColumnWidths(resolved)
-  }, [fontsReady, hasAutoColumns, containerWidth, columns])
+  }, [fontsReady, hasAutoColumns, containerWidth, columns, setColumnWidths])
 
   // widthsResolved drives visibility: we hide the table until widths are settled
   // to avoid a layout flash (wrong widths → jump to correct widths).
@@ -129,79 +129,6 @@ export function ResizableTable({ columns, rows }: ResizableTableProps): React.JS
     if (preparedCells.length === 0) return []
     return computeRowHeights(preparedCells, columnWidths, BODY_LINE_HEIGHT, CELL_PADDING_V + BODY_LINE_HEIGHT)
   }, [preparedCells, columnWidths])
-
-  // ── Total table width from column widths state ───────────────────────────────
-  const totalWidth = useMemo(
-    () => columnWidths.reduce((sum, w) => sum + w, 0),
-    [columnWidths]
-  )
-
-  // ── Drag-resize logic ────────────────────────────────────────────────────────
-  // We track drag state in a ref (not state) to avoid re-renders during drag;
-  // only the final column-width state update triggers a render.
-  const dragRef = useRef<{
-    colIdx: number
-    startX: number
-    startWidth: number
-  } | null>(null)
-
-  // Cleanup ref: holds the two document listeners so we can remove them on
-  // unmount even if a drag is in progress.
-  const cleanupRef = useRef<(() => void) | null>(null)
-
-  const startResize = useCallback((colIdx: number, clientX: number) => {
-    dragRef.current = {
-      colIdx,
-      startX: clientX,
-      startWidth: columnWidths[colIdx] ?? 0,
-    }
-
-    // Suppress text selection while dragging.
-    document.body.style.userSelect = 'none'
-    document.body.style.cursor = 'col-resize'
-
-    const onMouseMove = (e: MouseEvent) => {
-      const drag = dragRef.current
-      if (!drag) return
-      const delta = e.clientX - drag.startX
-      const newWidth = Math.max(20, drag.startWidth + delta)
-      setColumnWidths(prev => {
-        const next = [...prev]
-        next[drag.colIdx] = newWidth
-        return next
-      })
-    }
-
-    const onMouseUp = () => {
-      dragRef.current = null
-      document.body.style.userSelect = ''
-      document.body.style.cursor = ''
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
-      cleanupRef.current = null
-    }
-
-    document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', onMouseUp)
-
-    // Store cleanup so unmount can release listeners if drag is still active.
-    cleanupRef.current = () => {
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
-      document.body.style.userSelect = ''
-      document.body.style.cursor = ''
-    }
-  }, [columnWidths])
-
-  // Release any in-progress drag listeners when the component unmounts.
-  useEffect(() => {
-    return () => {
-      if (cleanupRef.current) {
-        cleanupRef.current()
-        cleanupRef.current = null
-      }
-    }
-  }, [])
 
   // ── Loading skeleton while fonts are loading ─────────────────────────────────
   if (!fontsReady) {
@@ -241,69 +168,21 @@ export function ResizableTable({ columns, rows }: ResizableTableProps): React.JS
       ref={containerRef}
       style={!widthsResolved ? { visibility: 'hidden' } : undefined}
     >
-      <div className="rt-scroll">
-        <table
-          className="rt-table"
-          style={{ width: totalWidth }}
-          role="table"
-          aria-rowcount={rows.length + 1}
-        >
-          <thead className="rt-thead">
-            <tr role="row">
-              {columns.map((col, colIdx) => (
-                <th
-                  key={col.key}
-                  className="rt-th"
-                  scope="col"
-                  style={{
-                    width: columnWidths[colIdx] ?? (col.width ?? 0),
-                    height: HEADER_HEIGHT,
-                  }}
-                >
-                  <span className="rt-th-label">{col.header}</span>
-                  <span
-                    className="rt-resize-handle"
-                    aria-hidden="true"
-                    onMouseDown={e => {
-                      e.preventDefault()
-                      startResize(colIdx, e.clientX)
-                    }}
-                  />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="rt-tbody">
-            {rows.map((row, rowIdx) => (
-              <tr
-                key={rowIdx}
-                role="row"
-                aria-rowindex={rowIdx + 2}
-              >
-                {columns.map((col, colIdx) => {
-                  // Coerce null/undefined to empty string for display
-                  const value = row[col.key]
-                  const display: string = value == null ? '' : String(value)
-
-                  return (
-                    <td
-                      key={col.key}
-                      className="rt-td"
-                      role="cell"
-                      style={{
-                        width: columnWidths[colIdx] ?? (col.width ?? 0),
-                        height: rowHeights[rowIdx] ?? 'auto',
-                      }}
-                    >
-                      {display}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <BaseTable
+        columns={columns}
+        columnWidths={columnWidths}
+        rows={rows}
+        rowHeights={rowHeights}
+        headerHeight={HEADER_HEIGHT}
+        className="rt-base"
+        renderResizeHandle={(colIdx) => (
+          <span
+            className="rt-resize-handle"
+            aria-hidden="true"
+            onMouseDown={e => { e.preventDefault(); startResize(colIdx, e.clientX) }}
+          />
+        )}
+      />
     </div>
   )
 }
