@@ -31,16 +31,24 @@ If you touch a table component and `prepare()` is inside a render function or a 
 ```
 src/
   tables/
+    base-table/
+      index.tsx        # pure renderer — no state, no hooks, no pretext calls
+      base-table.css   # shared structural table styles
     <table-name>/
-      index.tsx        # component entry point
+      index.tsx        # component entry point — composes BaseTable + hooks
       measure.ts       # all prepare() calls and layout logic live here
-      <table-name>.css # scoped styles
+      <table-name>.css # scoped styles (component-specific only)
   shared/
     fonts.ts           # font constants shared across tables
-    types.ts           # shared TypeScript types
+    types.ts           # shared TypeScript types (Column, TableRow)
+    hooks/
+      useFontsReady.ts # waits for document.fonts.ready before measuring
+      useColumnResize.ts # drag-resize logic for resizable tables
 ```
 
 Each table is a self-contained directory. Do not put layout logic in the component file — keep it in `measure.ts`.
+
+`BaseTable` is the shared renderer. New table components should compose it rather than writing their own `<table>` markup.
 
 ---
 
@@ -76,9 +84,17 @@ await document.fonts.ready
 
 1. Create `src/tables/<table-name>/` with `index.tsx`, `measure.ts`, and a CSS file.
 2. Put all `prepare()` and `layout()` calls in `measure.ts`.
-3. Export a single component from `index.tsx`.
-4. Add an entry to `src/tables/index.ts`.
-5. Use font constants from `src/shared/fonts.ts` — do not inline font strings.
+3. In `index.tsx`, compose `BaseTable` from `../base-table` — do not write your own `<table>` markup.
+4. Use shared hooks from `src/shared/hooks/`:
+   - `useFontsReady()` — always use this before calling `prepare()`
+   - `useColumnResize()` — use if the table needs drag-resize columns
+5. Export a single component from `index.tsx`.
+6. Add an entry to `src/tables/index.ts`.
+7. Use font constants from `src/shared/fonts.ts` — do not inline font strings.
+
+### Adding a new shared hook
+
+If a behavior appears in two or more tables, extract it to `src/shared/hooks/<hookName>.ts` and re-export it from `src/shared/hooks.ts`.
 
 ---
 
