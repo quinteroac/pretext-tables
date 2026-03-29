@@ -1,4 +1,4 @@
-import { BasicTable } from '../tables/index.js'
+import { BasicTable, ResizableTable } from '../tables/index.js'
 import type { Column, TableRow } from '../shared/types.js'
 import './demo.css'
 
@@ -23,13 +23,19 @@ const ROWS: TableRow[] = [
   { id: '12', name: 'Luis Fernandez',  summary: 'QA lead responsible for test strategy, automation frameworks, and coordinating release sign-off across teams.',                                                 department: 'Quality Assurance' },
 ]
 
+const RESIZABLE_COLUMNS: Column[] = [
+  { key: 'name',       header: 'Name',        width: 200 },
+  { key: 'summary',    header: 'Role Summary', width: 300 },
+  { key: 'department', header: 'Department',   width: 220 },
+]
+
 export function App() {
   return (
     <div className="demo-root">
       <header className="demo-header">
-        <h1 className="demo-title">BasicTable Demo</h1>
+        <h1 className="demo-title">pretext-tables</h1>
         <p className="demo-subtitle">
-          Cell heights are pre-calculated by{' '}
+          Cell heights pre-calculated by{' '}
           <code className="demo-code">@chenglou/pretext</code> — no DOM
           measurement, no layout thrash.
         </p>
@@ -37,20 +43,28 @@ export function App() {
 
       <main className="demo-main">
         <section className="demo-section">
-          <h2 className="demo-section-title">Team Directory</h2>
+          <h2 className="demo-section-title">BasicTable</h2>
           <p className="demo-section-desc">
-            12 rows &times; 3 columns. The &ldquo;Role Summary&rdquo; column
-            contains long text designed to trigger multi-line wrapping.
+            Alturas fijas calculadas por pretext al montar. Sin resize.
           </p>
-
           <div className="demo-table-meta">
             <span className="demo-pill">Name — 200 px</span>
             <span className="demo-pill">Role Summary — 300 px</span>
             <span className="demo-pill">Department — 220 px</span>
           </div>
-
           <div className="demo-table-wrapper">
             <BasicTable rows={ROWS} columns={COLUMNS} />
+          </div>
+        </section>
+
+        <section className="demo-section">
+          <h2 className="demo-section-title">ResizableTable</h2>
+          <p className="demo-section-desc">
+            Arrastra los handles del header para redimensionar columnas. Las
+            alturas se recalculan via pretext — sin tocar el DOM.
+          </p>
+          <div className="demo-table-wrapper">
+            <ResizableTable rows={ROWS} columns={RESIZABLE_COLUMNS} />
           </div>
         </section>
       </main>
