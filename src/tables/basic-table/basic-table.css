@@ -1,0 +1,26 @@
+.basic-table {
+  border-collapse: collapse;
+  font: var(--basic-table-font);
+  width: 100%;
+}
+
+.basic-table th,
+.basic-table td {
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+}
+
+.basic-table th {
+  background-color: #f8fafc;
+  font-weight: bold;
+}
+
+.basic-table tr:nth-child(even) td {
+  background-color: #f8fafc;
+}

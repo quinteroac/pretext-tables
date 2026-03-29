@@ -1,5 +1,5 @@
 import { ResizableTable } from './tables'
-import type { Column, Row } from './shared/types'
+import type { Column, DataRecord } from './shared/types'
 
 // ── Column definitions ────────────────────────────────────────────────────────
 // Widths are intentionally varied to showcase pretext's height computation:
@@ -27,7 +27,7 @@ const AUTO_COLUMNS: Column[] = [
 // Rows deliberately mix very short, moderate, and very long text to exercise
 // the height-computation path across all extremes.
 
-const ROWS: Row[] = [
+const ROWS: DataRecord[] = [
   {
     index: '1',
     title: 'Brief',
@@ -55,8 +55,7 @@ const ROWS: Row[] = [
   {
     index: '5',
     title: 'Null / empty',
-    // @ts-expect-error — intentionally testing null coercion
-    body:  null,
+    body:  '',
     meta:  '',
   },
   {

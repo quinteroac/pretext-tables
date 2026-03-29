@@ -1,3 +1,10 @@
+// Row type used by BasicTable
+export type Row = {
+  id: string
+  cells: string[]
+}
+
+// Column definition used by ResizableTable
 export interface Column {
   key: string
   header: string
@@ -5,4 +12,5 @@ export interface Column {
   width?: number
 }
 
-export type Row = Record<string, string>
+// Row type used by ResizableTable (key-value record)
+export type DataRecord = Record<string, string>

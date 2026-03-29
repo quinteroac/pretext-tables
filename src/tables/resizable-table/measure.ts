@@ -3,7 +3,7 @@
 // unique (text, font) pair. layout() is pure arithmetic and safe to call during render.
 
 import { prepare, layout, type PreparedText } from '@chenglou/pretext'
-import type { Column, Row } from '../../shared/types'
+import type { Column, DataRecord } from '../../shared/types'
 
 /**
  * Prepare every cell in the table data set for a given font.
@@ -13,7 +13,7 @@ import type { Column, Row } from '../../shared/types'
  * Coerces undefined/null values to empty string for robustness.
  */
 export function prepareRows(
-  rows: Row[],
+  rows: DataRecord[],
   columns: Column[],
   font: string
 ): PreparedText[][] {

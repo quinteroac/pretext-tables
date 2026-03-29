@@ -1,0 +1,61 @@
+{
+  "iteration": "000001",
+  "generatedAt": "2026-03-29",
+  "executiveSummary": "All 4 user stories and all 5 functional requirements from iteration 000001 are satisfied. The BasicTable component is fully implemented following the pretext-tables conventions: prepare() calls are isolated in measure.ts, the component uses useMemo keyed on stable dependencies, no DOM measurement APIs are used anywhere in production code, font constants are properly defined in shared/fonts.ts, and the component correctly waits for document.fonts.ready before measuring. All 19 tests pass, tsc --noEmit is clean, and eslint reports zero errors. One minor observation was found: the CSS file inlines a font string instead of referencing the shared constant.",
+  "verificationByFR": [
+    {
+      "frId": "FR-1",
+      "assessment": "comply",
+      "notes": "BasicTable accepts rows: { id: string; cells: string[] }[] and columnWidths: number[] as required props, verified in src/tables/basic-table/index.tsx."
+    },
+    {
+      "frId": "FR-2",
+      "assessment": "comply",
+      "notes": "All prepareWithSegments() and layout() calls reside exclusively in src/tables/basic-table/measure.ts. Confirmed by grep across src/tables/."
+    },
+    {
+      "frId": "FR-3",
+      "assessment": "partially_comply",
+      "notes": "BODY_FONT, HEADER_FONT, and MONO_FONT are correctly defined in src/shared/fonts.ts and imported in measure.ts. However, basic-table.css line 3 inlines 'font: 14px Inter, sans-serif' directly instead of referencing the shared constant. CSS cannot import TS constants directly, but the duplication risks drift between the rendered font and the measured font."
+    },
+    {
+      "frId": "FR-4",
+      "assessment": "comply",
+      "notes": "The component uses a useEffect + useState(fontsReady) pattern that waits for document.fonts.ready before setting fontsReady=true. useMemo is keyed on fontsReady so measurement only runs after fonts are loaded."
+    },
+    {
+      "frId": "FR-5",
+      "assessment": "comply",
+      "notes": "Only @chenglou/pretext is used for text measurement. No getBoundingClientRect, offsetHeight, offsetWidth, clientHeight, or clientWidth calls exist in any production file under src/tables/."
+    }
+  ],
+  "verificationByUS": [
+    {
+      "usId": "US-001",
+      "assessment": "comply",
+      "notes": "BasicTable is exported from src/tables/index.ts. Component accepts correct prop types. Renders without errors. tsc --noEmit and eslint both pass."
+    },
+    {
+      "usId": "US-002",
+      "assessment": "comply",
+      "notes": "All prepareWithSegments() calls are in measure.ts only. useMemo is keyed on [rows, columnWidths, fontsReady]. No DOM measurement APIs in table production code. 12 dedicated tests verify these properties. tsc and lint pass."
+    },
+    {
+      "usId": "US-003",
+      "assessment": "comply",
+      "notes": "Cell heights are driven by pretext line counts (N lines → N * LINE_HEIGHT px). CSS uses overflow-wrap: break-word, white-space: normal, word-break: break-word, and box-sizing: border-box to prevent horizontal overflow. 7 wrap tests verify column-width boundaries and height scaling. tsc and lint pass."
+    },
+    {
+      "usId": "US-004",
+      "assessment": "comply",
+      "notes": "Demo page renders BasicTable with 12 rows and 3 columns (Name 200px, Role Summary 300px, Department 220px). Role Summary column contains multi-sentence descriptions that trigger wrapping. Vite config and index.html entry point are in place. tsc and lint pass."
+    }
+  ],
+  "minorObservations": [
+    "basic-table.css inlines 'font: 14px Inter, sans-serif' (line 3), duplicating the BODY_FONT constant from src/shared/fonts.ts. If the font is ever changed in fonts.ts, the CSS must be updated manually to stay in sync. Consider a CSS custom property or a build-time injection to keep them aligned.",
+    "The BasicTable component has no <thead> / header row — column labels are absent in the rendered table. This is not required by the PRD but may be confusing in the demo.",
+    "The demo page uses hardcoded column widths (COLUMN_WIDTHS array) without any prop to control them from the outside; this is fine for a demo but worth noting for future extensibility.",
+    "wrap.test.ts is in src/tests/ rather than co-located with the component under src/tables/basic-table/. Consider establishing a consistent test file placement convention."
+  ],
+  "conclusionsAndRecommendations": "The implementation is solid and fully compliant with the PRD. The only actionable item is FR-3 partial compliance: the font string in basic-table.css should be kept in sync with BODY_FONT in fonts.ts. A simple recommendation is to use a CSS custom property (--body-font) injected at the root level by the component or a build step, so the measurement font and the render font are guaranteed to match. The remaining observations are cosmetic or stylistic and can be addressed in a future iteration or left as technical debt."
+}
