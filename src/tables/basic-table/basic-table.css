@@ -1,0 +1,24 @@
+.basic-table {
+  border-collapse: collapse;
+  font: 14px Inter, sans-serif;
+  width: 100%;
+}
+
+.basic-table th,
+.basic-table td {
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  text-align: left;
+  overflow: hidden;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.basic-table th {
+  background-color: #f8fafc;
+  font-weight: bold;
+}
+
+.basic-table tr:nth-child(even) td {
+  background-color: #f8fafc;
+}
