@@ -1,0 +1,119 @@
+/* Demo page layout */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  background: #f0f4f8;
+  color: #1a202c;
+  min-height: 100vh;
+}
+
+/* Root container */
+
+.demo-root {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* Header */
+
+.demo-header {
+  margin-bottom: 40px;
+}
+
+.demo-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1a202c;
+  margin-bottom: 8px;
+}
+
+.demo-subtitle {
+  font-size: 14px;
+  color: #4a5568;
+  max-width: 560px;
+}
+
+.demo-code {
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 13px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: #2d3748;
+}
+
+/* Section */
+
+.demo-main {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.demo-section {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 28px 28px 32px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.demo-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 6px;
+}
+
+.demo-section-desc {
+  font-size: 13px;
+  color: #718096;
+  margin-bottom: 16px;
+}
+
+/* Column meta pills */
+
+.demo-table-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.demo-pill {
+  font-size: 12px;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  background: #edf2f7;
+  color: #4a5568;
+  border-radius: 999px;
+  padding: 3px 10px;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+/* Table wrapper — give it a subtle shadow and let BasicTable fill it */
+
+.demo-table-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+/* Override basic-table widths so they don't stretch to 100% inside the card */
+
+.demo-table-wrapper .basic-table {
+  width: auto;
+  min-width: 100%;
+}
