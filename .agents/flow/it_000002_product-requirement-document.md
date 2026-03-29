@@ -48,6 +48,7 @@ Developers need a table component where columns can be resized by the user and c
 - FR-4: The component must wait for `document.fonts.ready` before calling `prepare()` for the first time.
 - FR-5: The component must be exported from `src/tables/index.ts`.
 - FR-6: Only React and `@chenglou/pretext` may be used — no additional layout or measurement libraries.
+- FR-7: There is no minimum column width constraint; columns can be resized to any width the user drags to.
 
 ## Non-Goals (Out of Scope)
 - Virtualization / windowing of rows.
@@ -57,4 +58,4 @@ Developers need a table component where columns can be resized by the user and c
 - Row selection or editing.
 
 ## Open Questions
-- Should the resize handle snap to a minimum column width? If so, what is the default minimum (e.g., 40px, 80px)?
+- None.
