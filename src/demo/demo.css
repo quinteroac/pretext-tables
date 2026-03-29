@@ -111,6 +111,15 @@ body {
   border: 1px solid #e2e8f0;
 }
 
+/* Variant: user can drag the right edge to resize the whole table */
+
+.demo-table-wrapper--resizable {
+  resize: horizontal;
+  overflow: auto;
+  min-width: 200px;
+  max-width: 100%;
+}
+
 /* Override basic-table widths so they don't stretch to 100% inside the card */
 
 .demo-table-wrapper .basic-table {

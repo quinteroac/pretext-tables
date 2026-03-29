@@ -1,0 +1,115 @@
+.resizable-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.resizable-table {
+  border-collapse: collapse;
+  font: var(--resizable-table-font);
+  table-layout: fixed;
+}
+
+.resizable-table th,
+.resizable-table td {
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.resizable-table th {
+  font: var(--resizable-table-header-font);
+  background: #f1f5f9;
+  position: relative;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.resizable-table tr:nth-child(even) td {
+  background-color: #f8fafc;
+}
+
+/* Header text truncates so the handle stays visible */
+
+.resizable-table-header-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12px;
+}
+
+/* Drag handle — column variant: right edge of header cells */
+
+.resizable-table-handle--col {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 1;
+}
+
+.resizable-table-handle--col::after {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 60%;
+  border-radius: 1px;
+  background: #cbd5e0;
+  transition: background 0.15s, height 0.15s;
+}
+
+.resizable-table-handle--col:hover::after,
+.resizable-table-handle--col:active::after {
+  background: #4299e1;
+  height: 80%;
+}
+
+/* Drag handle — row variant: bottom edge of the last cell in every row */
+
+.resizable-table-td--last {
+  position: relative;
+}
+
+.resizable-table-handle--row {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  cursor: row-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 1;
+}
+
+.resizable-table-handle--row::after {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 60%;
+  border-radius: 1px;
+  background: #cbd5e0;
+  transition: background 0.15s, width 0.15s;
+}
+
+.resizable-table-handle--row:hover::after,
+.resizable-table-handle--row:active::after {
+  background: #4299e1;
+  width: 80%;
+}

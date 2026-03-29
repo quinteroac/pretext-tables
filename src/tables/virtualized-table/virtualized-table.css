@@ -1,0 +1,37 @@
+.vt-viewport {
+  font: var(--vt-font);
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.vt-inner {
+  position: relative;
+  width: 100%;
+}
+
+.vt-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.vt-cell {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+  border-right: 1px solid #e2e8f0;
+}
+
+.vt-cell:last-child {
+  border-right: none;
+}

@@ -1,4 +1,4 @@
-import { BasicTable } from '../tables/index.js'
+import { BasicTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
 import './demo.css'
 
@@ -103,6 +103,63 @@ const ROWS: Row[] = [
   },
 ]
 
+const RESIZABLE_HEADERS = ['Name', 'Role Summary', 'Department']
+const RESIZABLE_DEFAULT_WIDTHS = [160, 280, 160]
+
+const EXPANDABLE_HEADERS = ['Name', 'Role Summary', 'Department']
+const EXPANDABLE_DEFAULT_WIDTHS = [160, 280, 160]
+
+const VIRTUAL_COLUMN_WIDTHS = [180, 340, 160]
+
+const DEPARTMENTS = [
+  'Engineering', 'Platform', 'Design', 'Analytics', 'Infrastructure',
+  'Product', 'Security', 'Customer Success', 'Mobile', 'Documentation',
+  'Quality Assurance', 'Data Science', 'DevOps', 'Finance', 'Legal',
+]
+
+const ROLE_SNIPPETS = [
+  'Leads architecture decisions and drives cross-team technical alignment on a daily basis.',
+  'Owns the full lifecycle of backend services from design through to production monitoring and on-call.',
+  'Collaborates with product managers and designers to deliver user-facing features with high quality.',
+  'Builds and maintains internal tooling that improves developer productivity across the organisation.',
+  'Reviews pull requests, mentors junior engineers, and runs weekly knowledge-sharing sessions.',
+  'Coordinates with external partners to integrate third-party APIs and manage SLA compliance.',
+  'Conducts user research, synthesises findings, and translates insights into concrete design decisions.',
+  'Maintains automated test suites and investigates flaky tests to ensure reliable CI pipelines.',
+  'Writes technical specifications, designs systems for scalability, and leads quarterly planning cycles.',
+  'Monitors production dashboards, responds to incidents, and runs post-mortem reviews.',
+  'Works closely with the data team to instrument new features and analyse experiment results.',
+  'Participates in hiring loops, onboards new team members, and refines engineering processes.',
+]
+
+const FIRST_NAMES = [
+  'Alice', 'Bob', 'Carol', 'David', 'Eva', 'Frank', 'Grace', 'Hiro',
+  'Isabel', 'James', 'Karen', 'Luis', 'Maria', 'Nathan', 'Olivia', 'Pedro',
+  'Quinn', 'Rosa', 'Sam', 'Tina', 'Umar', 'Vera', 'Will', 'Xia', 'Yuki', 'Zara',
+]
+
+const LAST_NAMES = [
+  'Johnson', 'Martinez', 'White', 'Kim', 'Schulz', 'Okafor', 'Tanaka',
+  'Nakamura', 'Costa', 'Li', 'Patel', 'Fernandez', 'Novak', 'Andersen',
+  'Okonkwo', 'Silva', 'Müller', 'Petrov', 'Dubois', 'Yamamoto',
+]
+
+function generateVirtualRows(count: number): Row[] {
+  return Array.from({ length: count }, (_, i) => {
+    const firstName = FIRST_NAMES[i % FIRST_NAMES.length]!
+    const lastName = LAST_NAMES[Math.floor(i / FIRST_NAMES.length) % LAST_NAMES.length]!
+    const department = DEPARTMENTS[i % DEPARTMENTS.length]!
+    // Every 3rd row gets a long multi-line description to exercise wrapping.
+    const baseSnippet = ROLE_SNIPPETS[i % ROLE_SNIPPETS.length]!
+    const description = i % 3 === 0
+      ? `${baseSnippet} Additionally, takes ownership of quarterly OKR planning for the ${department} team and coordinates cross-functional initiatives that span multiple reporting lines.`
+      : baseSnippet
+    return { id: String(i + 1), cells: [`${firstName} ${lastName}`, description, department] }
+  })
+}
+
+const VIRTUAL_ROWS = generateVirtualRows(500)
+
 export function App() {
   return (
     <div className="demo-root">
@@ -132,6 +189,68 @@ export function App() {
           <div className="demo-table-wrapper">
             <BasicTable rows={ROWS} columnWidths={COLUMN_WIDTHS} />
           </div>
+        </section>
+
+        <section className="demo-section">
+          <h2 className="demo-section-title">ExpandableTable</h2>
+          <p className="demo-section-desc">
+            Drag the right edge of the table to resize the whole container.
+            All columns scale proportionally via{' '}
+            <code className="demo-code">useExpandable</code> —{' '}
+            <code className="demo-code">layout()</code> recalculates row
+            heights on every change,{' '}
+            <code className="demo-code">prepare()</code> runs once on load.
+          </p>
+          <div className="demo-table-wrapper">
+            <ExpandableTable
+              rows={ROWS}
+              headers={EXPANDABLE_HEADERS}
+              defaultColumnWidths={EXPANDABLE_DEFAULT_WIDTHS}
+            />
+          </div>
+        </section>
+
+        <section className="demo-section">
+          <h2 className="demo-section-title">ResizableTable</h2>
+          <p className="demo-section-desc">
+            Drag a column divider to resize it{' '}
+            (<code className="demo-code">useResizable horizontal</code>), or
+            drag the bottom edge of any row to override its height{' '}
+            (<code className="demo-code">useResizable vertical</code>).
+          </p>
+          <div className="demo-table-wrapper">
+            <ResizableTable
+              rows={ROWS}
+              headers={RESIZABLE_HEADERS}
+              defaultColumnWidths={RESIZABLE_DEFAULT_WIDTHS}
+              horizontal
+              vertical
+            />
+          </div>
+        </section>
+
+        <section className="demo-section">
+          <h2 className="demo-section-title">VirtualizedTable</h2>
+          <p className="demo-section-desc">
+            500 rows — only the rows visible in the viewport are in the DOM at
+            any given time. All row heights are pre-calculated by{' '}
+            <code className="demo-code">@chenglou/pretext</code> before any
+            rendering, so the total scroll height is exact from the start — no
+            estimation, no layout jumps. Every third row has a longer
+            description that wraps across multiple lines.
+          </p>
+
+          <div className="demo-table-meta">
+            <span className="demo-pill">Name — 180 px</span>
+            <span className="demo-pill">Role Summary — 340 px</span>
+            <span className="demo-pill">Department — 160 px</span>
+          </div>
+
+          <VirtualizedTable
+            rows={VIRTUAL_ROWS}
+            columnWidths={VIRTUAL_COLUMN_WIDTHS}
+            height={400}
+          />
         </section>
       </main>
     </div>

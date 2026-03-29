@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect } from 'react'
 import type { Row } from '../../shared/types.js'
-import { measureRowHeights, LINE_HEIGHT } from './measure.js'
+import { useMeasure } from '../../shared/hooks/useMeasure.js'
 import { BODY_FONT } from '../../shared/fonts.js'
+import { LINE_HEIGHT, CELL_PADDING } from './measure.js'
 import './basic-table.css'
 
 export interface BasicTableProps {
@@ -10,18 +10,7 @@ export interface BasicTableProps {
 }
 
 export function BasicTable({ rows, columnWidths }: BasicTableProps) {
-  const [fontsReady, setFontsReady] = useState(false)
-
-  useEffect(() => {
-    document.fonts.ready.then(() => {
-      setFontsReady(true)
-    })
-  }, [])
-
-  const rowHeights = useMemo(() => {
-    if (!fontsReady) return rows.map(() => LINE_HEIGHT)
-    return measureRowHeights(rows, columnWidths)
-  }, [rows, columnWidths, fontsReady])
+  const rowHeights = useMeasure(rows, columnWidths, { lineHeight: LINE_HEIGHT, cellPadding: CELL_PADDING })
 
   return (
     <table className="basic-table" style={{ '--basic-table-font': BODY_FONT } as React.CSSProperties}>
