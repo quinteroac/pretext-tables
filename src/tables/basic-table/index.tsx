@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import type { Row } from '../../shared/types.js'
 import { measureRowHeights, LINE_HEIGHT } from './measure.js'
+import { BODY_FONT } from '../../shared/fonts.js'
 import './basic-table.css'
 
 export interface BasicTableProps {
@@ -23,7 +24,7 @@ export function BasicTable({ rows, columnWidths }: BasicTableProps) {
   }, [rows, columnWidths, fontsReady])
 
   return (
-    <table className="basic-table">
+    <table className="basic-table" style={{ '--basic-table-font': BODY_FONT } as React.CSSProperties}>
       <tbody>
         {rows.map((row, rowIndex) => (
           <tr key={row.id} style={{ height: rowHeights[rowIndex] }}>

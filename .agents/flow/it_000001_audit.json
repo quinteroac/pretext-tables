@@ -1,0 +1,28 @@
+{
+  "iteration": "000001",
+  "generatedAt": "2026-03-29",
+  "executiveSummary": "4/4 US comply, 4/5 FR comply (FR-3 partially). 19 tests pass, tsc and lint clean. Refactor: inject BODY_FONT as CSS custom property to eliminate font string duplication.",
+  "verificationByFR": [
+    { "frId": "FR-1", "assessment": "comply" },
+    { "frId": "FR-2", "assessment": "comply" },
+    { "frId": "FR-3", "assessment": "partially_comply" },
+    { "frId": "FR-4", "assessment": "comply" },
+    { "frId": "FR-5", "assessment": "comply" }
+  ],
+  "verificationByUS": [
+    { "usId": "US-001", "assessment": "comply" },
+    { "usId": "US-002", "assessment": "comply" },
+    { "usId": "US-003", "assessment": "comply" },
+    { "usId": "US-004", "assessment": "comply" }
+  ],
+  "minorObservations": [
+    "basic-table.css inlines font string — drift risk with BODY_FONT constant.",
+    "No <thead> header row in BasicTable.",
+    "Tests in src/tests/ rather than co-located with component."
+  ],
+  "refactorPlan": [
+    "In index.tsx: pass BODY_FONT as --basic-table-font CSS custom property on <table>.",
+    "In basic-table.css: replace hardcoded font with var(--basic-table-font).",
+    "Verify tsc and lint pass."
+  ]
+}
