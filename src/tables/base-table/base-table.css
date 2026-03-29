@@ -1,0 +1,49 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   BaseTable — shared structural styles
+   Component-specific overrides live in each table's own CSS.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bt-wrapper {
+  box-sizing: border-box;
+}
+
+.bt-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.bt-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.bt-thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.bt-th {
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  box-sizing: border-box;
+  /* Needed so absolutely-positioned children (e.g. resize handle) anchor here */
+  position: relative;
+}
+
+.bt-th-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bt-td {
+  vertical-align: top;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}

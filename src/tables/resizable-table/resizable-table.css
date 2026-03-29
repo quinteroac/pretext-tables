@@ -1,0 +1,202 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   ResizableTable — editorial aesthetic
+   Warm parchment background · ink typography · single rust accent
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.rt-wrapper {
+  --rt-bg:          oklch(97% 0.008 80);       /* warm parchment */
+  --rt-ink:         oklch(20% 0.012 60);        /* near-black ink */
+  --rt-ink-muted:   oklch(45% 0.010 60);        /* secondary text */
+  --rt-rule:        oklch(82% 0.014 70);        /* warm rule lines */
+  --rt-rule-strong: oklch(55% 0.018 60);        /* heavier border */
+  --rt-accent:      oklch(50% 0.13 35);         /* muted rust/sienna */
+  --rt-hover:       oklch(93% 0.012 75);        /* warm hover tint */
+  --rt-header-bg:   oklch(22% 0.012 60);        /* dark header bar */
+  --rt-header-ink:  oklch(93% 0.008 75);        /* parchment text on dark */
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--rt-ink);
+  background: var(--rt-bg);
+}
+
+/* ── Scroll container ──────────────────────────────────────────────────────── */
+
+.rt-base.bt-wrapper > .bt-scroll {
+  /* Subtle inner left border to echo the accent without overwhelming */
+  border-left: 3px solid var(--rt-accent);
+}
+
+/* ── Header row ────────────────────────────────────────────────────────────── */
+
+.rt-base .bt-th {
+  background: var(--rt-header-bg);
+  color: var(--rt-header-ink);
+  padding: 0 16px;
+  text-align: left;
+  font-family: "DM Serif Display", serif;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  /* Subtle bottom line separating header from body */
+  border-bottom: 2px solid var(--rt-accent);
+}
+
+/* ── Column resize handle ──────────────────────────────────────────────────── */
+
+.rt-base .bt-th-label {
+  /* Leave 8px gap so the handle never overlaps the label text */
+  padding-right: 8px;
+}
+
+.rt-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  /* Thin visible divider line centered in the 6px hit zone */
+  background: transparent;
+  display: flex;
+  align-items: stretch;
+  transition: background 120ms ease;
+  /* Extend the grab zone slightly beyond the cell edge */
+  z-index: 1;
+}
+
+/* The visible line is a pseudo-element so it can be narrower than the hit zone */
+.rt-resize-handle::after {
+  content: "";
+  display: block;
+  width: 2px;
+  margin: 4px auto;
+  border-radius: 1px;
+  background: oklch(65% 0.018 60 / 0.4);
+  transition: background 120ms ease, transform 120ms ease;
+  align-self: stretch;
+}
+
+.rt-resize-handle:hover::after,
+.rt-resize-handle:active::after {
+  background: var(--rt-accent);
+  transform: scaleX(1.5);
+}
+
+.rt-base .bt-th:first-child {
+  /* Accent nub on leftmost header cell */
+  border-left: none;
+}
+
+/* ── Body ──────────────────────────────────────────────────────────────────── */
+
+.rt-base .bt-tbody tr {
+  border-bottom: 1px solid var(--rt-rule);
+  transition: background 180ms ease-out;
+}
+
+.rt-base .bt-tbody tr:first-child {
+  border-top: none;
+}
+
+.rt-base .bt-tbody tr:hover {
+  background: var(--rt-hover);
+}
+
+.rt-base .bt-tbody tr:last-child {
+  border-bottom: 2px solid var(--rt-rule-strong);
+}
+
+.rt-base .bt-td {
+  padding: 12px 16px;
+  color: var(--rt-ink);
+  /* Smooth height reflow when column is resized */
+  transition: height 0.15s ease, width 0.15s ease;
+}
+
+/* ── Row index column (first col) ──────────────────────────────────────────── */
+
+.rt-base .bt-td:first-child,
+.rt-base .bt-th:first-child {
+  color: var(--rt-ink-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+/* ── Empty state ───────────────────────────────────────────────────────────── */
+
+.rt-empty {
+  padding: 48px 32px;
+  text-align: center;
+  color: var(--rt-ink-muted);
+  font-style: italic;
+  font-size: 14px;
+  border-top: 2px solid var(--rt-rule-strong);
+}
+
+.rt-empty-heading {
+  font-family: "DM Serif Display", serif;
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--rt-ink);
+  margin: 0 0 8px;
+}
+
+.rt-empty-sub {
+  margin: 0;
+  color: var(--rt-ink-muted);
+}
+
+/* ── Loading skeleton ──────────────────────────────────────────────────────── */
+
+.rt-loading {
+  padding: 48px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rt-skeleton-row {
+  display: flex;
+  gap: 12px;
+}
+
+.rt-skeleton-cell {
+  height: 14px;
+  border-radius: 2px;
+  background: var(--rt-rule);
+  animation: rt-pulse 1.6s ease-in-out infinite;
+}
+
+.rt-skeleton-cell:nth-child(1) { flex: 0 0 32px; animation-delay: 0ms; }
+.rt-skeleton-cell:nth-child(2) { flex: 1 1 auto; animation-delay: 80ms; }
+.rt-skeleton-cell:nth-child(3) { flex: 0 0 25%; animation-delay: 160ms; }
+.rt-skeleton-cell:nth-child(4) { flex: 0 0 18%; animation-delay: 240ms; }
+
+@keyframes rt-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+
+/* ── Reduced-motion overrides ──────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .rt-base .bt-tbody tr {
+    transition: none;
+  }
+  .rt-base .bt-td {
+    transition: none;
+  }
+  .rt-skeleton-cell {
+    animation: none;
+    opacity: 0.6;
+  }
+  .rt-resize-handle::after,
+  .rt-resize-handle:hover::after,
+  .rt-resize-handle:active::after {
+    transition: none;
+  }
+}

@@ -1,11 +1,13 @@
-.basic-table {
-  border-collapse: collapse;
-  font: 14px Inter, sans-serif;
+.basic-table-wrapper {
+  font: var(--basic-table-font);
+}
+
+.basic-table-base .bt-table {
   width: 100%;
 }
 
-.basic-table th,
-.basic-table td {
+.basic-table-base .bt-th,
+.basic-table-base .bt-td {
   border: 1px solid #e2e8f0;
   padding: 4px 8px;
   text-align: left;
@@ -16,11 +18,11 @@
   box-sizing: border-box;
 }
 
-.basic-table th {
+.basic-table-base .bt-th {
   background-color: #f8fafc;
   font-weight: bold;
 }
 
-.basic-table tr:nth-child(even) td {
+.basic-table-base .bt-tbody tr:nth-child(even) .bt-td {
   background-color: #f8fafc;
 }

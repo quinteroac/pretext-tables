@@ -1,6 +1,6 @@
 import { prepareWithSegments, layout } from '@chenglou/pretext'
 import { BODY_FONT } from '../../shared/fonts.js'
-import type { Row } from '../../shared/types.js'
+import type { TableRow, Column } from '../../shared/types.js'
 
 export const LINE_HEIGHT = 20
 
@@ -18,16 +18,17 @@ export function measureCellHeight(text: string, columnWidth: number): number {
  * Compute the height of every row by measuring each cell and taking the max
  * across all cells in that row.
  *
- * @param rows        - Array of row data
- * @param columnWidths - Width in px for each column
- * @returns           - Array of row heights (one entry per row)
+ * @param rows    - Array of row data
+ * @param columns - Column definitions (provides key and width)
+ * @returns       - Array of row heights (one entry per row)
  */
-export function measureRowHeights(rows: Row[], columnWidths: number[]): number[] {
+export function measureRowHeights(rows: TableRow[], columns: Column[]): number[] {
   return rows.map((row) => {
     let maxHeight = LINE_HEIGHT
-    for (let col = 0; col < row.cells.length; col++) {
-      const width = columnWidths[col] ?? 100
-      const h = measureCellHeight(row.cells[col] ?? '', width)
+    for (let col = 0; col < columns.length; col++) {
+      const column = columns[col]
+      const width = column.width ?? 100
+      const h = measureCellHeight(row[column.key] ?? '', width)
       if (h > maxHeight) maxHeight = h
     }
     return maxHeight

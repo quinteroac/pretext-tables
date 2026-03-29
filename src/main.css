@@ -1,0 +1,89 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Global reset + App shell
+   ───────────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: oklch(97% 0.008 80);   /* warm parchment — matches table --rt-bg */
+  min-height: 100dvh;
+}
+
+/* ── App shell ────────────────────────────────────────────────────────────── */
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.app-header {
+  margin-bottom: 40px;
+}
+
+.app-title {
+  font-family: "DM Serif Display", serif;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 400;
+  font-style: italic;
+  color: oklch(20% 0.012 60);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+.app-subtitle {
+  font-family: "DM Sans", sans-serif;
+  font-size: 15px;
+  color: oklch(45% 0.010 60);
+  line-height: 1.6;
+  max-width: 52ch;
+}
+
+.app-subtitle code {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 13px;
+  background: oklch(90% 0.012 70);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: oklch(35% 0.015 60);
+}
+
+/* ── Demo sections ─────────────────────────────────────────────────────────── */
+
+.app-demo {
+  margin-bottom: 56px;
+}
+
+.app-section-label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: oklch(55% 0.018 60);
+  margin-bottom: 12px;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.app-footer {
+  margin-top: 64px;
+  padding-top: 20px;
+  border-top: 1px solid oklch(82% 0.014 70);
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: oklch(55% 0.018 60);
+}
