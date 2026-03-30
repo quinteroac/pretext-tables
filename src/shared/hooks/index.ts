@@ -30,3 +30,6 @@ export type { UseScrollAnchorOptions, UseScrollAnchorResult } from './useScrollA
 
 export { useStickyColumns, sliceStickyColumns } from './useStickyColumns.js'
 export type { UseStickyColumnsOptions, UseStickyColumnsResult } from './useStickyColumns.js'
+
+export { useInfiniteScroll, computeDistanceFromBottom } from './useInfiniteScroll.js'
+export type { UseInfiniteScrollOptions, UseInfiniteScrollResult } from './useInfiniteScroll.js'
