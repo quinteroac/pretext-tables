@@ -8,17 +8,17 @@
 .editable-table thead th {
   text-align: left;
   padding: 0 8px 10px;
-  color: var(--text-secondary, oklch(55% 0.02 240));
+  color: var(--muted, oklch(50% 0.016 258));
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
-  border-bottom: 1px solid var(--border, oklch(22% 0.02 240));
+  border-bottom: 1px solid var(--border, oklch(22% 0.02 255));
 }
 
 .editable-table tbody tr {
-  border-bottom: 1px solid var(--border, oklch(22% 0.02 240));
+  border-bottom: 1px solid var(--border, oklch(22% 0.02 255));
   transition: height 80ms ease-out;
 }
 
@@ -52,10 +52,10 @@
 }
 
 .editable-table__textarea:focus {
-  background: oklch(18% 0.015 240 / 0.6);
+  background: var(--surface-hover, oklch(19% 0.020 255));
   overflow: hidden;
 }
 
 .editable-table__textarea::placeholder {
-  color: var(--text-tertiary, oklch(40% 0.02 240));
+  color: var(--muted, oklch(50% 0.016 258));
 }

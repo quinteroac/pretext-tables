@@ -280,39 +280,24 @@ export function App() {
           <em>Skip the DOM.</em>
         </h1>
         <p className="demo-subtitle">
-          Five table components powered by{' '}
+          20 hooks powered by{' '}
           <code className="demo-code">@chenglou/pretext</code> — row heights
           calculated before the browser renders. No DOM reads. No layout
           reflows.
         </p>
-        <div className="demo-stats">
-          <div className="demo-stat">
-            <div className="demo-stat-value demo-stat-value--good">0</div>
-            <div className="demo-stat-label">DOM reflows</div>
-          </div>
-          <div className="demo-stat">
-            <div className="demo-stat-value">7</div>
-            <div className="demo-stat-label">components</div>
-          </div>
-          <div className="demo-stat">
-            <div className="demo-stat-value demo-stat-value--info">1</div>
-            <div className="demo-stat-label">measure pass</div>
-          </div>
-          <div className="demo-stat">
-            <div className="demo-stat-value demo-stat-value--good">∞</div>
-            <div className="demo-stat-label">layout calls saved</div>
-          </div>
-        </div>
       </header>
 
       <main className="demo-main">
         <section className="demo-section" id="useMeasure">
+          <span className="demo-section-eyebrow">The foundation · one measure pass</span>
+          <h2 className="demo-section-title">useMeasure</h2>
           <p className="demo-section-desc">
-            Computes row heights from text before the browser renders. Calls{' '}
-            <code className="demo-code">prepare()</code> once per dataset, then{' '}
-            <code className="demo-code">layout()</code> — pure arithmetic — on every
-            column-width change. No <code className="demo-code">getBoundingClientRect</code>,
-            no reflows.
+            Pass your rows and column widths — get back exact row heights before
+            the browser renders.{' '}
+            <code className="demo-code">prepare()</code> tokenizes text once;{' '}
+            <code className="demo-code">layout()</code> is pure arithmetic on every
+            column-width change. No DOM reads, no reflows — every other hook on
+            this page builds on this.
           </p>
 
           <div className="demo-split">
@@ -348,13 +333,11 @@ export function App() {
           <span className="demo-section-eyebrow">Grid layout · sticky header</span>
           <h2 className="demo-section-title">GridTable</h2>
           <p className="demo-section-desc">
-            A CSS Grid-based table — no{' '}
-            <code className="demo-code">&lt;table&gt;</code> elements. The
-            header row uses{' '}
-            <code className="demo-code">position: sticky; top: 0</code> so it
-            stays pinned while you scroll. Row heights are still pre-computed by{' '}
-            <code className="demo-code">useMeasure</code> — zero DOM reflows.
-            Scroll the table below to confirm the header stays fixed.
+            Built on CSS Grid rather than{' '}
+            <code className="demo-code">&lt;table&gt;</code> elements. The header
+            row stays pinned as you scroll, and row heights are still pre-computed
+            by <code className="demo-code">useMeasure</code>. Scroll the table to
+            confirm.
           </p>
 
           <div className="demo-split">
@@ -390,15 +373,14 @@ export function App() {
         </section>
 
         <section className="demo-section" id="useExpandable">
-          <span className="demo-section-eyebrow">Expandable · container resize</span>
+          <span className="demo-section-eyebrow">Container resize · proportional columns</span>
           <h2 className="demo-section-title">useExpandable</h2>
           <p className="demo-section-desc">
             Wraps <code className="demo-code">ResizeObserver</code> and fires{' '}
             <code className="demo-code">onResize(w, h, prevW, prevH)</code> when the
-            container changes size. Combine with{' '}
-            <code className="demo-code">useMeasure</code> to scale column widths
-            proportionally and recompute row heights — no DOM reads.
-            Drag the right edge of the table to try it.
+            container changes size. Scale column widths proportionally and{' '}
+            <code className="demo-code">useMeasure</code> recomputes row heights
+            automatically. Drag the right edge of the table below to try it.
           </p>
           <div className="demo-split">
             <div className="demo-split__table">
@@ -436,13 +418,11 @@ export function App() {
           <span className="demo-section-eyebrow">Resizable · drag handles</span>
           <h2 className="demo-section-title">useResizable</h2>
           <p className="demo-section-desc">
-            Manages column-width and row-height drag state. Returns{' '}
+            Manages drag state for column widths and row heights. Attach{' '}
             <code className="demo-code">getColHandleProps</code> and{' '}
-            <code className="demo-code">getRowHandleProps</code> for attach-anywhere
-            drag handles. Drag a column edge to resize it. Drag the bottom of a row
-            to override its height.{' '}
-            <strong>Double-click a column handle</strong> to auto-fit via{' '}
-            <code className="demo-code">useShrinkWrap</code>.
+            <code className="demo-code">getRowHandleProps</code> to any element.
+            Drag a column edge to resize it; drag the bottom of a row to override
+            its height. Double-click a column handle to auto-fit.
           </p>
           <div className="demo-split">
             <div className="demo-split__table">
@@ -482,11 +462,13 @@ export function App() {
           <span className="demo-section-eyebrow">Ghost preview · column drag</span>
           <h2 className="demo-section-title">useResizePreview</h2>
           <p className="demo-section-desc">
-            While a column drag is in-flight, computes per-row preview heights via{' '}
-            <code className="demo-code">layout()</code> at ~0.09 ms/row — no DOM
-            reads. Returns <code className="demo-code">previewHeights[]</code> that
-            render as a ghost layer. Real heights commit only on drag end. Drag a
-            column handle below to see it.
+            While a column drag is in-flight,{' '}
+            <code className="demo-code">useResizePreview</code> computes live
+            per-row preview heights via{' '}
+            <code className="demo-code">layout()</code> at ~0.09 ms/row. Returns{' '}
+            <code className="demo-code">previewHeights[]</code> to drive a ghost
+            overlay — real heights commit only on drag end. Drag a column handle
+            below to see it.
           </p>
           <div className="demo-split">
             <div className="demo-split__table">
@@ -513,11 +495,10 @@ export function App() {
           <h2 className="demo-section-title">useVirtualization</h2>
           <p className="demo-section-desc">
             Given <code className="demo-code">rowHeights[]</code> from{' '}
-            <code className="demo-code">useMeasure</code>, computes the visible
-            window with binary search — no DOM reads, no{' '}
-            <code className="demo-code">ResizeObserver</code>. Because heights are
-            exact from the first frame, the scrollbar is correctly sized immediately.
-            500 rows below.
+            <code className="demo-code">useMeasure</code>, finds the visible window
+            with binary search. Because heights are exact from frame one, the
+            scrollbar is correctly sized immediately — no layout thrash as rows
+            load. 500 rows below.
           </p>
           <div className="demo-split">
             <div className="demo-split__table">
@@ -565,18 +546,16 @@ export function App() {
         </section>
 
         <section className="demo-section" id="useColumnControls">
-          <span className="demo-section-eyebrow">Visibility · Sorting · Sticky column</span>
+          <span className="demo-section-eyebrow">Visibility · sorting · sticky column</span>
           <h2 className="demo-section-title">useColumnControls + useStickyColumns</h2>
           <p className="demo-section-desc">
             <code className="demo-code">useColumnControls</code> manages column
             visibility and sort state — hidden columns are removed from layout and
             measurement entirely.{' '}
-            <code className="demo-code">useStickyColumns</code> slices the visible
-            widths into frozen and scrollable panes so the first column stays pinned
-            via <code className="demo-code">position: sticky</code>. A single{' '}
-            <code className="demo-code">useMeasure</code> call uses all widths to keep
-            row heights consistent across panes. Toggle columns with the checkboxes;
-            click any header to sort.
+            <code className="demo-code">useStickyColumns</code> keeps the first
+            column pinned via{' '}
+            <code className="demo-code">position: sticky</code>. Toggle columns
+            with the checkboxes; click any header to sort.
           </p>
           <div className="demo-split">
             <div className="demo-split__table">
@@ -687,15 +666,15 @@ function SearchDemo() {
 
   return (
     <section className="demo-section" id="useSearch">
-      <span className="demo-section-eyebrow">Search · highlight overlay · match coordinates</span>
+      <span className="demo-section-eyebrow">Search · pixel-accurate highlights</span>
       <h2 className="demo-section-title">useSearch</h2>
       <p className="demo-section-desc">
-        Filters rows by a search query and returns pixel-accurate{' '}
-        <code className="demo-code">matchCoords</code> for every occurrence —
-        derived from <code className="demo-code">layoutWithLines()</code>, no DOM
-        reads. Each rect is an <code className="demo-code">{'{ x, y, width, height }'}</code>{' '}
-        bounding box relative to the cell content area, ready to drive a highlight
-        overlay. Type in the input below to see matches highlighted live.
+        Filters rows by query and returns a pixel-accurate bounding box for
+        every match — derived from{' '}
+        <code className="demo-code">layoutWithLines()</code>, no DOM reads. Each{' '}
+        <code className="demo-code">matchCoords</code> rect is positioned relative
+        to the cell content area, ready to drive a highlight overlay. Type in
+        the input below to see matches highlighted live.
       </p>
 
       <div className="demo-split">
@@ -813,13 +792,10 @@ function SpanningTableDemo() {
       <p className="demo-section-desc">
         <code className="demo-code">useSpanningCell(rowHeights)</code> returns{' '}
         <code className="demo-code">totalHeight</code> and{' '}
-        <code className="demo-code">offsets[]</code> derived from{' '}
-        <code className="demo-code">useMeasure</code> output — thin wrappers over{' '}
-        <code className="demo-code">computeTotalHeight</code> /{' '}
-        <code className="demo-code">computeOffsets</code> from{' '}
-        <code className="demo-code">useVirtualization</code>. The SVG chart on the
-        right renders a horizontal tick at the top of every row: even when row
-        heights differ (due to text wrapping), every tick stays aligned.
+        <code className="demo-code">offsets[]</code> so a side column can align
+        exactly with each row — even when text wraps inconsistently. The SVG
+        chart on the right renders a tick at every row boundary without any DOM
+        measurement.
       </p>
       <div className="demo-split">
         <div className="demo-split__table">
@@ -917,14 +893,12 @@ function MediaCellsDemo() {
       <span className="demo-section-eyebrow">Media rows · pre-computed heights</span>
       <h2 className="demo-section-title">useMediaCells</h2>
       <p className="demo-section-desc">
-        Each row can expand to show an image or video preview whose height is
-        passed as a prop — <code className="demo-code">{'{ mediaHeight }'}</code> or{' '}
-        <code className="demo-code">{'{ width, aspectRatio }'}</code>. The total
-        row height (<em>text + media</em>) is computed by injecting synthetic
-        newline padding before calling{' '}
-        <code className="demo-code">layout()</code>. No{' '}
-        <code className="demo-code">ResizeObserver</code>, no{' '}
-        <code className="demo-code">getBoundingClientRect</code>.
+        Each row can expand to show an image or video preview. Pass{' '}
+        <code className="demo-code">{'{ mediaHeight }'}</code> or{' '}
+        <code className="demo-code">{'{ width, aspectRatio }'}</code> — the total
+        row height (text + media) is computed before the browser renders by
+        injecting synthetic newline padding into{' '}
+        <code className="demo-code">layout()</code>. Click ▼ to expand a row.
       </p>
 
       <div className="demo-split">
@@ -1351,13 +1325,10 @@ function DraggableDemo() {
       <span className="demo-section-eyebrow">Drag-to-reorder · rows + columns</span>
       <h2 className="demo-section-title">useDraggable</h2>
       <p className="demo-section-desc">
-        Manages row and column reorder drag state using native browser
-        drag-and-drop. Returns{' '}
-        <code className="demo-code">getRowHandleProps</code> and{' '}
-        <code className="demo-code">getColHandleProps</code> for grip
-        elements. Row heights stay correct through every reorder because{' '}
-        <code className="demo-code">prepare()</code> is keyed to the original
-        data, not the display order.
+        Manages row and column reorder drag state via native browser
+        drag-and-drop. <code className="demo-code">prepare()</code> is keyed to
+        the original data, not the display order — so row heights stay correct
+        through every reorder.
       </p>
       <div className="demo-split">
         <div className="demo-split__table">
@@ -1439,14 +1410,12 @@ function ShrinkWrapDemo() {
 
   return (
     <section className="demo-section" id="useShrinkWrap">
-      <span className="demo-section-eyebrow">Shrink-wrap · Double-click to fit</span>
+      <span className="demo-section-eyebrow">Shrink-wrap · double-click to fit</span>
       <h2 className="demo-section-title">useShrinkWrap</h2>
       <p className="demo-section-desc">
         Binary-searches for the minimum column width where no cell text wraps,
-        using <code className="demo-code">walkLineRanges()</code> — zero DOM
-        calls. Double-click a column handle below to snap it to its tightest
-        fit. Something <code className="demo-code">getBoundingClientRect</code>
-        -based libraries can only approximate; here it is exact.
+        using <code className="demo-code">walkLineRanges()</code>. The result is
+        exact. Double-click a column handle below to snap it to its tightest fit.
       </p>
 
       <div className="demo-split">
@@ -1603,14 +1572,12 @@ function ScrollAnchorDemo() {
 
   return (
     <section className="demo-section" id="useScrollAnchor">
-      <span className="demo-section-eyebrow">Scroll anchor · prepend / live feed</span>
+      <span className="demo-section-eyebrow">Scroll anchor · prepend · live feed</span>
       <h2 className="demo-section-title">useScrollAnchor</h2>
       <p className="demo-section-desc">
-        When rows are prepended, computes the exact{' '}
-        <code className="demo-code">scrollTop</code> correction from pretext
-        offsets before the DOM updates — keeping the visible content stable.
-        No <code className="demo-code">getBoundingClientRect</code>, no{' '}
-        <code className="demo-code">scrollHeight</code> reads. Click{' '}
+        When rows are prepended, corrects{' '}
+        <code className="demo-code">scrollTop</code> from pretext offsets before
+        the DOM updates — keeping the visible content stable. Click{' '}
         <em>Load older messages</em> or toggle the live feed below.
       </p>
       <div className="demo-split">
@@ -1741,11 +1708,10 @@ function InfiniteScrollDemo() {
       <p className="demo-section-desc">
         Triggers <code className="demo-code">onLoadMore</code> when the user
         scrolls within <code className="demo-code">threshold</code> px of the
-        bottom. Total content height is derived from pretext{' '}
-        <code className="demo-code">rowHeights</code> — not{' '}
+        bottom. Content height comes from pretext{' '}
+        <code className="demo-code">rowHeights</code>, not{' '}
         <code className="demo-code">scrollHeight</code>. Guards against
-        concurrent loads with an in-flight ref. Scroll to the bottom of the
-        table below to load more rows.
+        concurrent loads. Scroll to the bottom below to load more rows.
       </p>
       <div className="demo-split">
         <div className="demo-split__table">
@@ -1912,15 +1878,12 @@ function DetachableDemo() {
 
   return (
     <section className="demo-section" id="useDetachable">
-      <span className="demo-section-eyebrow">Nested data · expand inline child table</span>
+      <span className="demo-section-eyebrow">Expandable rows · inline child table</span>
       <h2 className="demo-section-title">useDetachable</h2>
       <p className="demo-section-desc">
-        Clicking a row expands an inline child table below it. Each child table
-        runs its own independent{' '}
-        <code className="demo-code">useMeasure</code> instance — no shared or
-        recursive measurement. Cells stay typed as{' '}
-        <code className="demo-code">string[]</code>; child data is supplied
-        entirely via <code className="demo-code">getChildRows</code>.
+        Click a row to expand an inline child table. Each child runs its own
+        independent <code className="demo-code">useMeasure</code> instance —
+        parent and child measurement never interfere.
       </p>
       <div className="demo-split">
         <div className="demo-split__table">
@@ -2186,14 +2149,12 @@ function EditableDemo() {
       <span className="demo-section-eyebrow">Inline editing · live height updates</span>
       <h2 className="demo-section-title">useEditable</h2>
       <p className="demo-section-desc">
-        Type in any cell — the row height updates on every keystroke using{' '}
+        Type in any cell — row height updates on every keystroke via{' '}
         <code className="demo-code">layout()</code> against a debounced{' '}
-        <code className="demo-code">prepare()</code> state. No{' '}
-        <code className="demo-code">getBoundingClientRect</code>, no{' '}
-        <code className="demo-code">ResizeObserver</code>, no DOM reads. Column
-        headers are drag-resizable to verify that{' '}
-        <code className="demo-code">columnWidths</code> from{' '}
-        <code className="demo-code">useResizable</code> are honoured during editing.
+        <code className="demo-code">prepare()</code>. Drag a column header to
+        verify that widths from{' '}
+        <code className="demo-code">useResizable</code> are honoured during
+        editing.
       </p>
 
       <div className="demo-split">
@@ -2358,13 +2319,11 @@ function CellNotesDemo() {
       <span className="demo-section-eyebrow">Cell notes · zero-flash tooltip</span>
       <h2 className="demo-section-title">useCellNotes</h2>
       <p className="demo-section-desc">
-        Hover any cell that has a{' '}
-        <span style={{ color: 'oklch(72% 0.14 55)', fontWeight: 600 }}>●</span> indicator to see a
-        tooltip whose height is pre-computed by{' '}
-        <code className="demo-code">layout()</code> before mount. The tooltip
-        appears at the correct size on the very first paint — no{' '}
-        <code className="demo-code">getBoundingClientRect</code>, no{' '}
-        <code className="demo-code">ResizeObserver</code>, no repositioning flash.
+        Hover a cell with a{' '}
+        <span style={{ color: 'oklch(72% 0.14 55)', fontWeight: 600 }}>●</span>{' '}
+        indicator. The tooltip height is pre-computed by{' '}
+        <code className="demo-code">layout()</code> before mount — it appears at
+        the correct size on the first paint, no repositioning flash.
       </p>
 
       <div className="demo-split">
@@ -2592,12 +2551,10 @@ function DynamicFontDemo() {
       <span className="demo-section-eyebrow">Dynamic font · zero DOM cost</span>
       <h2 className="demo-section-title">useDynamicFont</h2>
       <p className="demo-section-desc">
-        Drag the slider or pick a font family — every row height updates through{' '}
+        Drag the slider or pick a font family — row heights update via{' '}
         <code className="demo-code">layout()</code> against a debounced{' '}
-        <code className="demo-code">prepare()</code>, never touching{' '}
-        <code className="demo-code">getBoundingClientRect</code> or any DOM
-        measurement. The slider triggers continuous reflow-free remeasurement;
-        the family selector applies on the next debounce tick (~150 ms).
+        <code className="demo-code">prepare()</code>, no DOM measurement at any
+        point.
       </p>
 
       <div className="demo-df-controls">
@@ -2750,13 +2707,14 @@ function ExportCanvasDemo() {
 
   return (
     <section className="demo-section" id="useExportCanvas">
-      <span className="demo-section-eyebrow">PNG export · offscreen canvas · no DOM reads</span>
+      <span className="demo-section-eyebrow">PNG export · offscreen canvas</span>
       <h2 className="demo-section-title">useExportCanvas</h2>
       <p className="demo-section-desc">
-        Renders every row to an offscreen <code className="demo-code">{'<canvas>'}</code> using{' '}
-        <code className="demo-code">layout()</code> for geometry — zero{' '}
-        <code className="demo-code">ctx.measureText</code> calls.{' '}
-        Click <strong>Download PNG</strong> to export this table as a pixel-perfect image.
+        Renders every row to an offscreen{' '}
+        <code className="demo-code">{'<canvas>'}</code> using{' '}
+        <code className="demo-code">layout()</code> for geometry — no{' '}
+        <code className="demo-code">ctx.measureText</code> calls. Click{' '}
+        <em>Download PNG</em> to export this table as a pixel-perfect image.
       </p>
 
       <div className="demo-split">

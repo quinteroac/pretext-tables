@@ -1,26 +1,44 @@
 # pretext-tables
 
-A collection of UI table components powered by [`@chenglou/pretext`](https://github.com/chenglou/pretext) for precise, reflow-free text measurement and layout.
+A showcase of React table components built on [`@chenglou/pretext`](https://github.com/chenglou/pretext) — a library that measures text using the Canvas font engine before anything is rendered, eliminating layout thrash entirely.
 
-## What this is
+## The problem
 
-Standard HTML tables rely on the browser's layout engine to size cells around text content. This project takes a different approach: each table measures its text with `pretext` before rendering, so cell heights are known up front — no layout thrash, no reflows, no surprises.
+Standard HTML tables let the browser figure out cell heights at paint time. With dynamic content, wrapping text, or large datasets, this means repeated layout recalculations — reflows — that stack up fast. Virtualized tables work around this with fixed row heights or estimated heights, which introduces scroll jitter and layout jumps.
 
-## Why pretext
+## The approach
 
-`@chenglou/pretext` separates text measurement from layout into two cheap phases:
+`pretext` separates text measurement into two phases:
 
-- **`prepare()`** — measures text once using the Canvas font engine (~19 ms / 500 texts)
-- **`layout()`** — pure arithmetic line-breaking, zero DOM (~0.09 ms / text)
+- **`prepare()`** — measures text once via Canvas (~19 ms for 500 texts), font-accurate, no DOM
+- **`layout()`** — pure arithmetic line-breaking at any width (~0.09 ms per text)
 
-This makes it practical to size dozens or hundreds of table cells accurately before a single pixel is painted.
+Row heights are computed before the first render. Resize a column and heights recalculate instantly — no reflow, no jitter.
 
-## Skills
+## What's in the showcase
 
-This project ships three Claude Code skills for working with pretext:
+Eight table variants, each demonstrating a different use case:
 
-| Skill | Description |
+| Component | What it shows |
 |---|---|
-| `/pretext-docs` | Full API reference for `@chenglou/pretext` |
-| `/pretext-integrate` | Integration guide — walks you through picking the right API for your use case |
-| `/pretext-art` | Generates Canvas/SVG code for artistic text effects |
+| `BasicTable` | Static table with pretext-measured row heights |
+| `VirtualizedTable` | Virtualized scroll with accurate per-row heights |
+| `ResizableTable` | Column and row resize with scroll anchor |
+| `ExpandableTable` | Proportional column scaling on container resize |
+| `DraggableTable` | Drag-to-reorder rows and columns |
+| `ColumnControlsTable` | Column visibility toggles and click-to-sort |
+| `SpanningTable` | Multi-row spanning with aligned SVG chart |
+| `GridTable` | CSS Grid layout with sticky headers |
+
+And a set of composable hooks covering virtualization, resize, drag, sort, inline editing, sticky columns, canvas cells, search highlighting, export to PNG, and more.
+
+## Run locally
+
+```sh
+bun install
+bun run dev
+```
+
+## Credits
+
+Built on [`@chenglou/pretext`](https://github.com/chenglou/pretext) by [@_chenglou](https://twitter.com/_chenglou).

@@ -94,7 +94,7 @@
 }
 
 .st-bar {
-  fill: oklch(55% 0.18 260);
+  fill: var(--accent, oklch(72% 0.148 66));
   opacity: 0.65;
   transition: opacity 0.1s;
 }
@@ -104,7 +104,7 @@
 }
 
 .st-bar-label {
-  fill: oklch(62% 0.012 257);
+  fill: var(--text-mid, oklch(68% 0.012 257));
   font: 11px system-ui, sans-serif;
   pointer-events: none;
 }
