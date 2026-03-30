@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
@@ -591,6 +591,8 @@ const { rowHeights } = useMeasure(
         <MediaCellsDemo />
 
         <EditableDemo />
+
+        <CellNotesDemo />
       </main>
     </div>
   )
@@ -2109,6 +2111,193 @@ const { previewHeights, getEditProps } =
 // prepare() debounced ~150 ms (AC03)
 // layout() runs every input event (AC02)
 // No ResizeObserver, no DOM reads (AC05)`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// CellNotesDemo — useCellNotes: pre-measured tooltips with zero reposition flash
+// ---------------------------------------------------------------------------
+
+const CN_COLUMN_WIDTHS = [180, 320, 140]
+const CN_HEADERS = ['Name', 'Role Summary', 'Status']
+
+const CN_NOTES: Record<string, string> = {
+  'cn1:0': 'Alice leads a team of 8 engineers across three time zones. She introduced the current component token system.',
+  'cn1:1': 'Responsible for the Q3 migration to the new design system — reduced bundle size by 22%.',
+  'cn3:1': 'The token system Carol built is now used across 4 product surfaces and serves as the single source of truth for all visual constants.',
+  'cn4:2': "David's contract was recently extended through Q4 after successfully launching the new billing portal.",
+  'cn5:0': 'Eva presented her A/B test framework at the internal data summit. Mentors two junior analysts.',
+  'cn6:1': 'Frank automated the entire staging deploy pipeline, cutting release time from 45 minutes to under 6.',
+}
+
+const CN_ROWS: Row[] = [
+  { id: 'cn1', cells: ['Alice Johnson',  'Leads the frontend architecture team and establishes coding standards across all product surfaces.',  'Active']    },
+  { id: 'cn2', cells: ['Bob Martinez',   'Works on backend API design with a focus on performance and scalability for high-traffic endpoints.',  'Remote']    },
+  { id: 'cn3', cells: ['Carol White',    'Manages the design system and ensures visual consistency from the component library down to individual page layouts.',  'Active'] },
+  { id: 'cn4', cells: ['David Kim',      'Full-stack engineer who primarily owns the billing and subscription management subsystem.',           'Contract']  },
+  { id: 'cn5', cells: ['Eva Schulz',     'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses.', 'Remote']    },
+  { id: 'cn6', cells: ['Frank Okafor',   'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation.',  'Remote']    },
+]
+
+const CN_STATUS_COLORS: Record<string, { text: string; bg: string }> = {
+  Active:   { text: 'oklch(68% 0.12 145)', bg: 'oklch(16% 0.04 145)' },
+  Remote:   { text: 'oklch(68% 0.08 200)', bg: 'oklch(16% 0.03 200)' },
+  Contract: { text: 'oklch(68% 0.08 280)', bg: 'oklch(16% 0.03 280)' },
+}
+
+function CellNotesDemo() {
+  const { getNoteTriggerProps, hasNote, NoteTooltip } = useCellNotes({
+    rows: CN_ROWS,
+    notes: CN_NOTES,
+    columnWidths: CN_COLUMN_WIDTHS,
+    tooltipWidth: 240,
+    lineHeight: 20,
+    cellPadding: 16,
+  })
+
+  const { rowHeights } = useMeasure(CN_ROWS, CN_COLUMN_WIDTHS)
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Cell notes · zero-flash tooltip</span>
+      <h2 className="demo-section-title">useCellNotes</h2>
+      <p className="demo-section-desc">
+        Hover any cell that has a{' '}
+        <span style={{ color: 'oklch(72% 0.14 55)', fontWeight: 600 }}>●</span> indicator to see a
+        tooltip whose height is pre-computed by{' '}
+        <code className="demo-code">layout()</code> before mount. The tooltip
+        appears at the correct size on the very first paint — no{' '}
+        <code className="demo-code">getBoundingClientRect</code>, no{' '}
+        <code className="demo-code">ResizeObserver</code>, no repositioning flash.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div style={{ position: 'relative' }}>
+            <table
+              style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}
+            >
+              <thead>
+                <tr>
+                  {CN_HEADERS.map((header, colIndex) => (
+                    <th
+                      key={colIndex}
+                      style={{
+                        width: CN_COLUMN_WIDTHS[colIndex],
+                        textAlign: 'left',
+                        padding: '0 8px 10px',
+                        color: 'oklch(55% 0.02 240)',
+                        fontWeight: 600,
+                        fontSize: 12,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        borderBottom: '1px solid oklch(22% 0.02 240)',
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {CN_ROWS.map((row, rowIndex) => (
+                  <tr
+                    key={row.id}
+                    style={{
+                      height: rowHeights[rowIndex],
+                      borderBottom: '1px solid oklch(22% 0.02 240)',
+                    }}
+                  >
+                    {row.cells.map((cell, colIndex) => {
+                      const triggerProps = getNoteTriggerProps(rowIndex, colIndex)
+                      const cellHasNote = hasNote(rowIndex, colIndex)
+                      return (
+                        <td
+                          key={colIndex}
+                          style={{
+                            width: CN_COLUMN_WIDTHS[colIndex],
+                            maxWidth: CN_COLUMN_WIDTHS[colIndex],
+                            padding: '8px',
+                            verticalAlign: 'top',
+                            overflow: 'hidden',
+                            fontSize: 13,
+                            color: cellHasNote ? 'oklch(86% 0.03 240)' : 'oklch(70% 0.02 240)',
+                            cursor: cellHasNote ? 'help' : 'default',
+                          }}
+                          {...triggerProps}
+                        >
+                          <span style={{ position: 'relative' }}>
+                            {colIndex === 2 ? (
+                              (() => {
+                                const colors = CN_STATUS_COLORS[cell]
+                                return colors ? (
+                                  <span
+                                    className="demo-dept-badge"
+                                    style={{ color: colors.text, background: colors.bg }}
+                                  >
+                                    {cell}
+                                  </span>
+                                ) : cell
+                              })()
+                            ) : cell}
+                            {cellHasNote && (
+                              <span
+                                aria-hidden="true"
+                                style={{
+                                  display: 'inline-block',
+                                  marginLeft: 4,
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  background: 'oklch(72% 0.14 55)',
+                                  verticalAlign: 'middle',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                          </span>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* NoteTooltip renders at position:fixed — place once outside the table */}
+          <NoteTooltip />
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useCellNotes"
+            code={`const { getNoteTriggerProps, NoteTooltip } =
+  useCellNotes({
+    rows,
+    notes: {
+      'row1:0': 'Alice leads a team of…',
+      'row3:1': 'The token system Carol…',
+    },
+    columnWidths,
+    tooltipWidth: 240,
+  })
+
+// In each cell:
+<td {...getNoteTriggerProps(rowIndex, colIndex)}>
+  {cell}
+</td>
+
+// Once, outside the table:
+<NoteTooltip />
+
+// prepare() runs once per notes change (AC01)
+// layout() computes height before mount (AC02)
+// position: fixed from mouse event (AC04)
+// No getBoundingClientRect, no DOM reads`}
           />
         </div>
       </div>

@@ -138,6 +138,19 @@ Filters `rows[]` by a query string and returns match coordinates per cell using 
 ### `whiteSpace: 'pre-wrap'` option in `useMeasure`
 Expose the existing pretext `{ whiteSpace: 'pre-wrap' }` option as a `useMeasure` parameter. Enables cells with tab-indented or newline-separated content (code snippets, addresses). Requires matching `white-space: pre-wrap` in the table CSS.
 
+### `GridTable` — CSS Grid table (no `<table>`, `<tr>`, `<td>`)
+A table-like component built entirely with CSS Grid (`display: grid`) instead of HTML table semantics. Each row is a `<div>` with `grid-template-columns` matching the column widths; each cell is a `<div>`. Row heights come from `useMeasure` as usual — the only difference is the DOM structure.
+
+Why this matters: `<table>` layout is controlled by the browser's table algorithm, which can fight against explicit heights in subtle ways (cells expanding beyond their declared height, border-collapse quirks, sticky positioning limitations). A Grid-based table gives full control over geometry — the `rowHeight` from pretext is applied as an explicit `height` on the row div with no interference.
+
+Additional advantages over `<table>`:
+- `position: sticky` on column headers and frozen columns works without workarounds.
+- `overflow: hidden` on cells is reliable (table cells can overflow their declared height).
+- Easier to animate row enter/leave with `height` transitions.
+- Simpler CSS — no `border-collapse`, no `table-layout: fixed` hacks needed.
+
+The hook layer is unchanged — `useMeasure`, `useResizable`, `useVirtualization` all remain valid. Only the rendered markup changes. `GridTable` ships as a new pre-built component alongside the existing `BasicTable`.
+
 ---
 
 ## Out of scope
