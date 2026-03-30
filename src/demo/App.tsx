@@ -1,8 +1,7 @@
-import type React from 'react'
-import { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { BasicTable, ColumnControlsTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
@@ -343,6 +342,18 @@ export function App() {
         </section>
 
         <section className="demo-section">
+          <span className="demo-section-eyebrow">Ghost preview · Column drag</span>
+          <h2 className="demo-section-title">useResizePreview</h2>
+          <p className="demo-section-desc">
+            Drag a column handle to see a ghost preview of the new row heights
+            before committing. The orange bars show where rows would break — no
+            DOM reads, computed with <code className="demo-code">layout()</code> on
+            every pointer move.
+          </p>
+          <ResizePreviewDemo />
+        </section>
+
+        <section className="demo-section">
           <span className="demo-section-eyebrow">Virtual · 500 rows · Windowed</span>
           <h2 className="demo-section-title">VirtualizedTable</h2>
           <p className="demo-section-desc">
@@ -419,6 +430,192 @@ const DRAGGABLE_ROWS: Row[] = [
 
 const DRAGGABLE_COLUMN_WIDTHS = [160, 300, 140]
 const DRAGGABLE_HEADERS = ['Name', 'Role Summary', 'Department']
+
+// ---------------------------------------------------------------------------
+// ResizePreviewDemo
+// ---------------------------------------------------------------------------
+
+const RP_DEFAULT_WIDTHS = [180, 320, 160]
+const RP_LINE_HEIGHT = 20
+const RP_CELL_PADDING = 16
+const RP_HEADERS = ['Name', 'Role Summary', 'Department']
+const RP_MIN_COL = 60
+
+function ResizePreviewDemo() {
+  const { columnWidths, getColHandleProps, previewDragState } =
+    useResizable({
+      defaultColumnWidths: RP_DEFAULT_WIDTHS,
+      minColumnWidth: RP_MIN_COL,
+      horizontal: true,
+      rowCount: ROWS.length,
+    })
+
+  const [fontsReady, setFontsReady] = useState(false)
+  useEffect(() => { document.fonts.ready.then(() => setFontsReady(true)) }, [])
+
+  const prepared = useMemo(() => {
+    if (!fontsReady) return null
+    return ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
+  }, [fontsReady])
+
+  const rowHeights = useMeasure(ROWS, columnWidths, { lineHeight: RP_LINE_HEIGHT, cellPadding: RP_CELL_PADDING })
+  const { previewHeights } = useResizePreview(prepared, previewDragState, {
+    columnWidths,
+    lineHeight: RP_LINE_HEIGHT,
+    cellPadding: RP_CELL_PADDING,
+  })
+
+  const isDragging = previewDragState !== null
+
+  return (
+    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+      {/* Actual table */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="demo-table-meta" style={{ marginBottom: '8px' }}>
+          {RP_HEADERS.map((h, i) => (
+            <span key={i} className="demo-pill">{h} · {Math.round(columnWidths[i]!)}px</span>
+          ))}
+        </div>
+        <div className="demo-table-wrapper" style={{ position: 'relative' }}>
+          <table
+            style={
+              {
+                tableLayout: 'fixed',
+                borderCollapse: 'collapse',
+                width: columnWidths.reduce((a, b) => a + b, 0),
+                font: BODY_FONT,
+              } as React.CSSProperties
+            }
+          >
+            <thead>
+              <tr>
+                {RP_HEADERS.map((h, colIndex) => (
+                  <th
+                    key={colIndex}
+                    style={{
+                      width: columnWidths[colIndex],
+                      maxWidth: columnWidths[colIndex],
+                      padding: '8px',
+                      font: HEADER_FONT,
+                      textAlign: 'left',
+                      borderBottom: '2px solid oklch(30% 0 0)',
+                      position: 'relative',
+                      userSelect: 'none',
+                    }}
+                  >
+                    {h}
+                    {colIndex < RP_HEADERS.length - 1 && (
+                      <span
+                        {...getColHandleProps(colIndex)}
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: 6,
+                          cursor: 'col-resize',
+                          background: isDragging && previewDragState?.colIndex === colIndex
+                            ? 'oklch(65% 0.18 50)'
+                            : 'oklch(35% 0 0)',
+                        }}
+                      />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ROWS.map((row, rowIndex) => (
+                <tr key={row.id} style={{ height: rowHeights[rowIndex] }}>
+                  {row.cells.map((cell, colIndex) => (
+                    <td
+                      key={colIndex}
+                      style={{
+                        width: columnWidths[colIndex],
+                        maxWidth: columnWidths[colIndex],
+                        padding: '8px',
+                        verticalAlign: 'top',
+                        borderBottom: '1px solid oklch(22% 0 0)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {renderDeptCell(cell, rowIndex, colIndex)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Ghost preview panel */}
+      <div style={{ width: 160, flexShrink: 0 }}>
+        <div
+          style={{
+            fontSize: '11px',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: isDragging ? 'oklch(65% 0.18 50)' : 'oklch(45% 0 0)',
+            marginBottom: '8px',
+            transition: 'color 150ms',
+          }}
+        >
+          {isDragging
+            ? `Preview · col ${(previewDragState?.colIndex ?? 0) + 1} → ${Math.round(previewDragState?.currentWidth ?? 0)}px`
+            : 'Drag a handle →'}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {rowHeights.map((committed, i) => {
+            const preview = previewHeights?.[i] ?? null
+            return (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  height: Math.max(committed, preview ?? 0),
+                }}
+              >
+                {/* committed height bar */}
+                <div
+                  style={{
+                    width: 10,
+                    height: committed,
+                    background: 'oklch(35% 0 0)',
+                    borderRadius: 2,
+                    flexShrink: 0,
+                  }}
+                />
+                {/* preview height bar */}
+                {preview !== null && (
+                  <div
+                    style={{
+                      width: 10,
+                      height: preview,
+                      background: preview > committed
+                        ? 'oklch(65% 0.18 50)'
+                        : 'oklch(55% 0.15 145)',
+                      borderRadius: 2,
+                      flexShrink: 0,
+                      transition: 'height 0ms',
+                    }}
+                  />
+                )}
+                <span style={{ fontSize: 10, color: 'oklch(50% 0 0)' }}>
+                  {preview !== null
+                    ? `${committed}→${preview}px`
+                    : `${committed}px`}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function DraggableDemo() {
   return (

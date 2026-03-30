@@ -21,3 +21,6 @@ export type { UseColumnControlsOptions, UseColumnControlsResult, ColumnState, Co
 
 export { useShrinkWrap, shrinkWrapColumn } from './useShrinkWrap.js'
 export type { UseShrinkWrapOptions, UseShrinkWrapResult } from './useShrinkWrap.js'
+
+export { useResizePreview, computePreviewHeights } from './useResizePreview.js'
+export type { ResizePreviewDragState, UseResizePreviewOptions, UseResizePreviewResult } from './useResizePreview.js'
