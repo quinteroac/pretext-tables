@@ -1,0 +1,195 @@
+{
+  "goals": [
+    "Provide a pre-composed `ColumnControlsTable` component that supports column sorting, visibility toggling, and sticky (frozen) columns.",
+    "Introduce a reusable `useColumnControls` hook that other developers can compose in custom tables.",
+    "Add a demo showcase in the existing demo page so the feature is immediately visible and testable in the browser.",
+    "Cover core logic with unit tests (sort order, visibility state, sticky configuration)."
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Sortable Columns",
+      "description": "As a developer integrating `ColumnControlsTable`, I want to click a column header to sort rows ascending/descending by that column so that end users can quickly order data without custom sort logic.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-001-AC01",
+          "text": "Clicking a header with no current sort sets that column to ascending sort."
+        },
+        {
+          "id": "US-001-AC02",
+          "text": "Clicking the same header again switches to descending sort."
+        },
+        {
+          "id": "US-001-AC03",
+          "text": "Clicking a third time (or clicking a different header) resets sort to none (unsorted)."
+        },
+        {
+          "id": "US-001-AC04",
+          "text": "Sort indicator (▲ / ▼) is visible in the active column header; no indicator is shown when unsorted."
+        },
+        {
+          "id": "US-001-AC05",
+          "text": "Rows re-render in the correct order; `useMeasure` recomputes row heights for the sorted order."
+        },
+        {
+          "id": "US-001-AC06",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-001-AC07",
+          "text": "Visually verified in browser."
+        }
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Column Visibility Toggle",
+      "description": "As a developer integrating `ColumnControlsTable`, I want to show or hide individual columns via a UI control so that users can focus on the columns relevant to their task.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-002-AC01",
+          "text": "Each column can be toggled visible/hidden via `useColumnControls` state."
+        },
+        {
+          "id": "US-002-AC02",
+          "text": "Hidden columns are fully removed from the rendered layout (not just collapsed); `useMeasure` only measures visible columns."
+        },
+        {
+          "id": "US-002-AC03",
+          "text": "A column visibility toggle UI (checkbox list or button group) is rendered above the table in the demo showcase."
+        },
+        {
+          "id": "US-002-AC04",
+          "text": "At least one column must always remain visible (the hook enforces a minimum of 1 visible column and prevents hiding the last visible one)."
+        },
+        {
+          "id": "US-002-AC05",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-002-AC06",
+          "text": "Visually verified in browser."
+        }
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Sticky / Frozen First Column",
+      "description": "As a developer integrating `ColumnControlsTable`, I want the first column to stay fixed while the table scrolls horizontally so that row identity (e.g. a name or ID column) is always visible.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-003-AC01",
+          "text": "When table content overflows horizontally, the first column stays pinned at the left edge."
+        },
+        {
+          "id": "US-003-AC02",
+          "text": "The sticky column is styled with a visible separator (box-shadow or border) to distinguish it from scrolling columns."
+        },
+        {
+          "id": "US-003-AC03",
+          "text": "Sticky behaviour is implemented via CSS (`position: sticky`) — no JavaScript scroll listeners."
+        },
+        {
+          "id": "US-003-AC04",
+          "text": "`useMeasure` still correctly computes heights for all columns including the sticky one."
+        },
+        {
+          "id": "US-003-AC05",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-003-AC06",
+          "text": "Visually verified in browser with horizontal overflow."
+        }
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "`useColumnControls` Hook",
+      "description": "As a developer building a custom table, I want a standalone `useColumnControls` hook so that I can add sort, visibility, and sticky logic to any table without re-implementing state management.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-004-AC01",
+          "text": "`useColumnControls(columns)` accepts an initial column definitions array: `{ id: string; label: string; defaultVisible?: boolean; sticky?: boolean }[]`."
+        },
+        {
+          "id": "US-004-AC02",
+          "text": "Returns: `visibleColumns`, `allColumns`, `sortKey`, `sortDirection`, `toggleColumnVisibility(id)`, `setSort(id)`, `resetSort()`."
+        },
+        {
+          "id": "US-004-AC03",
+          "text": "The hook is exported from `src/shared/hooks/` barrel."
+        },
+        {
+          "id": "US-004-AC04",
+          "text": "Hook does not import or call `prepare()` / `layout()` directly."
+        },
+        {
+          "id": "US-004-AC05",
+          "text": "Typecheck / lint passes."
+        }
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Demo Showcase",
+      "description": "As a developer evaluating the library, I want a demo section for `ColumnControlsTable` in the existing demo page so that I can see all three features working together without writing any code.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-005-AC01",
+          "text": "The demo renders `ColumnControlsTable` with at least 4 columns and 10+ rows of sample data."
+        },
+        {
+          "id": "US-005-AC02",
+          "text": "The demo includes the column visibility toggle UI."
+        },
+        {
+          "id": "US-005-AC03",
+          "text": "Horizontal overflow is present so the sticky column behaviour is observable."
+        },
+        {
+          "id": "US-005-AC04",
+          "text": "Visually verified in browser."
+        }
+      ]
+    }
+  ],
+  "functionalRequirements": [
+    {
+      "id": "FR-1",
+      "description": "`useColumnControls` must be a pure React hook with no pretext calls inside it."
+    },
+    {
+      "id": "FR-2",
+      "description": "`ColumnControlsTable` must use `useMeasure` for all cell height computation; no `getBoundingClientRect` or DOM measurement."
+    },
+    {
+      "id": "FR-3",
+      "description": "Sort logic must operate on the `rows` array before passing to `useMeasure`, so heights are computed in final display order."
+    },
+    {
+      "id": "FR-4",
+      "description": "Only visible columns are passed to `useMeasure`; hidden columns must not contribute to column widths or row height calculations."
+    },
+    {
+      "id": "FR-5",
+      "description": "Sticky column is always the first column by position; arbitrary sticky columns are out of scope."
+    },
+    {
+      "id": "FR-6",
+      "description": "No external libraries beyond `@chenglou/pretext` and React may be introduced."
+    },
+    {
+      "id": "FR-7",
+      "description": "Font constants must be sourced from `src/shared/fonts.ts`; no inline font strings."
+    },
+    {
+      "id": "FR-8",
+      "description": "`ColumnControlsTable` must be exported from `src/tables/index.ts`."
+    },
+    {
+      "id": "FR-9",
+      "description": "`src/tables/column-controls-table/measure.ts` must contain only numeric constants (`LINE_HEIGHT`, `CELL_PADDING`, `MIN_COLUMN_WIDTH`)."
+    }
+  ]
+}

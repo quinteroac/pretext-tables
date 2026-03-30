@@ -1,28 +1,26 @@
 {
   "iteration": "000001",
-  "generatedAt": "2026-03-29",
-  "executiveSummary": "4/4 US comply, 4/5 FR comply (FR-3 partially). 19 tests pass, tsc and lint clean. Refactor: inject BODY_FONT as CSS custom property to eliminate font string duplication.",
-  "verificationByFR": [
-    { "frId": "FR-1", "assessment": "comply" },
-    { "frId": "FR-2", "assessment": "comply" },
-    { "frId": "FR-3", "assessment": "partially_comply" },
-    { "frId": "FR-4", "assessment": "comply" },
-    { "frId": "FR-5", "assessment": "comply" }
-  ],
-  "verificationByUS": [
-    { "usId": "US-001", "assessment": "comply" },
-    { "usId": "US-002", "assessment": "comply" },
-    { "usId": "US-003", "assessment": "comply" },
-    { "usId": "US-004", "assessment": "comply" }
-  ],
-  "minorObservations": [
-    "basic-table.css inlines font string — drift risk with BODY_FONT constant.",
-    "No <thead> header row in BasicTable.",
-    "Tests in src/tests/ rather than co-located with component."
-  ],
-  "refactorPlan": [
-    "In index.tsx: pass BODY_FONT as --basic-table-font CSS custom property on <table>.",
-    "In basic-table.css: replace hardcoded font with var(--basic-table-font).",
-    "Verify tsc and lint pass."
+  "fixes": [
+    {
+      "id": "fix-1",
+      "title": "Reset sort to unsorted when clicking a different column header",
+      "file": "src/shared/hooks/useColumnControls.ts",
+      "description": "US-001 AC03 requires that clicking a different header resets sort to none. Change the setSort callback so that prev.key !== id returns { key: null, direction: null } instead of { key: id, direction: 'asc' }.",
+      "before": "if (prev.key !== id) return { key: id, direction: 'asc' }",
+      "after": "if (prev.key !== id) return { key: null, direction: null }"
+    },
+    {
+      "id": "fix-2",
+      "title": "Add MIN_COLUMN_WIDTH to measure.ts",
+      "file": "src/tables/column-controls-table/measure.ts",
+      "description": "FR-9 lists MIN_COLUMN_WIDTH as an expected constant. Add it with the standard value of 60.",
+      "after": "export const MIN_COLUMN_WIDTH = 60"
+    },
+    {
+      "id": "fix-3",
+      "title": "Update setSort different-id test to expect unsorted result",
+      "file": "src/tests/use-column-controls.test.ts",
+      "description": "The test 'setSort(different id) resets to asc on new column' must be updated to assert { key: null, direction: null } after the setSort fix."
+    }
   ]
 }

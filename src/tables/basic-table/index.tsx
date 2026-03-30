@@ -1,3 +1,4 @@
+import type React from 'react'
 import type { Row } from '../../shared/types.js'
 import { useMeasure } from '../../shared/hooks/useMeasure.js'
 import { BODY_FONT } from '../../shared/fonts.js'
@@ -7,9 +8,10 @@ import './basic-table.css'
 export interface BasicTableProps {
   rows: Row[]
   columnWidths: number[]
+  renderCell?: (value: string, rowIndex: number, colIndex: number) => React.ReactNode
 }
 
-export function BasicTable({ rows, columnWidths }: BasicTableProps) {
+export function BasicTable({ rows, columnWidths, renderCell }: BasicTableProps) {
   const rowHeights = useMeasure(rows, columnWidths, { lineHeight: LINE_HEIGHT, cellPadding: CELL_PADDING })
 
   return (
@@ -22,7 +24,7 @@ export function BasicTable({ rows, columnWidths }: BasicTableProps) {
                 key={colIndex}
                 style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}
               >
-                {cell}
+                {renderCell ? renderCell(cell, rowIndex, colIndex) : cell}
               </td>
             ))}
           </tr>

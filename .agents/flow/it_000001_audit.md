@@ -2,39 +2,86 @@
 
 ## Executive Summary
 
-All 4 user stories and 5 functional requirements from iteration 000001 are satisfied. The BasicTable component correctly isolates `prepare()` calls in `measure.ts`, uses `useMemo` with stable dependencies, avoids all DOM measurement APIs, and waits for `document.fonts.ready`. 19 tests pass, typecheck and lint are clean. One partial compliance issue was found in FR-3: `basic-table.css` inlines a font string instead of referencing the shared `BODY_FONT` constant, creating a risk of drift between the measured and rendered font.
+The `ColumnControlsTable` implementation is largely compliant with the PRD. 8 of 9 functional requirements comply (FR-9 partially), and 4 of 5 user stories fully comply. The one meaningful gap is US-001 AC03: clicking a *different* column header should reset sort to unsorted per the literal acceptance criterion, but the implementation transitions to ascending on the new column instead. A secondary minor gap is FR-9: `measure.ts` is missing the `MIN_COLUMN_WIDTH` constant listed in the PRD. All 37 unit tests pass. The hook (`useColumnControls`) is purely stateful with zero pretext calls, sort is applied before `useMeasure`, hidden columns are excluded from measurement, sticky is CSS-only, and the demo showcases all features with 5 columns and 12 rows.
+
+---
 
 ## Verification by FR
 
 | FR | Assessment | Notes |
 |---|---|---|
-| FR-1 | comply | `BasicTable` accepts `rows: Row[]` and `columnWidths: number[]` as required props. |
-| FR-2 | comply | All `prepareWithSegments()` and `layout()` calls live exclusively in `measure.ts`. |
-| FR-3 | partially_comply | `BODY_FONT` is correctly used in `measure.ts`, but `basic-table.css` inlines `'14px Inter, sans-serif'` rather than referencing the shared constant. |
-| FR-4 | comply | Component waits for `document.fonts.ready` via `useEffect` before enabling measurement. |
-| FR-5 | comply | No `getBoundingClientRect`, `offsetHeight`, or any DOM sizing API in production code. |
+| FR-1 | comply | `useColumnControls` has no pretext import or call |
+| FR-2 | comply | `useMeasure` used; zero DOM measurement |
+| FR-3 | comply | `sortedRows` computed before `useMeasure` |
+| FR-4 | comply | Only visible column cells/widths passed to `useMeasure` |
+| FR-5 | comply | Pure CSS `th:first-child` / `td:first-child` sticky |
+| FR-6 | comply | No new external packages |
+| FR-7 | comply | `BODY_FONT` / `HEADER_FONT` imported from `fonts.ts` |
+| FR-8 | comply | Exported from `src/tables/index.ts` |
+| FR-9 | partially_comply | Only numeric constants ✓, but `MIN_COLUMN_WIDTH` is absent |
+
+---
 
 ## Verification by US
 
 | US | Assessment | Notes |
 |---|---|---|
-| US-001 | comply | Exported, correct props, renders without errors, typecheck and lint pass. |
-| US-002 | comply | `prepareWithSegments()` isolated in `measure.ts`, `useMemo` keyed correctly, no DOM APIs, 12 tests pass. |
-| US-003 | comply | CSS prevents horizontal overflow, row heights driven by pretext line counts, 7 wrap tests pass. |
-| US-004 | comply | Demo with 12 rows × 3 columns, long-text column triggers wrapping, Vite entry point in place. |
+| US-001 Sortable Columns | partially_comply | AC03 gap: clicking a different header transitions to asc on that column instead of resetting to unsorted |
+| US-002 Column Visibility Toggle | comply | Checkbox UI above table, min-1 enforced, hidden cols excluded from measurement |
+| US-003 Sticky / Frozen First Column | comply | CSS `position:sticky`, box-shadow separator, no JS scroll listeners |
+| US-004 `useColumnControls` Hook | comply | Correct shape, barrel export, no pretext calls — all 17 hook tests pass |
+| US-005 Demo Showcase | comply | 5 columns, 12 rows, visibility toggle, horizontal overflow observable |
+
+---
 
 ## Minor Observations
 
-- `basic-table.css` duplicates the `BODY_FONT` value — drift risk if the font changes in `fonts.ts`.
-- No `<thead>` / column header row in the rendered table (not required by PRD but useful for readability).
-- Test files live in `src/tests/` rather than co-located with the component; consider establishing a consistent convention.
+1. **AC03 ambiguity** — "clicking a different header resets sort to none" could be read as the previous column's indicator clearing (which does happen). The recommendation is to implement the literal AC: clicking a new column header resets sort to unsorted; a subsequent click on that column starts ascending.
+2. **`MIN_COLUMN_WIDTH` missing** from `measure.ts` despite being listed in FR-9's parenthetical list of expected constants.
+3. **`useSortable` overlap** — an existing `useSortable` hook covers similar sort-state logic; `useColumnControls` duplicates it inline. Below the three-table extraction threshold, but worth tracking.
+4. **`renderCell` uses original `colIndex`** (not remapped visible-column index) — consistent with other tables but may surprise consumers when columns are hidden.
+
+---
 
 ## Conclusions and Recommendations
 
-The implementation is solid. The one actionable item is FR-3: inject the font as a CSS custom property so the measurement font and render font are guaranteed to stay in sync. A CSS variable `--basic-table-font` set inline on the `<table>` element (sourced from `BODY_FONT`) ensures a single source of truth without requiring CSS-to-TS imports.
+Two targeted fixes are required:
+1. Update `setSort` in `useColumnControls.ts` so that clicking a *different* column header resets the sort state to `{ key: null, direction: null }` (unsorted), matching US-001 AC03 literally.
+2. Add `MIN_COLUMN_WIDTH = 60` to `src/tables/column-controls-table/measure.ts` to satisfy FR-9.
+
+Update the corresponding test (`setSort(different id) resets to asc on new column`) to reflect the corrected behaviour. No other changes are required.
+
+---
 
 ## Refactor Plan
 
-1. **`src/tables/basic-table/index.tsx`** — Add `style={{ '--basic-table-font': BODY_FONT } as React.CSSProperties}` to the `<table>` element, importing `BODY_FONT` from `src/shared/fonts.ts`.
-2. **`src/tables/basic-table/basic-table.css`** — Replace `font: 14px Inter, sans-serif` with `font: var(--basic-table-font)` so the rendered font always matches the measured font.
-3. Run `tsc --noEmit` and `eslint` to confirm no regressions.
+### Fix 1 — `useColumnControls.ts`: reset sort when clicking a different column
+
+**File:** `src/shared/hooks/useColumnControls.ts`
+
+Change `setSort` so that a click on a column different from the current `sortKey` resets the sort to unsorted (key: null, direction: null) rather than transitioning to ascending on the new column.
+
+```
+Before:
+  if (prev.key !== id) return { key: id, direction: 'asc' }
+
+After:
+  if (prev.key !== id) return { key: null, direction: null }
+```
+
+Sort cycle becomes: none → asc (click same column) → desc → none. Clicking a *different* column while any sort is active resets to none; clicking it again then sets ascending.
+
+### Fix 2 — `measure.ts`: add MIN_COLUMN_WIDTH
+
+**File:** `src/tables/column-controls-table/measure.ts`
+
+Add:
+```ts
+export const MIN_COLUMN_WIDTH = 60
+```
+
+### Fix 3 — Update affected test
+
+**File:** `src/tests/use-column-controls.test.ts`
+
+Update the `setSort(different id)` test to expect `{ key: null, direction: null }` instead of `{ key: 'b', direction: 'asc' }`.

@@ -5,6 +5,28 @@
   max-width: 100%;
 }
 
+.expandable-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.expandable-table-container::-webkit-scrollbar-track {
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
+.expandable-table-container::-webkit-scrollbar-thumb {
+  background: var(--border-hi, oklch(34% 0.022 255));
+  border-radius: 4px;
+}
+
+.expandable-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted, oklch(50% 0.016 258));
+}
+
+.expandable-table-container::-webkit-scrollbar-corner {
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
 .expandable-table {
   border-collapse: collapse;
   font: var(--expandable-table-font);
@@ -14,8 +36,8 @@
 
 .expandable-table th,
 .expandable-table td {
-  border: 1px solid #e2e8f0;
-  padding: 4px 8px;
+  border: 1px solid var(--border, oklch(22% 0.020 255));
+  padding: 7px 10px;
   text-align: left;
   vertical-align: top;
   word-break: break-word;
@@ -27,11 +49,21 @@
 
 .expandable-table th {
   font: var(--expandable-table-header-font);
-  background: #f1f5f9;
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  color: var(--bright, oklch(96% 0.007 254));
   white-space: nowrap;
   user-select: none;
 }
 
+.expandable-table td {
+  background: var(--surface, oklch(13% 0.016 255));
+  color: var(--text, oklch(83% 0.012 257));
+}
+
 .expandable-table tr:nth-child(even) td {
-  background-color: #f8fafc;
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+.expandable-table tbody tr:hover td {
+  background: var(--surface-hover, oklch(19% 0.020 255));
 }

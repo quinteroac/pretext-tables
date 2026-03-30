@@ -9,3 +9,9 @@ export type { ResizableTableProps } from './resizable-table/index.js'
 
 export { VirtualizedTable } from './virtualized-table/index.js'
 export type { VirtualizedTableProps } from './virtualized-table/index.js'
+
+export { DraggableTable } from './draggable-table/index.js'
+export type { DraggableTableProps } from './draggable-table/index.js'
+
+export { ColumnControlsTable } from './column-controls-table/index.js'
+export type { ColumnControlsTableProps } from './column-controls-table/index.js'

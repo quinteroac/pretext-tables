@@ -1,0 +1,71 @@
+{
+  "iteration": "000004",
+  "executive_summary": "The DraggableTable iteration delivers a structurally complete implementation: all files are in the right locations, exports are wired up correctly, font constants are sourced from fonts.ts, no third-party DnD library was introduced, and the three-layer architecture is followed. However, a critical logic bug in useDraggable.ts renders the core drag-reorder functionality non-functional for both rows and columns. In the onDrop handler, both the 'from' and 'to' parameters map to the drop-target element's visual index — because the closure variable rowIndex/colIndex equals the target and dragOverIndex.current is set to the same target by onDragEnter — so the guard condition (target !== rowIndex) is always false and reorder() is never called. All 26 tests pass because they only exercise the pure reorder() utility function, not the drag event handlers. A secondary minor issue exists in the DraggableDemo in App.tsx: it passes reordered rows (orderedRows) to useMeasure on every reorder, triggering unnecessary prepare() remeasures, and uses an inline font string in one container div.",
+  "verification_by_fr": [
+    {
+      "frId": "FR-1",
+      "assessment": "comply",
+      "notes": "HTML5 drag-and-drop API (draggable attribute, onDragStart/onDragEnter/onDragOver/onDrop/onDragEnd, dataTransfer) is used throughout. No pointer event APIs were used, but the PRD allows 'pointer events OR HTML5 drag-and-drop'."
+    },
+    {
+      "frId": "FR-2",
+      "assessment": "comply",
+      "notes": "package.json confirms no external DnD dependency (no react-dnd, dnd-kit, sortablejs, react-beautiful-dnd, etc.). Only @chenglou/pretext is present as the measurement dependency."
+    },
+    {
+      "frId": "FR-3",
+      "assessment": "comply",
+      "notes": "useDraggable is implemented in src/shared/hooks/useDraggable.ts and correctly re-exported from src/shared/hooks/index.ts along with the reorder helper and all TypeScript types."
+    },
+    {
+      "frId": "FR-4",
+      "assessment": "comply",
+      "notes": "src/tables/draggable-table/ contains index.tsx, measure.ts (exports LINE_HEIGHT=20, CELL_PADDING=16, MIN_COLUMN_WIDTH=60), and draggable-table.css. Three-layer architecture is followed."
+    },
+    {
+      "frId": "FR-5",
+      "assessment": "comply",
+      "notes": "DraggableTable and DraggableTableProps are exported from src/tables/index.ts."
+    },
+    {
+      "frId": "FR-6",
+      "assessment": "comply",
+      "notes": "DraggableTable calls useMeasure(rows, columnWidths, {...}) and never imports or calls prepare() directly. No other direct pretext calls exist in the component."
+    },
+    {
+      "frId": "FR-7",
+      "assessment": "comply",
+      "notes": "DraggableTable passes the original rows prop (not the reordered slice) to useMeasure, so the prepare() memoization key does not change on reorder — no full remeasure is triggered. Heights are indexed by dataIndex (rowHeights[dataIndex]), which is stable. Minor: the DraggableDemo in App.tsx passes orderedRows (a new array reference on every render) to useMeasure, which would trigger prepare() on every reorder, but this is demo code, not the production component."
+    },
+    {
+      "frId": "FR-8",
+      "assessment": "partially_comply",
+      "notes": "DraggableTable correctly imports BODY_FONT and HEADER_FONT from src/shared/fonts.ts and uses them via CSS custom properties. However, the DraggableDemo component in App.tsx uses an inline fontFamily: 'Inter, sans-serif' and fontSize: 14 in the container div style instead of referencing fonts.ts constants."
+    }
+  ],
+  "verification_by_us": [
+    {
+      "usId": "US-001",
+      "assessment": "partially_comply",
+      "notes": "Grip icon (⠿) is rendered in a dedicated first cell per row. The entire <tr> element is made draggable via getRowHandleProps spread. Visual feedback is implemented (is-dragging reduces opacity to 0.4; is-drop-target adds an indigo outline). The onRowsReorder callback is wired and would fire with the new order. Row heights are indexed by dataIndex so they remain correct after reorder. CRITICAL ISSUE: The reorder never executes. In onDrop (which fires on the DROP TARGET element), the closure variable rowIndex equals the drop target's visual index, and dragOverIndex.current was set to the same value by the same element's onDragEnter — so the guard condition (target !== rowIndex) is always false. Verified by simulation."
+    },
+    {
+      "usId": "US-002",
+      "assessment": "partially_comply",
+      "notes": "Grip icon (⠿) is shown in every column header. The entire <th> element is draggable via getColHandleProps. Visual indicators (col-is-dragging opacity, col-is-drop-target outline + background) are implemented. The onColumnsReorder callback is wired. Column widths use columnWidths[dataColIndex] so they follow their data column correctly. CRITICAL ISSUE: Identical onDrop bug as US-001 — the reorder never executes for column drags either."
+    },
+    {
+      "usId": "US-003",
+      "assessment": "partially_comply",
+      "notes": "useDraggable is exported from src/shared/hooks/index.ts with the exact return type specified in the PRD (rowOrder, columnOrder, dragging, getRowHandleProps, getColHandleProps). The hook uses only useState and useRef — no DOM measurement APIs. DraggableDemo in App.tsx demonstrates composing useDraggable with useMeasure. ISSUE: The drag event handlers produced by the hook do not deliver working reorder behavior due to the onDrop logic bug described in US-001. The hook API contract is correct but the implementation is broken."
+    }
+  ],
+  "minor_observations": [
+    "No aria-grabbed, aria-dropeffect, or role='listitem' attributes are set on draggable rows/headers, making the drag-reorder inaccessible to screen readers.",
+    "The cursor: grab style is only applied to the .draggable-table-grip span (via CSS) and to <th> elements, but NOT to <tr> or <td> elements. Users have no visual affordance that the entire row body area is draggable, only the grip icon changes cursor.",
+    "All 26 tests exercise reorder() (a pure function) and index-mapping arithmetic. No test simulates or mocks drag events (onDragStart, onDragEnter, onDrop, onDragEnd), leaving the critical event-handler bug undetected.",
+    "DraggableDemo in App.tsx defines local constants (LINE_HEIGHT=20, CELL_PADDING_V=12, CELL_PADDING_H=12) instead of importing from measure.ts, creating duplication that could drift.",
+    "The dragOverIndex ref is shared between row-drag and column-drag operations. If a user somehow initiated both simultaneously (not realistically possible in a browser, but worth noting), the index could be contaminated across drag types."
+  ],
+  "conclusions_and_recommendations": "The implementation is architecturally correct and well-structured. The primary blocker is a single logical error in useDraggable.ts that prevents drag-reorder from ever executing. The fix is straightforward: introduce a dragSourceRef (useRef) set in onDragStart to record the visual index of the drag source. In onDrop, replace the current 'from' parameter (rowIndex/colIndex — the drop target's own index) with dragSourceRef.current (the actual source), and use rowIndex/colIndex as the 'to' parameter. The same fix applies symmetrically to both getRowHandleProps and getColHandleProps. After fixing the core bug: (1) add drag-event integration tests using jsdom or a similar environment to prevent regressions; (2) fix the DraggableDemo in App.tsx to pass original rows/widths to useMeasure and derive the reordered view at render time without creating new array references as dependencies; (3) replace inline font strings in DraggableDemo with constants from fonts.ts; (4) add cursor: grab to <tr> elements (not just the grip span) so users know the full row is draggable."
+}

@@ -9,3 +9,12 @@ export type { ExpandableOptions } from './useExpandable.js'
 
 export { useVirtualization, computeOffsets, computeTotalHeight, computeVirtualWindow } from './useVirtualization.js'
 export type { UseVirtualizationOptions, UseVirtualizationResult } from './useVirtualization.js'
+
+export { useDraggable, reorder } from './useDraggable.js'
+export type { UseDraggableOptions, DraggableResult } from './useDraggable.js'
+
+export { useSortable, nextSortState, sortRows } from './useSortable.js'
+export type { SortDirection, SortState, UseSortableResult } from './useSortable.js'
+
+export { useColumnControls } from './useColumnControls.js'
+export type { UseColumnControlsOptions, UseColumnControlsResult, ColumnState, ColumnSortDirection } from './useColumnControls.js'

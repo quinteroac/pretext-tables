@@ -1,0 +1,97 @@
+.draggable-table-container {
+  overflow-x: auto;
+}
+
+.draggable-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font: var(--draggable-table-font);
+}
+
+.draggable-table th {
+  font: var(--draggable-table-header-font);
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  color: var(--bright, oklch(96% 0.007 254));
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+  border-right: 1px solid var(--border, oklch(22% 0.020 255));
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  user-select: none;
+  cursor: grab;
+}
+
+.draggable-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+  border-right: 1px solid var(--border, oklch(22% 0.020 255));
+  background: var(--surface, oklch(13% 0.016 255));
+  color: var(--text, oklch(83% 0.012 257));
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.draggable-table tr:nth-child(even) td {
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+.draggable-table tbody tr {
+  cursor: grab;
+}
+
+.draggable-table tbody tr:hover td {
+  background: var(--surface-hover, oklch(19% 0.020 255));
+}
+
+.draggable-table tbody tr:active {
+  cursor: grabbing;
+}
+
+.draggable-table tr.is-dragging td {
+  opacity: 0.35;
+}
+
+.draggable-table tr.is-drop-target td {
+  outline: 2px solid var(--accent, oklch(72% 0.148 66));
+  outline-offset: -2px;
+}
+
+.draggable-table-grip {
+  cursor: grab;
+  user-select: none;
+  color: var(--border-hi, oklch(34% 0.022 255));
+  padding-right: 4px;
+  display: inline-block;
+  transition: color 0.12s;
+}
+
+.draggable-table tbody tr:hover .draggable-table-grip {
+  color: var(--accent, oklch(72% 0.148 66));
+}
+
+.draggable-table-grip:active {
+  cursor: grabbing;
+}
+
+/* Column drag styles */
+.draggable-table th.col-is-dragging {
+  opacity: 0.35;
+}
+
+.draggable-table th.col-is-drop-target {
+  outline: 2px solid var(--accent, oklch(72% 0.148 66));
+  outline-offset: -2px;
+  background: var(--accent-dim, oklch(72% 0.148 66 / 0.10));
+}
+
+.draggable-table-header-text {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}

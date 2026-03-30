@@ -1,10 +1,10 @@
 .vt-viewport {
   font: var(--vt-font);
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
+  /* border and border-radius come from .demo-table-wrapper in the demo page */
   overflow-y: auto;
   overflow-x: hidden;
-  background: #fff;
+  background: var(--surface, oklch(13% 0.016 255));
+  color: var(--text, oklch(83% 0.012 257));
   box-sizing: border-box;
 }
 
@@ -19,17 +19,44 @@
   right: 0;
   display: flex;
   box-sizing: border-box;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
+.vt-row--even {
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+.vt-row:hover {
+  background: var(--surface-hover, oklch(19% 0.020 255));
+}
+
+/* Dark theme scrollbar — WebKit */
+.vt-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.vt-viewport::-webkit-scrollbar-track {
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
+.vt-viewport::-webkit-scrollbar-thumb {
+  background: var(--border-hi, oklch(34% 0.022 255));
+  border-radius: 4px;
+}
+
+.vt-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--muted, oklch(50% 0.016 258));
 }
 
 .vt-cell {
   flex-shrink: 0;
-  padding: 4px 8px;
+  padding: 7px 10px;
   overflow-wrap: break-word;
   word-break: break-word;
   white-space: normal;
   box-sizing: border-box;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--border, oklch(22% 0.020 255));
 }
 
 .vt-cell:last-child {

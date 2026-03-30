@@ -11,8 +11,8 @@
 
 .resizable-table th,
 .resizable-table td {
-  border: 1px solid #e2e8f0;
-  padding: 4px 8px;
+  border: 1px solid var(--border, oklch(22% 0.020 255));
+  padding: 7px 10px;
   text-align: left;
   vertical-align: top;
   word-break: break-word;
@@ -24,14 +24,24 @@
 
 .resizable-table th {
   font: var(--resizable-table-header-font);
-  background: #f1f5f9;
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  color: var(--bright, oklch(96% 0.007 254));
   position: relative;
   white-space: nowrap;
   user-select: none;
 }
 
+.resizable-table td {
+  background: var(--surface, oklch(13% 0.016 255));
+  color: var(--text, oklch(83% 0.012 257));
+}
+
 .resizable-table tr:nth-child(even) td {
-  background-color: #f8fafc;
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+.resizable-table tbody tr:hover td {
+  background: var(--surface-hover, oklch(19% 0.020 255));
 }
 
 /* Header text truncates so the handle stays visible */
@@ -67,13 +77,13 @@
   width: 2px;
   height: 60%;
   border-radius: 1px;
-  background: #cbd5e0;
+  background: var(--border-hi, oklch(34% 0.022 255));
   transition: background 0.15s, height 0.15s;
 }
 
 .resizable-table-handle--col:hover::after,
 .resizable-table-handle--col:active::after {
-  background: #4299e1;
+  background: var(--accent, oklch(72% 0.148 66));
   height: 80%;
 }
 
@@ -104,12 +114,12 @@
   height: 2px;
   width: 60%;
   border-radius: 1px;
-  background: #cbd5e0;
+  background: var(--border-hi, oklch(34% 0.022 255));
   transition: background 0.15s, width 0.15s;
 }
 
 .resizable-table-handle--row:hover::after,
 .resizable-table-handle--row:active::after {
-  background: #4299e1;
+  background: var(--accent, oklch(72% 0.148 66));
   width: 80%;
 }

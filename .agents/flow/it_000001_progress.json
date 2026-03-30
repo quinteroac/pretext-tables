@@ -1,0 +1,59 @@
+{
+  "entries": [
+    {
+      "use_case_id": "US-001",
+      "status": "completed",
+      "attempt_count": 1,
+      "last_agent_exit_code": 0,
+      "quality_checks": [],
+      "last_error_summary": "",
+      "updated_at": "2026-03-30T00:41:33.985Z",
+      "audit_artifact_path": ".agents/flow/it_000001_audit.json",
+      "refactor_report_path": ".agents/flow/it_000001_refactor-report.md"
+    },
+    {
+      "use_case_id": "US-002",
+      "status": "completed",
+      "attempt_count": 1,
+      "last_agent_exit_code": 0,
+      "quality_checks": [],
+      "last_error_summary": "",
+      "updated_at": "2026-03-30T00:46:13.978Z",
+      "audit_artifact_path": ".agents/flow/it_000001_audit.json",
+      "refactor_report_path": ".agents/flow/it_000001_refactor-report.md"
+    },
+    {
+      "use_case_id": "US-003",
+      "status": "completed",
+      "attempt_count": 2,
+      "last_agent_exit_code": 0,
+      "quality_checks": [],
+      "last_error_summary": "",
+      "updated_at": "2026-03-30T00:59:32.567Z",
+      "audit_artifact_path": ".agents/flow/it_000001_audit.json",
+      "refactor_report_path": ".agents/flow/it_000001_refactor-report.md"
+    },
+    {
+      "use_case_id": "US-004",
+      "status": "completed",
+      "attempt_count": 2,
+      "last_agent_exit_code": 0,
+      "quality_checks": [],
+      "last_error_summary": "",
+      "updated_at": "2026-03-30T01:05:34.591Z",
+      "audit_artifact_path": ".agents/flow/it_000001_audit.json",
+      "refactor_report_path": ".agents/flow/it_000001_refactor-report.md"
+    },
+    {
+      "use_case_id": "US-005",
+      "status": "completed",
+      "attempt_count": 2,
+      "last_agent_exit_code": 0,
+      "quality_checks": [],
+      "last_error_summary": "",
+      "updated_at": "2026-03-30T01:08:02.335Z",
+      "audit_artifact_path": ".agents/flow/it_000001_audit.json",
+      "refactor_report_path": ".agents/flow/it_000001_refactor-report.md"
+    }
+  ]
+}

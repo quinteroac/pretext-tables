@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import type React from 'react'
 import type { Row } from '../../shared/types.js'
 import { useMeasure } from '../../shared/hooks/useMeasure.js'
 import { useVirtualization } from '../../shared/hooks/useVirtualization.js'
@@ -16,6 +17,7 @@ export interface VirtualizedTableProps {
    * Reduces blank flashes during fast scrolling. Default 3.
    */
   overscan?: number
+  renderCell?: (value: string, rowIndex: number, colIndex: number) => React.ReactNode
 }
 
 /**
@@ -23,7 +25,7 @@ export interface VirtualizedTableProps {
  * All row heights are computed by @chenglou/pretext before any DOM rendering —
  * no getBoundingClientRect, no layout thrash, no height estimation.
  */
-export function VirtualizedTable({ rows, columnWidths, height, overscan = 3 }: VirtualizedTableProps) {
+export function VirtualizedTable({ rows, columnWidths, height, overscan = 3, renderCell }: VirtualizedTableProps) {
   const [scrollTop, setScrollTop] = useState(0)
   const viewportRef = useRef<HTMLDivElement>(null)
 
@@ -59,11 +61,10 @@ export function VirtualizedTable({ rows, columnWidths, height, overscan = 3 }: V
           return (
             <div
               key={row.id}
-              className="vt-row"
+              className={`vt-row${rowIndex % 2 === 1 ? ' vt-row--even' : ''}`}
               style={{
                 top: offsets[rowIndex],
                 height: rowHeights[rowIndex],
-                backgroundColor: rowIndex % 2 === 1 ? '#f8fafc' : '#ffffff',
               }}
             >
               {row.cells.map((cell, colIndex) => (
@@ -72,7 +73,7 @@ export function VirtualizedTable({ rows, columnWidths, height, overscan = 3 }: V
                   className="vt-cell"
                   style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}
                 >
-                  {cell}
+                  {renderCell ? renderCell(cell, rowIndex, colIndex) : cell}
                 </div>
               ))}
             </div>

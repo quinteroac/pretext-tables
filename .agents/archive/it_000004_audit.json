@@ -1,0 +1,53 @@
+{
+  "iteration": "000004",
+  "executive_summary": "Structurally complete but broken at runtime. The critical onDrop logic bug in useDraggable.ts prevents reorder() from ever being called. All FRs pass except FR-8 (partially). US-001, US-002, US-003 partially comply due to the bug. Refactor: fix dragSourceRef tracking in useDraggable, fix DraggableDemo font/remeasure issues, improve CSS cursor affordance, add drag event integration tests.",
+  "verification_by_fr": [
+    { "frId": "FR-1", "assessment": "comply" },
+    { "frId": "FR-2", "assessment": "comply" },
+    { "frId": "FR-3", "assessment": "comply" },
+    { "frId": "FR-4", "assessment": "comply" },
+    { "frId": "FR-5", "assessment": "comply" },
+    { "frId": "FR-6", "assessment": "comply" },
+    { "frId": "FR-7", "assessment": "comply" },
+    { "frId": "FR-8", "assessment": "partially_comply" }
+  ],
+  "verification_by_us": [
+    { "usId": "US-001", "assessment": "partially_comply" },
+    { "usId": "US-002", "assessment": "partially_comply" },
+    { "usId": "US-003", "assessment": "partially_comply" }
+  ],
+  "minor_observations": [
+    "No aria-grabbed/aria-dropeffect attributes — drag inaccessible to screen readers.",
+    "cursor: grab only on .draggable-table-grip and th — full-row drag affordance invisible.",
+    "26 tests cover reorder() pure function only — broken drag event handlers not tested.",
+    "DraggableDemo defines local LINE_HEIGHT/CELL_PADDING constants instead of importing from measure.ts.",
+    "dragOverIndex ref shared across row and column drag operations."
+  ],
+  "conclusions_and_recommendations": "Fix useDraggable.ts by introducing dragSourceRef set in onDragStart; use it as 'from' in onDrop with rowIndex/colIndex as 'to'. Fix DraggableDemo to pass original rows to useMeasure. Replace inline font strings with fonts.ts constants. Add cursor: grab to tr elements. Add drag-event integration tests.",
+  "refactor_plan": [
+    {
+      "step": 1,
+      "title": "Fix useDraggable.ts onDrop logic (critical)",
+      "file": "src/shared/hooks/useDraggable.ts",
+      "action": "Introduce dragSourceRef = useRef<number|null>(null). Set it in onDragStart to the source rowIndex/colIndex. In onDrop, use dragSourceRef.current as 'from' and rowIndex/colIndex (drop target) as 'to'. Apply to both getRowHandleProps and getColHandleProps. Clear dragSourceRef in onDrop and onDragEnd."
+    },
+    {
+      "step": 2,
+      "title": "Fix DraggableDemo in App.tsx (FR-7 + FR-8)",
+      "file": "src/demo/App.tsx",
+      "action": "Pass original rows/DRAGGABLE_COLUMN_WIDTHS to useMeasure. Derive visual ordering at render time without creating new array references as dependencies. Replace inline fontFamily/fontSize with constants from fonts.ts."
+    },
+    {
+      "step": 3,
+      "title": "Fix CSS drag cursor affordance",
+      "file": "src/tables/draggable-table/draggable-table.css",
+      "action": "Add cursor: grab to .draggable-table tr so the full row shows a grab cursor, not only the grip span."
+    },
+    {
+      "step": 4,
+      "title": "Add drag event integration tests",
+      "file": "src/tests/draggable.test.ts",
+      "action": "Add tests simulating onDragStart -> onDragEnter -> onDrop event sequences using renderHook, covering row reorder and column reorder happy paths."
+    }
+  ]
+}
