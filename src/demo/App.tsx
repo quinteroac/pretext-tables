@@ -315,12 +315,12 @@ export function App() {
         </section>
 
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Sortable · Column controls</span>
+          <span className="demo-section-eyebrow">Sortable + Visibility · Column controls</span>
           <h2 className="demo-section-title">ColumnControlsTable</h2>
           <p className="demo-section-desc">
-            Click any column header to sort rows ascending, then descending,
-            then back to the original order. Sort indicators (▲ / ▼) appear
-            in the active header. Row heights recompute for the new order.
+            Toggle columns on/off with the checkboxes above the table. Click
+            any header to sort. Hidden columns are fully removed from layout
+            and measurement — at least one column always stays visible.
           </p>
 
           <div className="demo-table-meta">

@@ -1,3 +1,59 @@
+/* ── Column visibility controls ─────────────────────────────── */
+
+.cc-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cc-visibility-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 8px 10px;
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+}
+
+.cc-visibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted, oklch(50% 0.016 258));
+  cursor: pointer;
+  user-select: none;
+  padding: 3px 12px 3px 0;
+  margin-right: 12px;
+  border-right: 1px solid var(--border, oklch(22% 0.020 255));
+  white-space: nowrap;
+  transition: color 0.12s;
+}
+
+.cc-visibility-toggle:last-child {
+  border-right: none;
+  margin-right: 0;
+}
+
+.cc-visibility-toggle--active {
+  color: var(--text, oklch(83% 0.012 257));
+}
+
+.cc-visibility-toggle--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cc-visibility-toggle input[type="checkbox"] {
+  accent-color: var(--accent, oklch(72% 0.148 66));
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  cursor: inherit;
+}
+
+/* ── Table ──────────────────────────────────────────────────── */
+
 .cc-table {
   border-collapse: collapse;
   font: var(--cc-table-font);

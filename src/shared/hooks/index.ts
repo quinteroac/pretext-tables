@@ -15,3 +15,6 @@ export type { UseDraggableOptions, DraggableResult } from './useDraggable.js'
 
 export { useSortable, nextSortState, sortRows } from './useSortable.js'
 export type { SortDirection, SortState, UseSortableResult } from './useSortable.js'
+
+export { useColumnControls } from './useColumnControls.js'
+export type { UseColumnControlsOptions, UseColumnControlsResult } from './useColumnControls.js'
