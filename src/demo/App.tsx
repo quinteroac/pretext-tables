@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
@@ -580,6 +580,8 @@ const { rowHeights } = useMeasure(
         <ScrollAnchorDemo />
 
         <InfiniteScrollDemo />
+
+        <DetachableDemo />
 
         <CanvasCellDemo />
       </main>
@@ -1372,6 +1374,196 @@ function InfiniteScrollDemo() {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// DetachableDemo — useDetachable: expand rows into inline child tables
+// ---------------------------------------------------------------------------
+
+// Parent rows: teams with a short description and a project count
+const DT_PARENT_ROWS: Row[] = [
+  { id: 'dt-team-1', cells: ['Frontend', 'Owns the component library, design system, and all customer-facing web surfaces. Works closely with Design to ship pixel-perfect interfaces.', '4 projects'] },
+  { id: 'dt-team-2', cells: ['Platform',  'Responsible for core API infrastructure, authentication services, and the internal developer platform that all product teams rely on.',             '3 projects'] },
+  { id: 'dt-team-3', cells: ['Data',       'Builds the analytics pipeline, event ingestion, and all reporting dashboards consumed by business stakeholders and product managers.',       '5 projects'] },
+]
+
+const DT_PARENT_COL_WIDTHS = [140, 360, 120]
+
+// Child rows per parent: individual project entries
+const DT_CHILD_ROWS: Record<string, Row[]> = {
+  'dt-team-1': [
+    { id: 'dt-p-1a', cells: ['Design System v3',        'Migrate all components to the new token architecture and add dark-mode support across the full component set.',     'In Progress'] },
+    { id: 'dt-p-1b', cells: ['Accessibility Audit',     'Full WCAG 2.2 AA compliance pass covering keyboard navigation, colour contrast, and screen-reader annotations.',   'Planned']     },
+    { id: 'dt-p-1c', cells: ['Performance Dashboard',   'Surface Core Web Vitals per page, track regressions in CI, and expose a public status page for stakeholders.',      'In Progress'] },
+    { id: 'dt-p-1d', cells: ['Component Playground',    'Interactive Storybook environment with live prop controls, automatically published on every main-branch merge.',      'Shipped']     },
+  ],
+  'dt-team-2': [
+    { id: 'dt-p-2a', cells: ['Auth Service Rewrite',    'Replace the legacy session-cookie auth with short-lived JWTs and refresh-token rotation to improve security posture.', 'In Progress'] },
+    { id: 'dt-p-2b', cells: ['Internal Dev Portal',     'Self-service portal for spinning up staging environments, viewing service health, and triggering manual deploys.',    'Planned']     },
+    { id: 'dt-p-2c', cells: ['API Rate Limiting',       'Implement per-tenant rate limiting with configurable tiers; surface quota usage in the developer dashboard.',         'Shipped']     },
+  ],
+  'dt-team-3': [
+    { id: 'dt-p-3a', cells: ['Event Pipeline v2',       'Rewrite the ingestion layer with Kafka to support 10× throughput while reducing end-to-end latency to under 200 ms.', 'In Progress'] },
+    { id: 'dt-p-3b', cells: ['Revenue Dashboard',       'Real-time MRR, churn, and LTV charts with cohort breakdown; built on top of the new query engine.',                   'Shipped']     },
+    { id: 'dt-p-3c', cells: ['Experiment Framework',    'A/B testing infrastructure that integrates with feature flags to track metric impact per variant automatically.',     'In Progress'] },
+    { id: 'dt-p-3d', cells: ['Data Quality Monitor',    'Automated schema validation, anomaly detection, and Slack alerting so bad data never silently corrupts reports.',     'Planned']     },
+    { id: 'dt-p-3e', cells: ['ML Feature Store',        'Centralised registry for training features; versioned snapshots, lineage tracking, and an online serving API.',       'Planned']     },
+  ],
+}
+
+const DT_CHILD_COL_WIDTHS = [200, 370, 100]
+const DT_CHILD_HEADERS = ['Project', 'Description', 'Status']
+
+const DT_STATUS_COLORS: Record<string, { text: string; bg: string }> = {
+  'In Progress': { text: 'oklch(72% 0.12 200)', bg: 'oklch(16% 0.04 200)' },
+  'Planned':     { text: 'oklch(68% 0.08 280)', bg: 'oklch(16% 0.03 280)' },
+  'Shipped':     { text: 'oklch(72% 0.12 145)', bg: 'oklch(16% 0.04 145)' },
+}
+
+/** Inline child table — owns its own independent useMeasure instance. */
+function DetachableChildPanel({ rows }: { rows: Row[] }) {
+  // Independent useMeasure — no shared or recursive measurement with the parent.
+  const { rowHeights } = useMeasure(rows, DT_CHILD_COL_WIDTHS, {
+    lineHeight: 20,
+    cellPadding: 16,
+  })
+  return (
+    <div className="dt-child-panel">
+      <table className="dt-child-table" style={{ '--dt-child-font': BODY_FONT } as React.CSSProperties}>
+        <thead>
+          <tr>
+            {DT_CHILD_HEADERS.map((h) => (
+              <th key={h} style={{ width: DT_CHILD_COL_WIDTHS[DT_CHILD_HEADERS.indexOf(h)] }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, ri) => (
+            <tr key={row.id} style={{ height: rowHeights[ri] }}>
+              {row.cells.map((cell, ci) => {
+                if (ci === 2) {
+                  const colors = DT_STATUS_COLORS[cell]
+                  return (
+                    <td key={ci} style={{ width: DT_CHILD_COL_WIDTHS[ci] }}>
+                      {colors
+                        ? <span className="demo-dept-badge" style={{ color: colors.text, background: colors.bg }}>{cell}</span>
+                        : cell}
+                    </td>
+                  )
+                }
+                return <td key={ci} style={{ width: DT_CHILD_COL_WIDTHS[ci] }}>{cell}</td>
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function DetachableDemo() {
+  const { expandedRows, toggle, getChildRows } = useDetachable({
+    getChildRows: (row) => DT_CHILD_ROWS[row.id] ?? [],
+  })
+
+  // Independent parent useMeasure instance.
+  const { rowHeights } = useMeasure(DT_PARENT_ROWS, DT_PARENT_COL_WIDTHS, {
+    lineHeight: 20,
+    cellPadding: 16,
+  })
+
+  const DT_PARENT_HEADERS = ['Team', 'Mission', 'Projects']
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Nested data · expand inline child table</span>
+      <h2 className="demo-section-title">useDetachable</h2>
+      <p className="demo-section-desc">
+        Clicking a row expands an inline child table below it. Each child table
+        runs its own independent{' '}
+        <code className="demo-code">useMeasure</code> instance — no shared or
+        recursive measurement. Cells stay typed as{' '}
+        <code className="demo-code">string[]</code>; child data is supplied
+        entirely via <code className="demo-code">getChildRows</code>.
+      </p>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <table
+            className="dt-parent-table"
+            style={{ '--dt-parent-font': BODY_FONT } as React.CSSProperties}
+          >
+            <thead>
+              <tr>
+                <th className="dt-expand-col" />
+                {DT_PARENT_HEADERS.map((h) => (
+                  <th key={h}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DT_PARENT_ROWS.map((row, ri) => {
+                const isExpanded = expandedRows.has(row.id)
+                const childRows = getChildRows(row)
+                return (
+                  <React.Fragment key={row.id}>
+                    <tr
+                      className={`dt-parent-row${isExpanded ? ' dt-parent-row--expanded' : ''}`}
+                      style={{ height: rowHeights[ri] }}
+                      onClick={() => toggle(row.id)}
+                    >
+                      <td className="dt-expand-col">
+                        <span className="dt-expand-icon" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+                          {isExpanded ? '▼' : '▶'}
+                        </span>
+                      </td>
+                      {row.cells.map((cell, ci) => (
+                        <td key={ci} style={{ width: DT_PARENT_COL_WIDTHS[ci] }}>{cell}</td>
+                      ))}
+                    </tr>
+                    {isExpanded && (
+                      <tr className="dt-child-row">
+                        <td />
+                        <td colSpan={DT_PARENT_COL_WIDTHS.length}>
+                          <DetachableChildPanel rows={childRows} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useDetachable"
+            code={`const { expandedRows, toggle, getChildRows } =
+  useDetachable({ getChildRows: (row) => childData[row.id] })
+
+// Parent measure — independent instance
+const { rowHeights } = useMeasure(parentRows, colWidths)
+
+// In the parent <tbody>:
+{parentRows.map((row, i) => (<>
+  <tr onClick={() => toggle(row.id)}
+      style={{ height: rowHeights[i] }}>
+    ...
+  </tr>
+  {expandedRows.has(row.id) && (
+    <ChildPanel rows={getChildRows(row)} />
+  )}
+</>))}
+
+// ChildPanel — owns its own useMeasure
+function ChildPanel({ rows }) {
+  const { rowHeights } = useMeasure(rows, childColWidths)
+  return <table>...</table>
+}`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // CanvasCellDemo — useCanvasCell: pixel-accurate canvas cell rendering
 // ---------------------------------------------------------------------------
 

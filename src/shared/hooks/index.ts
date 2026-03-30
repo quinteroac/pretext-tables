@@ -42,3 +42,6 @@ export type {
   CanvasCellEffect,
   DrawCellFn,
 } from './useCanvasCell.js'
+
+export { useDetachable, toggleSet } from './useDetachable.js'
+export type { UseDetachableOptions, UseDetachableResult } from './useDetachable.js'
