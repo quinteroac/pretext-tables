@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type React from 'react'
+import type { ResizePreviewDragState } from './useResizePreview.js'
 
 export interface ResizableOptions {
   /** Initial column widths in px. */
@@ -48,6 +49,13 @@ export interface ResizableResult {
     rowIndex: number,
     currentHeight: number
   ) => React.HTMLAttributes<HTMLSpanElement>
+
+  /**
+   * The column currently being dragged and its live preview width.
+   * `null` when no horizontal drag is in progress.
+   * Pass this directly to `useResizePreview` to compute ghost row heights.
+   */
+  previewDragState: ResizePreviewDragState | null
 }
 
 /**
@@ -70,6 +78,7 @@ export function useResizable(options: ResizableOptions): ResizableResult {
   const [manualRowHeights, setManualRowHeights] = useState<(number | undefined)[]>(() =>
     Array(rowCount).fill(undefined)
   )
+  const [previewDragState, setPreviewDragState] = useState<ResizePreviewDragState | null>(null)
 
   const colDrag = useRef<{ colIndex: number; startX: number; startWidth: number } | null>(null)
   const rowDrag = useRef<{ rowIndex: number; startY: number; startHeight: number } | null>(null)
@@ -81,9 +90,11 @@ export function useResizable(options: ResizableOptions): ResizableResult {
       if (horizontal && colDrag.current) {
         const { colIndex, startX, startWidth } = colDrag.current
         const delta = e.clientX - startX
+        const newWidth = Math.max(startWidth + delta, minColumnWidth)
+        setPreviewDragState({ colIndex, currentWidth: newWidth })
         setColumnWidths((prev) => {
           const next = [...prev]
-          next[colIndex] = Math.max(startWidth + delta, minColumnWidth)
+          next[colIndex] = newWidth
           return next
         })
       }
@@ -99,6 +110,7 @@ export function useResizable(options: ResizableOptions): ResizableResult {
     }
 
     function onMouseUp() {
+      setPreviewDragState(null)
       colDrag.current = null
       rowDrag.current = null
     }
@@ -140,5 +152,6 @@ export function useResizable(options: ResizableOptions): ResizableResult {
     manualRowHeights,
     getColHandleProps,
     getRowHandleProps,
+    previewDragState,
   }
 }

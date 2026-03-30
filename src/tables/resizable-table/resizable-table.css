@@ -1,6 +1,7 @@
 .resizable-table-container {
   width: 100%;
   overflow-x: auto;
+  position: relative;
 }
 
 .resizable-table {
@@ -122,4 +123,31 @@
 .resizable-table-handle--row:active::after {
   background: var(--accent, oklch(72% 0.148 66));
   width: 80%;
+}
+
+/* Ghost overlay — translucent column preview shown while dragging a handle */
+
+.resizable-table-ghost {
+  position: absolute;
+  pointer-events: none;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resizable-table-ghost-cell {
+  box-sizing: border-box;
+  background: var(--accent, oklch(72% 0.148 66));
+  opacity: 0.15;
+  border: 1px solid color-mix(in oklch, var(--accent, oklch(72% 0.148 66)) 60%, transparent);
+  transition: height 0.05s linear;
+}
+
+.resizable-table-ghost-cell:first-child {
+  border-top-width: 2px;
+}
+
+.resizable-table-ghost-cell:last-child {
+  border-bottom-width: 2px;
 }

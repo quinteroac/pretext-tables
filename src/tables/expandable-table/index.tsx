@@ -38,7 +38,7 @@ export function ExpandableTable({ rows, headers, defaultColumnWidths, renderCell
     },
   })
 
-  const rowHeights = useMeasure(rows, columnWidths, {
+  const { rowHeights } = useMeasure(rows, columnWidths, {
     lineHeight: LINE_HEIGHT,
     cellPadding: CELL_PADDING,
   })

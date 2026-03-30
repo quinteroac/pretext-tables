@@ -1,0 +1,225 @@
+{
+  "goals": [
+    "Add `useShrinkWrap`, `useResizePreview`, and `useScrollAnchor` to `src/shared/hooks/` following the existing primitives pattern.",
+    "Wire `useShrinkWrap` into `ResizableTable` so double-clicking a column resize handle triggers `fitColumn(colIndex)`.",
+    "Wire `useResizePreview` into `ResizableTable` so a ghost layer renders during a column drag, with real heights committing only on drag-end.",
+    "Zero DOM calls in all three hooks — all text metrics come from `@chenglou/pretext` (`walkLineRanges()`, `layout()`).",
+    "Unit tests cover the critical logic of each hook; demo page is updated to showcase all three."
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "useShrinkWrap — binary-search minimum column width",
+      "description": "As a library consumer or ResizableTable user, I want to call `fitColumn(colIndex)` and have the column snap to the minimum width where no cell text wraps, so that I get an exact fit with zero DOM measurements.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-001-AC01",
+          "text": "`useShrinkWrap(prepared, columnWidths, options?)` is exported from `src/shared/hooks/index.ts`."
+        },
+        {
+          "id": "US-001-AC02",
+          "text": "Returns `{ fitColumn: (colIndex: number) => number }` — the return value is the minimum pixel width."
+        },
+        {
+          "id": "US-001-AC03",
+          "text": "Internally uses `walkLineRanges()` from `@chenglou/pretext`; no `getBoundingClientRect`, `offsetWidth`, or any DOM API."
+        },
+        {
+          "id": "US-001-AC04",
+          "text": "Binary search converges on a width within `±1px` of the true minimum wrap boundary."
+        },
+        {
+          "id": "US-001-AC05",
+          "text": "`fitColumn` handles edge cases: empty column, single-character cells, cells with only whitespace."
+        },
+        {
+          "id": "US-001-AC06",
+          "text": "Typecheck (`tsc --noEmit`) and lint pass."
+        },
+        {
+          "id": "US-001-AC07",
+          "text": "Visually verified in browser via demo page."
+        }
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "useResizePreview — ghost heights during column drag",
+      "description": "As a library consumer or ResizableTable user, I want the table to show updated row heights in a ghost/preview layer while I drag a column handle, so that I can see how text will reflow before committing the resize.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-002-AC01",
+          "text": "`useResizePreview(prepared, dragState, options?)` is exported from `src/shared/hooks/index.ts`."
+        },
+        {
+          "id": "US-002-AC02",
+          "text": "Returns `{ previewHeights: number[] | null }` — `null` when no drag is active."
+        },
+        {
+          "id": "US-002-AC03",
+          "text": "Uses `layout()` from `@chenglou/pretext` to recompute heights for the dragged column; no DOM reads."
+        },
+        {
+          "id": "US-002-AC04",
+          "text": "`previewHeights` updates on every drag-position change (pointer move); real table heights are unchanged until drag ends."
+        },
+        {
+          "id": "US-002-AC05",
+          "text": "Calling overhead per pointer-move event is ≤ 2 ms for tables with up to 200 visible rows (verified via `performance.now()` in a unit test or comment)."
+        },
+        {
+          "id": "US-002-AC06",
+          "text": "Typecheck and lint pass."
+        },
+        {
+          "id": "US-002-AC07",
+          "text": "Visually verified in browser via demo page."
+        }
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "useScrollAnchor — prepend rows without scroll jump",
+      "description": "As a library consumer building a real-time feed or chat-history table, I want to call `prepend(newRows)` and have `scrollTop` corrected atomically, so that the currently visible row stays stable with no visible jump.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-003-AC01",
+          "text": "`useScrollAnchor(rowHeights, scrollRef, options?)` is exported from `src/shared/hooks/index.ts`."
+        },
+        {
+          "id": "US-003-AC02",
+          "text": "Returns `{ prepend: (newRows: Row[], atIndex?: number) => void }` — caller passes new rows; `atIndex` defaults to `0` (prepend). Hook handles scroll correction internally."
+        },
+        {
+          "id": "US-003-AC03",
+          "text": "Scroll correction is computed from pretext offsets before the DOM updates (uses the existing `rowHeights[]` from `useMeasure`)."
+        },
+        {
+          "id": "US-003-AC04",
+          "text": "No `getBoundingClientRect`, `scrollHeight`, or layout-triggering DOM reads inside `prepend`."
+        },
+        {
+          "id": "US-003-AC05",
+          "text": "Works correctly when prepending 1 row and when prepending many rows at once."
+        },
+        {
+          "id": "US-003-AC06",
+          "text": "Typecheck and lint pass."
+        },
+        {
+          "id": "US-003-AC07",
+          "text": "Visually verified in browser via demo page."
+        }
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Wire useShrinkWrap into ResizableTable",
+      "description": "As an end user of ResizableTable, I want to double-click a column resize handle and have the column auto-size to fit its content exactly, so that I don't have to drag manually to find the right width.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-004-AC01",
+          "text": "`ResizableTable` accepts an optional `shrinkWrap?: boolean` prop (default `false`); when `true`, double-click on any column handle calls `fitColumn(colIndex)` and updates `columnWidths`."
+        },
+        {
+          "id": "US-004-AC02",
+          "text": "The existing `ResizableTable` API (all current props) is unchanged — no breaking changes."
+        },
+        {
+          "id": "US-004-AC03",
+          "text": "`ResizableTable` does not import `useShrinkWrap` unless `shrinkWrap` is enabled (tree-shaking friendly, or lazy import)."
+        },
+        {
+          "id": "US-004-AC04",
+          "text": "Typecheck and lint pass."
+        },
+        {
+          "id": "US-004-AC05",
+          "text": "Visually verified in browser: double-click a handle → column snaps to fit width."
+        }
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Wire useResizePreview into ResizableTable",
+      "description": "As an end user of ResizableTable, I want the table to show a ghost/preview overlay of reflow heights while I drag a column handle, so that I know what the layout will look like before releasing the mouse.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-005-AC01",
+          "text": "`ResizableTable` accepts an optional `resizePreview?: boolean` prop (default `false`); when `true`, `useResizePreview` is active during drag."
+        },
+        {
+          "id": "US-005-AC02",
+          "text": "The ghost layer is rendered as a **separate absolutely-positioned overlay column** — only the dragged column floats as a translucent ghost panel showing the reflow preview; the rest of the table remains static."
+        },
+        {
+          "id": "US-005-AC03",
+          "text": "Real row heights and real DOM cells are unchanged until `pointerup` / drag-end."
+        },
+        {
+          "id": "US-005-AC04",
+          "text": "The existing `ResizableTable` API is unchanged."
+        },
+        {
+          "id": "US-005-AC05",
+          "text": "Typecheck and lint pass."
+        },
+        {
+          "id": "US-005-AC06",
+          "text": "Visually verified in browser: dragging a handle shows the ghost layer; releasing commits the real heights."
+        }
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Demo page updated",
+      "description": "As a developer evaluating the library, I want the demo page to show each new hook in action, so that I can understand the hooks' behaviour without reading source code.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-006-AC01",
+          "text": "`src/demo/` is updated with a section (or separate demo table) for `useShrinkWrap` (double-click to fit), `useResizePreview` (ghost layer during drag), and `useScrollAnchor` (prepend button / live feed simulation)."
+        },
+        {
+          "id": "US-006-AC02",
+          "text": "Each demo section has a short descriptive label."
+        },
+        {
+          "id": "US-006-AC03",
+          "text": "Demo runs without console errors (`bun run dev`)."
+        },
+        {
+          "id": "US-006-AC04",
+          "text": "Visually verified in browser."
+        }
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Unit tests for all three hooks",
+      "description": "As a maintainer, I want Vitest unit tests covering the critical logic of each new hook, so that regressions are caught automatically.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-007-AC01",
+          "text": "`src/tests/useShrinkWrap.test.ts` — tests: binary search converges, edge cases (empty column, whitespace-only cells)."
+        },
+        {
+          "id": "US-007-AC02",
+          "text": "`src/tests/useResizePreview.test.ts` — tests: returns `null` when no drag, returns correct heights when drag state is active."
+        },
+        {
+          "id": "US-007-AC03",
+          "text": "`src/tests/useScrollAnchor.test.ts` — tests: `prepend` computes correct `scrollTop` offset for 1 row and N rows."
+        },
+        {
+          "id": "US-007-AC04",
+          "text": "All new tests pass: `bun test`."
+        },
+        {
+          "id": "US-007-AC05",
+          "text": "No existing tests are broken."
+        }
+      ]
+    }
+  ],
+  "functionalRequirements": []
+}

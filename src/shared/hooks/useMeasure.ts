@@ -17,6 +17,17 @@ export interface UseMeasureOptions {
   cellPadding?: number
 }
 
+export interface UseMeasureResult {
+  /** One computed row height per row, ready for `<tr style={{ height }}>`. */
+  rowHeights: number[]
+  /**
+   * The prepared text grid produced by `prepareWithSegments()`.
+   * `null` while fonts are loading. Expose so consumers can pass it to hooks
+   * like `useShrinkWrap` without re-running `prepare()` themselves.
+   */
+  prepared: PreparedTextWithSegments[][] | null
+}
+
 /**
  * Computes and maintains row heights for a table using @chenglou/pretext.
  *
@@ -24,14 +35,14 @@ export interface UseMeasureOptions {
  *   prepare()  Canvas measurement — runs once per (rows, font) change.
  *   layout()   Pure arithmetic   — runs on every columnWidths change.
  *
- * Returns a stable number[] — one height per row — ready to apply directly
- * to each <tr style={{ height }}>.
+ * Returns `{ rowHeights, prepared }`. Use `rowHeights` for `<tr>` heights and
+ * `prepared` to feed hooks like `useShrinkWrap` without duplicating prepare().
  */
 export function useMeasure(
   rows: Row[],
   columnWidths: number[],
   options?: UseMeasureOptions
-): number[] {
+): UseMeasureResult {
   const { font = BODY_FONT, lineHeight = 20, cellPadding = 16 } = options ?? {}
 
   const [fontsReady, setFontsReady] = useState(false)
@@ -60,5 +71,5 @@ export function useMeasure(
     })
   }, [prepared, columnWidths, lineHeight, cellPadding])
 
-  return rowHeights
+  return { rowHeights, prepared }
 }

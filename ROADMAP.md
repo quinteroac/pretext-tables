@@ -79,6 +79,31 @@ Returns a `drawCell(ctx, rowIndex, colIndex, x, y)` function that renders a cell
 ### `useDetachable` hook + `DetachableTable`
 Manages expand/collapse state for rows that open a child table in a panel, drawer, or modal. The parent and child are independent `useMeasure` instances — no recursive measurement. Cells remain `string[]`; the child table data is passed as a separate `getChildRows(row)` prop.
 
+### `useMediaCells` hook + `MediaTable`
+Supports cells that contain text alongside an image or video. Media dimensions must be provided upfront (`mediaHeight`, or `width` + `aspectRatio` for video) — this keeps row heights fully calculable by pretext without any DOM measurement. Row height becomes `textHeight + mediaHeight` when media is visible, or pure `textHeight` when hidden. The hook returns a `toggleMedia(rowId)` function and a `mediaVisible` state map. When a row's media is hidden, `layout()` recalculates the collapsed height instantly — no reflow, no ResizeObserver. Aimed at product catalogues, content tables, and media feeds where rows mix text metadata with a preview image or video thumbnail.
+
+> **Note:** arbitrary JSX inside cells remains out of scope. Only media with known dimensions (passed as data, not measured from DOM) is supported.
+
+### `useSpanningCell` hook + `SpanningTable`
+Exposes the full table geometry — `totalHeight` and `offsets[]` — so a single cell can span the entire height of the table and stay pixel-aligned with each row. Useful for financial dashboards, commodity tables, and any layout where a chart, timeline, or visualization occupies a side column while text rows occupy the other columns.
+
+The hook returns:
+- `totalHeight` — sum of all row heights, ready to use as the container height of the spanning element
+- `offsets[]` — cumulative Y position of each row, ready to use as tick marks, grid lines, or data point anchors in the spanning SVG/canvas
+
+Both values come from `computeTotalHeight()` and `computeOffsets()` — already implemented in `useVirtualization.ts` — so the hook is a thin wrapper that exposes them at the table level. The consumer renders whatever they want in the spanning slot via a `renderSpanning(totalHeight, offsets) => ReactNode` prop. No DOM measurement needed: the chart knows its exact size before it mounts.
+
+```tsx
+// Example: commodity table with a live chart spanning all rows
+<SpanningTable
+  rows={commodities}
+  columnWidths={[220, 140]}
+  renderSpanning={(totalHeight, offsets) => (
+    <PriceChart height={totalHeight} rowTicks={offsets} data={trendData} />
+  )}
+/>
+```
+
 ### `useCellNotes` hook
 Accepts a `notes` map (`Record<"rowId:colIndex", string>`) and pre-measures all note texts with `prepare()` alongside the main table data. Returns `getNoteTriggerProps(rowIndex, colIndex)` for hover targets and a `<NoteTooltip>` component whose dimensions are known before it appears — so positioning is correct on the first frame with zero repositioning flash. Standard tooltip libraries measure content after mount and correct position in a follow-up paint; pretext eliminates that step entirely.
 
