@@ -6,6 +6,7 @@ import type { MediaSpec } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT, FONT_FAMILY_SANS, FONT_FAMILY_SERIF, FONT_FAMILY_MONO, FONT_FAMILY_SYSTEM } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
+import { Sidebar } from './Sidebar.js'
 import './demo.css'
 
 // ---------------------------------------------------------------------------
@@ -271,6 +272,7 @@ const VIRTUAL_ROWS = generateVirtualRows(500)
 export function App() {
   return (
     <div className="demo-root">
+      <Sidebar />
       <header className="demo-header">
         <div className="demo-wordmark">pretext-tables</div>
         <h1 className="demo-title">
@@ -304,9 +306,7 @@ export function App() {
       </header>
 
       <main className="demo-main">
-        <section className="demo-section">
-          <span className="demo-section-eyebrow">Measurement · zero DOM reads</span>
-          <h2 className="demo-section-title">useMeasure</h2>
+        <section className="demo-section" id="useMeasure">
           <p className="demo-section-desc">
             Computes row heights from text before the browser renders. Calls{' '}
             <code className="demo-code">prepare()</code> once per dataset, then{' '}
@@ -389,7 +389,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="demo-section">
+        <section className="demo-section" id="useExpandable">
           <span className="demo-section-eyebrow">Expandable · container resize</span>
           <h2 className="demo-section-title">useExpandable</h2>
           <p className="demo-section-desc">
@@ -432,7 +432,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="demo-section">
+        <section className="demo-section" id="useResizable">
           <span className="demo-section-eyebrow">Resizable · drag handles</span>
           <h2 className="demo-section-title">useResizable</h2>
           <p className="demo-section-desc">
@@ -478,7 +478,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="demo-section">
+        <section className="demo-section" id="useResizePreview">
           <span className="demo-section-eyebrow">Ghost preview · column drag</span>
           <h2 className="demo-section-title">useResizePreview</h2>
           <p className="demo-section-desc">
@@ -508,7 +508,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="demo-section">
+        <section className="demo-section" id="useVirtualization">
           <span className="demo-section-eyebrow">Virtualization · windowed render</span>
           <h2 className="demo-section-title">useVirtualization</h2>
           <p className="demo-section-desc">
@@ -564,7 +564,7 @@ export function App() {
           </div>
         </section>
 
-        <section className="demo-section">
+        <section className="demo-section" id="useColumnControls">
           <span className="demo-section-eyebrow">Visibility · Sorting · Sticky column</span>
           <h2 className="demo-section-title">useColumnControls + useStickyColumns</h2>
           <p className="demo-section-desc">
@@ -686,7 +686,7 @@ function SearchDemo() {
   })
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useSearch">
       <span className="demo-section-eyebrow">Search · highlight overlay · match coordinates</span>
       <h2 className="demo-section-title">useSearch</h2>
       <p className="demo-section-desc">
@@ -807,7 +807,7 @@ const SP_COLUMN_WIDTHS: [number, number] = [180, 320]
 
 function SpanningTableDemo() {
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useSpanningCell">
       <span className="demo-section-eyebrow">Side column · pixel-aligned with every row</span>
       <h2 className="demo-section-title">useSpanningCell</h2>
       <p className="demo-section-desc">
@@ -913,7 +913,7 @@ function MediaCellsDemo() {
   const totalWidth = MC_COLUMN_WIDTHS.reduce((a, b) => a + b, 0)
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useMediaCells">
       <span className="demo-section-eyebrow">Media rows · pre-computed heights</span>
       <h2 className="demo-section-title">useMediaCells</h2>
       <p className="demo-section-desc">
@@ -1347,7 +1347,7 @@ function ResizePreviewDemo() {
 
 function DraggableDemo() {
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useDraggable">
       <span className="demo-section-eyebrow">Drag-to-reorder · rows + columns</span>
       <h2 className="demo-section-title">useDraggable</h2>
       <p className="demo-section-desc">
@@ -1438,7 +1438,7 @@ function ShrinkWrapDemo() {
   }
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useShrinkWrap">
       <span className="demo-section-eyebrow">Shrink-wrap · Double-click to fit</span>
       <h2 className="demo-section-title">useShrinkWrap</h2>
       <p className="demo-section-desc">
@@ -1602,7 +1602,7 @@ function ScrollAnchorDemo() {
   }, [isLive, prepend])
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useScrollAnchor">
       <span className="demo-section-eyebrow">Scroll anchor · prepend / live feed</span>
       <h2 className="demo-section-title">useScrollAnchor</h2>
       <p className="demo-section-desc">
@@ -1735,7 +1735,7 @@ function InfiniteScrollDemo() {
   })
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useInfiniteScroll">
       <span className="demo-section-eyebrow">Infinite scroll · append on demand</span>
       <h2 className="demo-section-title">useInfiniteScroll</h2>
       <p className="demo-section-desc">
@@ -1911,7 +1911,7 @@ function DetachableDemo() {
   const DT_PARENT_HEADERS = ['Team', 'Mission', 'Projects']
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useDetachable">
       <span className="demo-section-eyebrow">Nested data · expand inline child table</span>
       <h2 className="demo-section-title">useDetachable</h2>
       <p className="demo-section-desc">
@@ -2090,7 +2090,7 @@ function CanvasCellDemo() {
   }, [drawCell, prepared, rowHeights, totalWidth])
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useCanvasCell">
       <span className="demo-section-eyebrow">Canvas rendering · gradient cell effect</span>
       <h2 className="demo-section-title">useCanvasCell</h2>
       <p className="demo-section-desc">
@@ -2182,7 +2182,7 @@ function EditableDemo() {
   const { previewHeights, getEditProps } = useEditable(EDIT_ROWS_INITIAL, columnWidths)
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useEditable">
       <span className="demo-section-eyebrow">Inline editing · live height updates</span>
       <h2 className="demo-section-title">useEditable</h2>
       <p className="demo-section-desc">
@@ -2354,7 +2354,7 @@ function CellNotesDemo() {
   const { rowHeights } = useMeasure(CN_ROWS, CN_COLUMN_WIDTHS)
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useCellNotes">
       <span className="demo-section-eyebrow">Cell notes · zero-flash tooltip</span>
       <h2 className="demo-section-title">useCellNotes</h2>
       <p className="demo-section-desc">
@@ -2588,7 +2588,7 @@ function DynamicFontDemo() {
   )
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useDynamicFont">
       <span className="demo-section-eyebrow">Dynamic font · zero DOM cost</span>
       <h2 className="demo-section-title">useDynamicFont</h2>
       <p className="demo-section-desc">
@@ -2749,7 +2749,7 @@ function ExportCanvasDemo() {
   }, [exportCanvas])
 
   return (
-    <section className="demo-section">
+    <section className="demo-section" id="useExportCanvas">
       <span className="demo-section-eyebrow">PNG export · offscreen canvas · no DOM reads</span>
       <h2 className="demo-section-title">useExportCanvas</h2>
       <p className="demo-section-desc">
