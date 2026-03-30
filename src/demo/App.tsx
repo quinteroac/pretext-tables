@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes, useDynamicFont } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
-import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
+import { BODY_FONT, HEADER_FONT, FONT_FAMILY_SANS, FONT_FAMILY_SERIF, FONT_FAMILY_MONO, FONT_FAMILY_SYSTEM } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
 import './demo.css'
@@ -593,6 +593,8 @@ const { rowHeights } = useMeasure(
         <EditableDemo />
 
         <CellNotesDemo />
+
+        <DynamicFontDemo />
       </main>
     </div>
   )
@@ -2297,6 +2299,209 @@ function CellNotesDemo() {
 // prepare() runs once per notes change (AC01)
 // layout() computes height before mount (AC02)
 // position: fixed from mouse event (AC04)
+// No getBoundingClientRect, no DOM reads`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// DynamicFontDemo — useDynamicFont: live font-size slider + family selector
+// ---------------------------------------------------------------------------
+
+const DF_COLUMN_WIDTHS = [180, 320, 180]
+
+const DF_HEADERS = ['Name', 'Contribution', 'Language']
+
+const DF_ROWS: Row[] = [
+  {
+    id: 'df1',
+    cells: [
+      'Grace Hopper',
+      'Pioneered the first compiler and coined the term "debugging" after literally removing a moth from the Mark II computer. Her work laid the foundation for high-level programming languages.',
+      'COBOL',
+    ],
+  },
+  {
+    id: 'df2',
+    cells: [
+      'Dennis Ritchie',
+      'Created the C programming language and co-developed Unix. The impact of these contributions spans virtually every operating system and language in use today.',
+      'C',
+    ],
+  },
+  {
+    id: 'df3',
+    cells: [
+      'Margaret Hamilton',
+      'Led the team that wrote the on-board flight software for the Apollo missions. Her error-detection routines saved Apollo 11 from aborting landing just three minutes before touchdown.',
+      'Assembly',
+    ],
+  },
+  {
+    id: 'df4',
+    cells: [
+      'Linus Torvalds',
+      'Authored the Linux kernel in 1991 as a hobby project and later created Git to manage distributed version control after the Linux kernel community outgrew existing tools.',
+      'C',
+    ],
+  },
+  {
+    id: 'df5',
+    cells: [
+      'Barbara Liskov',
+      'Formulated the Liskov Substitution Principle, a cornerstone of object-oriented design, and invented the CLU language which pioneered data abstraction and iterators.',
+      'CLU / Java',
+    ],
+  },
+]
+
+const DF_FONT_FAMILIES: Array<{ label: string; value: string }> = [
+  { label: 'Space Grotesk (sans)',  value: FONT_FAMILY_SANS   },
+  { label: 'System UI (system)',    value: FONT_FAMILY_SYSTEM  },
+  { label: 'Georgia (serif)',       value: FONT_FAMILY_SERIF   },
+  { label: 'JetBrains Mono (mono)', value: FONT_FAMILY_MONO    },
+]
+
+const DF_INITIAL_SIZE = 14
+const DF_INITIAL_FAMILY = FONT_FAMILY_SANS
+
+function DynamicFontDemo() {
+  const [fontSize, setFontSize] = useState<number>(DF_INITIAL_SIZE)
+  const [fontFamily, setFontFamily] = useState<string>(DF_INITIAL_FAMILY)
+
+  const { rowHeights, setFont, currentFont } = useDynamicFont(
+    DF_ROWS,
+    DF_COLUMN_WIDTHS,
+    `${DF_INITIAL_SIZE}px ${DF_INITIAL_FAMILY}`,
+    { debounceMs: 150, lineHeight: 22, cellPadding: 16 }
+  )
+
+  const handleSizeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const size = Number(e.target.value)
+      setFontSize(size)
+      setFont(`${size}px ${fontFamily}`)
+    },
+    [fontFamily, setFont]
+  )
+
+  const handleFamilyChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const family = e.target.value
+      setFontFamily(family)
+      setFont(`${fontSize}px ${family}`)
+    },
+    [fontSize, setFont]
+  )
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Dynamic font · zero DOM cost</span>
+      <h2 className="demo-section-title">useDynamicFont</h2>
+      <p className="demo-section-desc">
+        Drag the slider or pick a font family — every row height updates through{' '}
+        <code className="demo-code">layout()</code> against a debounced{' '}
+        <code className="demo-code">prepare()</code>, never touching{' '}
+        <code className="demo-code">getBoundingClientRect</code> or any DOM
+        measurement. The slider triggers continuous reflow-free remeasurement;
+        the family selector applies on the next debounce tick (~150 ms).
+      </p>
+
+      <div className="demo-df-controls">
+        <label className="demo-df-control-group">
+          <span className="demo-df-label">Font size</span>
+          <input
+            className="demo-df-slider"
+            type="range"
+            min={12}
+            max={32}
+            step={1}
+            value={fontSize}
+            onChange={handleSizeChange}
+          />
+          <span className="demo-df-size-badge">{fontSize}px</span>
+        </label>
+
+        <label className="demo-df-control-group">
+          <span className="demo-df-label">Font family</span>
+          <select
+            className="demo-df-select"
+            value={fontFamily}
+            onChange={handleFamilyChange}
+          >
+            {DF_FONT_FAMILIES.map(({ label, value }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <table
+            className="demo-df-table"
+            style={{ font: currentFont }}
+          >
+            <thead>
+              <tr>
+                {DF_HEADERS.map((header, colIndex) => (
+                  <th
+                    key={colIndex}
+                    style={{ width: DF_COLUMN_WIDTHS[colIndex] }}
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DF_ROWS.map((row, rowIndex) => (
+                <tr
+                  key={row.id}
+                  style={{ height: rowHeights[rowIndex] }}
+                >
+                  {row.cells.map((cell, colIndex) => (
+                    <td key={colIndex} style={{ width: DF_COLUMN_WIDTHS[colIndex] }}>
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useDynamicFont"
+            code={`const { rowHeights, setFont, currentFont } =
+  useDynamicFont(rows, columnWidths, BODY_FONT)
+
+// Slider (12 px – 32 px):
+<input
+  type="range" min={12} max={32}
+  onChange={e =>
+    setFont(\`\${e.target.value}px \${family}\`)
+  }
+/>
+
+// Family selector:
+<select
+  onChange={e =>
+    setFont(\`\${size}px \${e.target.value}\`)
+  }
+/>
+
+// table font tracks currentFont:
+<table style={{ font: currentFont }}>
+
+// prepare() debounced 150 ms (AC02-AC03)
+// layout() runs immediately each render
 // No getBoundingClientRect, no DOM reads`}
           />
         </div>

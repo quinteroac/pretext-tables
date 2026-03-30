@@ -973,3 +973,130 @@ body {
   color: oklch(85% 0.04 255 / 0.7);
   font-family: var(--mono, monospace);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   DynamicFontDemo controls
+───────────────────────────────────────────────────────────── */
+
+.demo-df-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--surface-hi);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.demo-df-control-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: default;
+}
+
+.demo-df-label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.demo-df-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 160px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-hi);
+  outline: none;
+  cursor: pointer;
+}
+
+.demo-df-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+}
+
+.demo-df-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+}
+
+.demo-df-size-badge {
+  min-width: 34px;
+  text-align: right;
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.demo-df-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 4px 28px 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-body, system-ui, sans-serif);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 80ms;
+}
+
+.demo-df-select:hover {
+  border-color: var(--accent);
+}
+
+.demo-df-select:focus {
+  border-color: var(--accent);
+}
+
+/* Table */
+.demo-df-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.demo-df-table th {
+  text-align: left;
+  padding: 0 8px 10px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.demo-df-table td {
+  padding: 8px;
+  vertical-align: top;
+  overflow: hidden;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.demo-df-table tr:hover td {
+  background: var(--surface-hover);
+}
