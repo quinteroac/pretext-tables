@@ -1,6 +1,11 @@
 import type React from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { BasicTable, ColumnControlsTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
+import { useMeasure, useShrinkWrap } from '../shared/hooks/index.js'
+import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
+import { prepareWithSegments } from '@chenglou/pretext'
+import type { PreparedTextWithSegments } from '@chenglou/pretext'
 import './demo.css'
 
 // ── Department color map ──────────────────────────────────────────────────
@@ -266,7 +271,7 @@ export function App() {
             <div className="demo-stat-label">DOM reflows</div>
           </div>
           <div className="demo-stat">
-            <div className="demo-stat-value">6</div>
+            <div className="demo-stat-value">7</div>
             <div className="demo-stat-label">components</div>
           </div>
           <div className="demo-stat">
@@ -393,6 +398,8 @@ export function App() {
         </section>
 
         <DraggableDemo />
+
+        <ShrinkWrapDemo />
       </main>
     </div>
   )
@@ -433,6 +440,117 @@ function DraggableDemo() {
         />
       </div>
 
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// ShrinkWrapDemo — shows useShrinkWrap with "Fit column" buttons
+// ---------------------------------------------------------------------------
+
+// Layer 3 custom composition: this component manages its own prepare phase so
+// the prepared grid can be shared with both useMeasure (row heights) and
+// useShrinkWrap (fitColumn).  In a real integration the prepare memo would
+// live in a shared hook; here it is inlined for clarity.
+
+const SW_ROWS: Row[] = [
+  { id: 'sw1', cells: ['Alice Johnson', 'Leads the frontend architecture team and establishes coding standards across all product surfaces.', 'Engineering'] },
+  { id: 'sw2', cells: ['Bob Martinez', 'Works on backend API design with a focus on performance and scalability for high-traffic endpoints.', 'Platform'] },
+  { id: 'sw3', cells: ['Carol White', 'Manages the design system and ensures visual consistency from the component library down to individual page layouts.', 'Design'] },
+  { id: 'sw4', cells: ['David Kim', 'Full-stack engineer who primarily owns the billing and subscription management subsystem.', 'Engineering'] },
+  { id: 'sw5', cells: ['Eva Schulz', 'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses.', 'Analytics'] },
+]
+
+const SW_HEADERS = ['Name', 'Role Summary', 'Department']
+const SW_DEFAULT_WIDTHS = [280, 480, 240]
+
+function ShrinkWrapDemo() {
+  const [columnWidths, setColumnWidths] = useState<number[]>(SW_DEFAULT_WIDTHS)
+  const [fontsReady, setFontsReady] = useState(false)
+
+  useEffect(() => {
+    document.fonts.ready.then(() => setFontsReady(true))
+  }, [])
+
+  // prepare() once per (rows, font) change — shared between layout and shrink-wrap.
+  const prepared = useMemo<PreparedTextWithSegments[][] | null>(() => {
+    if (!fontsReady) return null
+    return SW_ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
+  }, [fontsReady])
+
+  const rowHeights = useMeasure(SW_ROWS, columnWidths, { font: BODY_FONT })
+  const { fitColumn } = useShrinkWrap(prepared, columnWidths)
+
+  function handleFit(colIndex: number) {
+    const w = fitColumn(colIndex)
+    setColumnWidths((prev) => prev.map((v, i) => (i === colIndex ? w : v)))
+  }
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Shrink-wrap · Binary-search fit</span>
+      <h2 className="demo-section-title">useShrinkWrap</h2>
+      <p className="demo-section-desc">
+        Click a <em>Fit</em> button to snap the column to the narrowest width
+        where no cell text wraps. Uses binary search over{' '}
+        <code className="demo-code">walkLineRanges()</code> — zero DOM
+        measurements, zero reflows.
+      </p>
+
+      <div className="demo-shrinkwrap-controls">
+        {SW_HEADERS.map((header, i) => (
+          <button key={i} className="demo-fit-btn" onClick={() => handleFit(i)}>
+            Fit: {header}
+          </button>
+        ))}
+        <button
+          className="demo-fit-btn demo-fit-btn--reset"
+          onClick={() => setColumnWidths(SW_DEFAULT_WIDTHS)}
+        >
+          Reset widths
+        </button>
+      </div>
+
+      <div className="demo-table-meta">
+        {SW_HEADERS.map((h, i) => (
+          <span key={i} className="demo-pill">
+            {h} · {Math.round(columnWidths[i]!)}px
+          </span>
+        ))}
+      </div>
+
+      <div className="demo-table-wrapper">
+        <table
+          className="demo-sw-table"
+          style={
+            {
+              '--font-body': BODY_FONT,
+              '--font-header': HEADER_FONT,
+            } as React.CSSProperties
+          }
+        >
+          <thead>
+            <tr>
+              {SW_HEADERS.map((h, i) => (
+                <th key={i} style={{ width: columnWidths[i] }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {SW_ROWS.map((row, ri) => (
+              <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                {row.cells.map((cell, ci) => (
+                  <td key={ci} style={{ width: columnWidths[ci] }}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   )
 }

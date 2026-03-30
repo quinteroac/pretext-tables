@@ -79,6 +79,11 @@ Returns a `drawCell(ctx, rowIndex, colIndex, x, y)` function that renders a cell
 ### `useDetachable` hook + `DetachableTable`
 Manages expand/collapse state for rows that open a child table in a panel, drawer, or modal. The parent and child are independent `useMeasure` instances — no recursive measurement. Cells remain `string[]`; the child table data is passed as a separate `getChildRows(row)` prop.
 
+### `useMediaCells` hook + `MediaTable`
+Supports cells that contain text alongside an image or video. Media dimensions must be provided upfront (`mediaHeight`, or `width` + `aspectRatio` for video) — this keeps row heights fully calculable by pretext without any DOM measurement. Row height becomes `textHeight + mediaHeight` when media is visible, or pure `textHeight` when hidden. The hook returns a `toggleMedia(rowId)` function and a `mediaVisible` state map. When a row's media is hidden, `layout()` recalculates the collapsed height instantly — no reflow, no ResizeObserver. Aimed at product catalogues, content tables, and media feeds where rows mix text metadata with a preview image or video thumbnail.
+
+> **Note:** arbitrary JSX inside cells remains out of scope. Only media with known dimensions (passed as data, not measured from DOM) is supported.
+
 ### `useCellNotes` hook
 Accepts a `notes` map (`Record<"rowId:colIndex", string>`) and pre-measures all note texts with `prepare()` alongside the main table data. Returns `getNoteTriggerProps(rowIndex, colIndex)` for hover targets and a `<NoteTooltip>` component whose dimensions are known before it appears — so positioning is correct on the first frame with zero repositioning flash. Standard tooltip libraries measure content after mount and correct position in a follow-up paint; pretext eliminates that step entirely.
 

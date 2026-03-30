@@ -18,3 +18,6 @@ export type { SortDirection, SortState, UseSortableResult } from './useSortable.
 
 export { useColumnControls } from './useColumnControls.js'
 export type { UseColumnControlsOptions, UseColumnControlsResult, ColumnState, ColumnSortDirection } from './useColumnControls.js'
+
+export { useShrinkWrap, shrinkWrapColumn } from './useShrinkWrap.js'
+export type { UseShrinkWrapOptions, UseShrinkWrapResult } from './useShrinkWrap.js'
