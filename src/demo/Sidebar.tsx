@@ -1,4 +1,7 @@
 
+import { useMemo } from 'react'
+import { useScrollspy } from '../shared/hooks/useScrollspy.js'
+
 export const DEMO_SECTIONS: { id: string; label: string }[] = [
   { id: 'useMeasure',             label: 'useMeasure' },
   { id: 'GridTableDemo',          label: 'GridTable' },
@@ -22,7 +25,13 @@ export const DEMO_SECTIONS: { id: string; label: string }[] = [
   { id: 'useExportCanvas',        label: 'useExportCanvas' },
 ]
 
+const SECTION_IDS = DEMO_SECTIONS.map(s => s.id)
+
 export function Sidebar() {
+  // ids array is stable (module-level constant) so useMemo is just for clarity
+  const ids = useMemo(() => SECTION_IDS, [])
+  const activeId = useScrollspy(ids)
+
   return (
     <nav className="demo-sidebar" aria-label="Demo sections">
       <div className="demo-sidebar__inner">
@@ -30,7 +39,11 @@ export function Sidebar() {
         <ul className="demo-sidebar__list">
           {DEMO_SECTIONS.map(({ id, label }) => (
             <li key={id} className="demo-sidebar__item">
-              <a className="demo-sidebar__link" href={`#${id}`}>
+              <a
+                className={`demo-sidebar__link${activeId === id ? ' demo-sidebar__link--active' : ''}`}
+                href={`#${id}`}
+                aria-current={activeId === id ? 'location' : undefined}
+              >
                 {label}
               </a>
             </li>

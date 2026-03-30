@@ -72,3 +72,5 @@ export type { UseExportCanvasOptions, UseExportCanvasResult } from './useExportC
 
 export { useSearch, computeCellMatchRects, computeSearchResults } from './useSearch.js'
 export type { MatchRect, CellMatchMap, UseSearchResult, UseSearchOptions } from './useSearch.js'
+
+export { useScrollspy, pickNearestSection } from './useScrollspy.js'

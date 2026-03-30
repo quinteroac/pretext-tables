@@ -145,6 +145,13 @@ body {
   outline-offset: -2px;
 }
 
+.demo-sidebar__link--active {
+  color: var(--accent);
+  border-left: 2px solid var(--accent);
+  padding-left: 16px; /* 18px - 2px border = same visual indent */
+  background: var(--accent-dim);
+}
+
 /* Hide sidebar below 860px — content stacks on small screens */
 @media (max-width: 860px) {
   .demo-sidebar {
