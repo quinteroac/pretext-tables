@@ -999,7 +999,7 @@ function ShrinkWrapDemo() {
 
   return (
     <section className="demo-section">
-      <span className="demo-section-eyebrow">Shrink-wrap · exact column fit</span>
+      <span className="demo-section-eyebrow">Shrink-wrap · Double-click to fit</span>
       <h2 className="demo-section-title">useShrinkWrap</h2>
       <p className="demo-section-desc">
         Binary-searches for the minimum column width where no cell text wraps,
