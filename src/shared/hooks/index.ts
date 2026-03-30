@@ -63,3 +63,12 @@ export type { UseEditableOptions, EditCellProps, UseEditableResult } from './use
 
 export { useCellNotes, computeNoteHeights } from './useCellNotes.js'
 export type { UseCellNotesOptions, UseCellNotesResult } from './useCellNotes.js'
+
+export { useDynamicFont, computeDynamicRowHeights } from './useDynamicFont.js'
+export type { UseDynamicFontOptions, UseDynamicFontResult } from './useDynamicFont.js'
+
+export { useExportCanvas, renderTableToContext, renderTableToBlob } from './useExportCanvas.js'
+export type { UseExportCanvasOptions, UseExportCanvasResult } from './useExportCanvas.js'
+
+export { useSearch, computeCellMatchRects, computeSearchResults } from './useSearch.js'
+export type { MatchRect, CellMatchMap, UseSearchResult, UseSearchOptions } from './useSearch.js'

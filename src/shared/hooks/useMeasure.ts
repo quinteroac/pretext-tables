@@ -15,6 +15,12 @@ export interface UseMeasureOptions {
    * Default 16 (8 px each side).
    */
   cellPadding?: number
+  /**
+   * Controls how whitespace and newlines are handled during text measurement.
+   * Pass `'pre-wrap'` to preserve newlines and tabs in cell content.
+   * Defaults to `undefined` (pretext uses its default 'normal' behaviour).
+   */
+  whiteSpace?: 'normal' | 'pre-wrap'
 }
 
 export interface UseMeasureResult {
@@ -43,7 +49,7 @@ export function useMeasure(
   columnWidths: number[],
   options?: UseMeasureOptions
 ): UseMeasureResult {
-  const { font = BODY_FONT, lineHeight = 20, cellPadding = 16 } = options ?? {}
+  const { font = BODY_FONT, lineHeight = 20, cellPadding = 16, whiteSpace } = options ?? {}
 
   const [fontsReady, setFontsReady] = useState(false)
 
@@ -51,11 +57,12 @@ export function useMeasure(
     document.fonts.ready.then(() => setFontsReady(true))
   }, [])
 
-  // prepare() — expensive Canvas phase, runs only when rows or font changes.
+  // prepare() — expensive Canvas phase, runs only when rows, font, or whiteSpace changes.
   const prepared = useMemo<PreparedTextWithSegments[][] | null>(() => {
     if (!fontsReady) return null
-    return rows.map((row) => row.cells.map((cell) => prepareWithSegments(cell, font)))
-  }, [rows, font, fontsReady])
+    const prepareOptions = whiteSpace !== undefined ? { whiteSpace } : undefined
+    return rows.map((row) => row.cells.map((cell) => prepareWithSegments(cell, font, prepareOptions)))
+  }, [rows, font, whiteSpace, fontsReady])
 
   // layout() — cheap arithmetic phase, runs on every column-width change.
   const rowHeights = useMemo(() => {

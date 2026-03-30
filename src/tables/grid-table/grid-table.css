@@ -1,0 +1,84 @@
+.grid-table-container {
+  overflow: auto;
+  height: var(--grid-table-height, 400px);
+  font: var(--grid-table-font);
+  position: relative;
+}
+
+.grid-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.grid-table-container::-webkit-scrollbar-track {
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
+.grid-table-container::-webkit-scrollbar-thumb {
+  background: var(--border-hi, oklch(34% 0.022 255));
+  border-radius: 4px;
+}
+
+.grid-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted, oklch(50% 0.016 258));
+}
+
+.grid-table-container::-webkit-scrollbar-corner {
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
+/* Outer grid: single column, each row (header + body rows) stretches full width */
+.grid-table {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-width: max-content;
+}
+
+/* Header row — sticky at top of scrolling container */
+.grid-table-header-row {
+  display: grid;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.grid-table-header-cell {
+  font: var(--grid-table-header-font);
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  color: var(--bright, oklch(96% 0.007 254));
+  border: 1px solid var(--border, oklch(22% 0.020 255));
+  padding: 7px 10px;
+  text-align: left;
+  white-space: nowrap;
+  user-select: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Body row — grid columns match header */
+.grid-table-row {
+  display: grid;
+}
+
+.grid-table-cell {
+  background: var(--surface, oklch(13% 0.016 255));
+  color: var(--text, oklch(83% 0.012 257));
+  border: 1px solid var(--border, oklch(22% 0.020 255));
+  border-top: none;
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.grid-table-row:nth-child(even) .grid-table-cell {
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+.grid-table-row:hover .grid-table-cell {
+  background: var(--surface-hover, oklch(19% 0.020 255));
+}

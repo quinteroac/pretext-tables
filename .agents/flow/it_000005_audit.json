@@ -1,0 +1,39 @@
+{
+  "iteration": "000005",
+  "refactorItems": [
+    {
+      "id": "R1",
+      "title": "Fix Bun canvas polyfill in test setup",
+      "severity": "high",
+      "file": "src/tests/setup.ts",
+      "description": "The current polyfill installs a document.createElement shim using the 'canvas' npm package. Under Bun's runtime the returned context does not satisfy @chenglou/pretext's internal check, causing 119 tests to fail. Replace the shim with one that uses globalThis.OffscreenCanvas when available, falling back to the canvas package's createCanvas for Node.js. If Bun natively supports OffscreenCanvas, remove the polyfill entirely for the Bun path.",
+      "action": "Replace the document.createElement('canvas') approach with: if (typeof OffscreenCanvas === 'undefined') { globalThis.OffscreenCanvas = class { constructor(w,h){ return createCanvas(w,h) } } } — or add a pretext-compatible canvas context provider."
+    },
+    {
+      "id": "R2",
+      "title": "Add aria-label to Export PNG button",
+      "severity": "medium",
+      "file": "src/demo/App.tsx",
+      "location": "ExportCanvasDemo function, <button> element",
+      "description": "The download button has text content '⬇ Download PNG' but no aria-label. The DOWN ARROW emoji may be announced literally by screen readers.",
+      "action": "Add aria-label=\"Download table as PNG\" to the <button className=\"demo-export-btn\"> element."
+    },
+    {
+      "id": "R3",
+      "title": "Eliminate double prepare() in SearchDemo",
+      "severity": "low",
+      "file": "src/demo/App.tsx",
+      "location": "SearchDemo function",
+      "description": "SearchDemo calls both useSearch(SEARCH_ROWS, ...) and useMeasure(filteredRows, ...). Each hook independently calls prepareWithSegments, doubling the Canvas measurement cost for matching rows. Extend useSearch to optionally return rowHeights so the second prepare() pass is unnecessary.",
+      "action": "Add optional layout parameters (lineHeight, cellPadding) to UseSearchOptions and return rowHeights: number[] from useSearch. Update SearchDemo to destructure rowHeights from useSearch instead of calling useMeasure separately."
+    },
+    {
+      "id": "R4",
+      "title": "Add useDynamicFont + useResizable composition test",
+      "severity": "low",
+      "file": "src/tests/useDynamicFont.test.ts",
+      "description": "US-001-AC05 states useDynamicFont composes correctly with useResizable. This is verified by API design but not exercised in any test. Add a test that simulates passing columnWidths from useResizable to useDynamicFont and asserts heights update correctly on both font change and column resize.",
+      "action": "Add a test group 'AC05: composes with useResizable' that verifies: (1) changing columnWidths with a pending debounce still produces correct heights from the previous prepared state; (2) after debounce fires, heights reflect the new font."
+    }
+  ]
+}

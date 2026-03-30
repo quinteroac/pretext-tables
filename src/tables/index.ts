@@ -21,3 +21,6 @@ export type { SpanningTableProps } from './spanning-table/index.js'
 
 export { EditableTable } from './editable-table/index.js'
 export type { EditableTableProps } from './editable-table/index.js'
+
+export { GridTable } from './grid-table/index.js'
+export type { GridTableProps } from './grid-table/index.js'

@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
+import { BasicTable, DraggableTable, ExpandableTable, GridTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes, useDynamicFont, useExportCanvas, useSearch } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
-import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
+import { BODY_FONT, HEADER_FONT, FONT_FAMILY_SANS, FONT_FAMILY_SERIF, FONT_FAMILY_MONO, FONT_FAMILY_SYSTEM } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
 import './demo.css'
@@ -209,6 +209,8 @@ const ROWS: Row[] = [
   },
 ]
 
+const GRID_HEADERS = ['Name', 'Role Summary', 'Department']
+
 const RESIZABLE_HEADERS = ['Name', 'Role Summary', 'Department']
 const RESIZABLE_DEFAULT_WIDTHS = [160, 280, 160]
 
@@ -337,6 +339,51 @@ export function App() {
 <tr style={{ height: rowHeights[i] }}>
   ...
 </tr>`}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="demo-section" id="GridTableDemo">
+          <span className="demo-section-eyebrow">Grid layout · sticky header</span>
+          <h2 className="demo-section-title">GridTable</h2>
+          <p className="demo-section-desc">
+            A CSS Grid-based table — no{' '}
+            <code className="demo-code">&lt;table&gt;</code> elements. The
+            header row uses{' '}
+            <code className="demo-code">position: sticky; top: 0</code> so it
+            stays pinned while you scroll. Row heights are still pre-computed by{' '}
+            <code className="demo-code">useMeasure</code> — zero DOM reflows.
+            Scroll the table below to confirm the header stays fixed.
+          </p>
+
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <div className="demo-table-meta">
+                <span className="demo-pill">Name · 200px</span>
+                <span className="demo-pill">Role Summary · 300px</span>
+                <span className="demo-pill">Department · 220px</span>
+              </div>
+              <div className="demo-table-wrapper demo-table-wrapper--fit">
+                <GridTable
+                  rows={ROWS}
+                  headers={GRID_HEADERS}
+                  columnWidths={COLUMN_WIDTHS}
+                  renderCell={renderDeptCell}
+                />
+              </div>
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="GridTable"
+                code={`// Header pinned with position:sticky; top:0 (CSS)
+// Row heights pre-computed — zero DOM reflows
+<GridTable
+  rows={rows}
+  headers={['Name', 'Role', 'Dept']}
+  columnWidths={[200, 300, 220]}
+  renderCell={renderDeptCell}
+/>`}
               />
             </div>
           </div>
@@ -593,8 +640,153 @@ const { rowHeights } = useMeasure(
         <EditableDemo />
 
         <CellNotesDemo />
+
+        <DynamicFontDemo />
+
+        <ExportCanvasDemo />
+
+        <SearchDemo />
       </main>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// SearchDemo — useSearch: text input + match-coordinate highlight overlay
+// ---------------------------------------------------------------------------
+
+const SEARCH_ROWS: Row[] = [
+  { id: 'sr1', cells: ['Alice Johnson', 'Leads the frontend architecture team and is responsible for establishing coding standards across all product surfaces.'] },
+  { id: 'sr2', cells: ['Bob Martinez', 'Works on backend API design with a focus on performance and scalability for high-traffic endpoints.'] },
+  { id: 'sr3', cells: ['Carol White', 'Manages the design system and ensures visual consistency from the component library down to individual page layouts.'] },
+  { id: 'sr4', cells: ['David Kim', 'Full-stack engineer who primarily owns the billing and subscription management subsystem.'] },
+  { id: 'sr5', cells: ['Eva Schulz', 'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses.'] },
+  { id: 'sr6', cells: ['Frank Okafor', 'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation strategies.'] },
+  { id: 'sr7', cells: ['Grace Tanaka', 'Product manager for the core editor experience, gathering user feedback and shaping the feature roadmap.'] },
+  { id: 'sr8', cells: ['Hiro Nakamura', 'Security engineer who performs threat modelling and conducts regular penetration tests on all customer-facing services.'] },
+]
+
+const SEARCH_COLUMN_WIDTHS = [200, 440]
+const SEARCH_HEADERS = ['Name', 'Role Summary']
+const SEARCH_CELL_PADDING = 16
+
+function SearchDemo() {
+  const [query, setQuery] = useState('')
+
+  const { filteredRows, matchCoords } = useSearch(
+    SEARCH_ROWS,
+    SEARCH_COLUMN_WIDTHS,
+    BODY_FONT,
+    query,
+    { cellPadding: SEARCH_CELL_PADDING },
+  )
+
+  const { rowHeights } = useMeasure(filteredRows, SEARCH_COLUMN_WIDTHS, {
+    cellPadding: SEARCH_CELL_PADDING,
+  })
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Search · highlight overlay · match coordinates</span>
+      <h2 className="demo-section-title">useSearch</h2>
+      <p className="demo-section-desc">
+        Filters rows by a search query and returns pixel-accurate{' '}
+        <code className="demo-code">matchCoords</code> for every occurrence —
+        derived from <code className="demo-code">layoutWithLines()</code>, no DOM
+        reads. Each rect is an <code className="demo-code">{'{ x, y, width, height }'}</code>{' '}
+        bounding box relative to the cell content area, ready to drive a highlight
+        overlay. Type in the input below to see matches highlighted live.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-search-controls">
+            <input
+              className="demo-search-input"
+              type="text"
+              placeholder="Search rows…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search table rows"
+              spellCheck={false}
+              autoComplete="off"
+            />
+            {query.length > 0 && (
+              <span className="demo-search-count">
+                {filteredRows.length === 0
+                  ? 'No matches'
+                  : `${filteredRows.length} row${filteredRows.length === 1 ? '' : 's'}`}
+              </span>
+            )}
+          </div>
+
+          <div className="demo-table-wrapper">
+            <table className="demo-search-table">
+              <thead>
+                <tr>
+                  {SEARCH_HEADERS.map((h, ci) => (
+                    <th key={ci} style={{ width: SEARCH_COLUMN_WIDTHS[ci] }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row, ri) => (
+                  <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} style={{ width: SEARCH_COLUMN_WIDTHS[ci] }}>
+                        <div className="demo-search-cell">
+                          {cell}
+                          {matchCoords[ri]?.[ci]?.map((rect, hi) => (
+                            <span
+                              key={hi}
+                              className="demo-search-highlight"
+                              style={{
+                                left: rect.x,
+                                top: rect.y,
+                                width: rect.width,
+                                height: rect.height,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useSearch"
+            code={`const [query, setQuery] = useState('')
+
+const { filteredRows, matchCoords } =
+  useSearch(rows, columnWidths, BODY_FONT, query)
+
+const { rowHeights } =
+  useMeasure(filteredRows, columnWidths)
+
+// matchCoords is parallel to filteredRows.
+// Each entry maps colIndex → MatchRect[]:
+//   { x, y, width, height }
+// All coords from layoutWithLines() — no DOM reads.
+
+// Render highlight overlay per cell:
+matchCoords[ri]?.[ci]?.map(rect => (
+  <span style={{
+    position: 'absolute',
+    left: rect.x, top: rect.y,
+    width: rect.width,
+    height: rect.height,
+  }} />
+))`}
+          />
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -2297,6 +2489,327 @@ function CellNotesDemo() {
 // prepare() runs once per notes change (AC01)
 // layout() computes height before mount (AC02)
 // position: fixed from mouse event (AC04)
+// No getBoundingClientRect, no DOM reads`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// DynamicFontDemo — useDynamicFont: live font-size slider + family selector
+// ---------------------------------------------------------------------------
+
+const DF_COLUMN_WIDTHS = [180, 320, 180]
+
+const DF_HEADERS = ['Name', 'Contribution', 'Language']
+
+const DF_ROWS: Row[] = [
+  {
+    id: 'df1',
+    cells: [
+      'Grace Hopper',
+      'Pioneered the first compiler and coined the term "debugging" after literally removing a moth from the Mark II computer. Her work laid the foundation for high-level programming languages.',
+      'COBOL',
+    ],
+  },
+  {
+    id: 'df2',
+    cells: [
+      'Dennis Ritchie',
+      'Created the C programming language and co-developed Unix. The impact of these contributions spans virtually every operating system and language in use today.',
+      'C',
+    ],
+  },
+  {
+    id: 'df3',
+    cells: [
+      'Margaret Hamilton',
+      'Led the team that wrote the on-board flight software for the Apollo missions. Her error-detection routines saved Apollo 11 from aborting landing just three minutes before touchdown.',
+      'Assembly',
+    ],
+  },
+  {
+    id: 'df4',
+    cells: [
+      'Linus Torvalds',
+      'Authored the Linux kernel in 1991 as a hobby project and later created Git to manage distributed version control after the Linux kernel community outgrew existing tools.',
+      'C',
+    ],
+  },
+  {
+    id: 'df5',
+    cells: [
+      'Barbara Liskov',
+      'Formulated the Liskov Substitution Principle, a cornerstone of object-oriented design, and invented the CLU language which pioneered data abstraction and iterators.',
+      'CLU / Java',
+    ],
+  },
+]
+
+const DF_FONT_FAMILIES: Array<{ label: string; value: string }> = [
+  { label: 'Space Grotesk (sans)',  value: FONT_FAMILY_SANS   },
+  { label: 'System UI (system)',    value: FONT_FAMILY_SYSTEM  },
+  { label: 'Georgia (serif)',       value: FONT_FAMILY_SERIF   },
+  { label: 'JetBrains Mono (mono)', value: FONT_FAMILY_MONO    },
+]
+
+const DF_INITIAL_SIZE = 14
+const DF_INITIAL_FAMILY = FONT_FAMILY_SANS
+
+function DynamicFontDemo() {
+  const [fontSize, setFontSize] = useState<number>(DF_INITIAL_SIZE)
+  const [fontFamily, setFontFamily] = useState<string>(DF_INITIAL_FAMILY)
+
+  const { rowHeights, setFont, currentFont } = useDynamicFont(
+    DF_ROWS,
+    DF_COLUMN_WIDTHS,
+    `${DF_INITIAL_SIZE}px ${DF_INITIAL_FAMILY}`,
+    { debounceMs: 150, lineHeight: 22, cellPadding: 16 }
+  )
+
+  const handleSizeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const size = Number(e.target.value)
+      setFontSize(size)
+      setFont(`${size}px ${fontFamily}`)
+    },
+    [fontFamily, setFont]
+  )
+
+  const handleFamilyChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const family = e.target.value
+      setFontFamily(family)
+      setFont(`${fontSize}px ${family}`)
+    },
+    [fontSize, setFont]
+  )
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Dynamic font · zero DOM cost</span>
+      <h2 className="demo-section-title">useDynamicFont</h2>
+      <p className="demo-section-desc">
+        Drag the slider or pick a font family — every row height updates through{' '}
+        <code className="demo-code">layout()</code> against a debounced{' '}
+        <code className="demo-code">prepare()</code>, never touching{' '}
+        <code className="demo-code">getBoundingClientRect</code> or any DOM
+        measurement. The slider triggers continuous reflow-free remeasurement;
+        the family selector applies on the next debounce tick (~150 ms).
+      </p>
+
+      <div className="demo-df-controls">
+        <label className="demo-df-control-group">
+          <span className="demo-df-label">Font size</span>
+          <input
+            className="demo-df-slider"
+            type="range"
+            min={12}
+            max={32}
+            step={1}
+            value={fontSize}
+            onChange={handleSizeChange}
+          />
+          <span className="demo-df-size-badge">{fontSize}px</span>
+        </label>
+
+        <label className="demo-df-control-group">
+          <span className="demo-df-label">Font family</span>
+          <select
+            className="demo-df-select"
+            value={fontFamily}
+            onChange={handleFamilyChange}
+          >
+            {DF_FONT_FAMILIES.map(({ label, value }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <table
+            className="demo-df-table"
+            style={{ font: currentFont }}
+          >
+            <thead>
+              <tr>
+                {DF_HEADERS.map((header, colIndex) => (
+                  <th
+                    key={colIndex}
+                    style={{ width: DF_COLUMN_WIDTHS[colIndex] }}
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DF_ROWS.map((row, rowIndex) => (
+                <tr
+                  key={row.id}
+                  style={{ height: rowHeights[rowIndex] }}
+                >
+                  {row.cells.map((cell, colIndex) => (
+                    <td key={colIndex} style={{ width: DF_COLUMN_WIDTHS[colIndex] }}>
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useDynamicFont"
+            code={`const { rowHeights, setFont, currentFont } =
+  useDynamicFont(rows, columnWidths, BODY_FONT)
+
+// Slider (12 px – 32 px):
+<input
+  type="range" min={12} max={32}
+  onChange={e =>
+    setFont(\`\${e.target.value}px \${family}\`)
+  }
+/>
+
+// Family selector:
+<select
+  onChange={e =>
+    setFont(\`\${size}px \${e.target.value}\`)
+  }
+/>
+
+// table font tracks currentFont:
+<table style={{ font: currentFont }}>
+
+// prepare() debounced 150 ms (AC02-AC03)
+// layout() runs immediately each render
+// No getBoundingClientRect, no DOM reads`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// ExportCanvasDemo — useExportCanvas: download full table as PNG
+// ---------------------------------------------------------------------------
+
+const EC_COLUMN_WIDTHS = [180, 280, 120]
+
+const EC_HEADERS = ['Researcher', 'Discovery', 'Year']
+
+const EC_ROWS: Row[] = [
+  { id: 'ec1', cells: ['Marie Curie', 'First person to win Nobel Prizes in two different sciences — Physics (1903) and Chemistry (1911) — for research on radioactivity.', '1898–1911'] },
+  { id: 'ec2', cells: ['Alan Turing', 'Formalised computation with the Turing machine model and broke the Enigma cipher, laying the groundwork for modern computer science.', '1936'] },
+  { id: 'ec3', cells: ['Rosalind Franklin', 'X-ray crystallography work produced Photo 51 — the image that revealed the double-helix structure of DNA.', '1952'] },
+  { id: 'ec4', cells: ['Tim Berners-Lee', 'Invented the World Wide Web while at CERN, proposing HTML, HTTP, and URLs as an open, decentralised information system.', '1989'] },
+  { id: 'ec5', cells: ['Katherine Johnson', 'NASA mathematician whose orbital mechanics calculations were critical for the success of the first and subsequent US crewed spaceflights.', '1953–1986'] },
+]
+
+const EC_LINE_HEIGHT = 20
+const EC_CELL_PADDING = 16
+
+function ExportCanvasDemo() {
+  const [exporting, setExporting] = useState(false)
+
+  const { exportCanvas } = useExportCanvas(EC_ROWS, EC_COLUMN_WIDTHS, BODY_FONT, {
+    lineHeight: EC_LINE_HEIGHT,
+    cellPadding: EC_CELL_PADDING,
+  })
+
+  const { rowHeights } = useMeasure(EC_ROWS, EC_COLUMN_WIDTHS, {
+    lineHeight: EC_LINE_HEIGHT,
+    cellPadding: EC_CELL_PADDING,
+    font: BODY_FONT,
+  })
+
+  const handleDownload = useCallback(async () => {
+    setExporting(true)
+    try {
+      const blob = await exportCanvas()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'table-export.png'
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
+  }, [exportCanvas])
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">PNG export · offscreen canvas · no DOM reads</span>
+      <h2 className="demo-section-title">useExportCanvas</h2>
+      <p className="demo-section-desc">
+        Renders every row to an offscreen <code className="demo-code">{'<canvas>'}</code> using{' '}
+        <code className="demo-code">layout()</code> for geometry — zero{' '}
+        <code className="demo-code">ctx.measureText</code> calls.{' '}
+        Click <strong>Download PNG</strong> to export this table as a pixel-perfect image.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-export-controls">
+            <button
+              className="demo-export-btn"
+              onClick={handleDownload}
+              disabled={exporting}
+            >
+              {exporting ? 'Exporting…' : '⬇ Download PNG'}
+            </button>
+          </div>
+
+          <div className="demo-export-table-wrap">
+            <table className="demo-export-table">
+              <thead>
+                <tr>
+                  {EC_HEADERS.map((h, ci) => (
+                    <th key={ci} style={{ width: EC_COLUMN_WIDTHS[ci] }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {EC_ROWS.map((row, ri) => (
+                  <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} style={{ width: EC_COLUMN_WIDTHS[ci] }}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useExportCanvas"
+            code={`const { exportCanvas } = useExportCanvas(
+  rows, columnWidths, BODY_FONT
+)
+
+// Download button handler:
+const blob = await exportCanvas()
+const url  = URL.createObjectURL(blob)
+const a    = document.createElement('a')
+a.href     = url
+a.download = 'table-export.png'
+a.click()
+URL.revokeObjectURL(url)
+
+// All geometry from layout() — no ctx.measureText
 // No getBoundingClientRect, no DOM reads`}
           />
         </div>
