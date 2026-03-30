@@ -5,6 +5,11 @@ export interface UseInfiniteScrollOptions {
   /**
    * Called when the scroll container nears the bottom.
    * Must return a Promise<Row[]> — the resolved rows are the new batch to append.
+   *
+   * The hook is a **pure event/flag primitive** — it does not manage row state.
+   * After the Promise resolves, the caller is responsible for appending the new rows
+   * to its own React state. `useMeasure` will compute their heights in the same
+   * render cycle before the browser paints, preventing scroll-position jumps.
    */
   onLoadMore: () => Promise<Row[]>
   /**
@@ -14,8 +19,17 @@ export interface UseInfiniteScrollOptions {
   threshold?: number
   /**
    * Pretext-computed row heights from `useMeasure()`.
-   * Used to derive total content height without reading `scrollHeight` from the DOM,
-   * in compliance with the no-DOM-measurement constraint (AC07).
+   *
+   * **Why this is required:** The hook must detect proximity to the bottom without
+   * reading `scrollHeight` from the DOM (which would be a layout-forcing DOM read).
+   * Instead, total content height is derived by summing `rowHeights` — the same
+   * values that `useMeasure` computes via `@chenglou/pretext` before any render.
+   *
+   * Canonical wiring:
+   * ```ts
+   * const { rowHeights } = useMeasure(rows, columnWidths)
+   * const { onScroll, isLoading } = useInfiniteScroll({ onLoadMore, rowHeights })
+   * ```
    */
   rowHeights: number[]
 }

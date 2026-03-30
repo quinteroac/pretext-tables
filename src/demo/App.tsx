@@ -1452,7 +1452,7 @@ function CanvasCellDemo() {
     for (let ri = 0; ri < CV_ROWS.length; ri++) {
       let x = 0
       for (let ci = 0; ci < CV_COLUMN_WIDTHS.length; ci++) {
-        drawCell(ctx, ri, ci, x * dpr, y * dpr, dpr)
+        drawCell(ctx, ri, ci, x, y, dpr)
         x += CV_COLUMN_WIDTHS[ci]!
       }
       y += rowHeights[ri]!
