@@ -1,75 +1,118 @@
 import { useState, useMemo, useCallback } from 'react'
 
+/** Column definition passed to useColumnControls. */
 export interface UseColumnControlsOptions {
-  /** Total number of columns. */
-  columnCount: number
-  /** Columns initially hidden (by index). Defaults to none. */
-  initialHidden?: number[]
+  id: string
+  label: string
+  /** Defaults to true when omitted. */
+  defaultVisible?: boolean
+  sticky?: boolean
 }
 
+/** Column state returned in visibleColumns / allColumns. */
+export interface ColumnState extends Required<UseColumnControlsOptions> {
+  visible: boolean
+}
+
+export type ColumnSortDirection = 'asc' | 'desc'
+
 export interface UseColumnControlsResult {
-  /** Boolean per column — true if visible. */
-  visibility: boolean[]
-  /** Indices of currently visible columns. */
-  visibleIndices: number[]
-  /** Toggle a column. Prevents hiding the last visible column. */
-  toggleColumn: (colIndex: number) => void
-  /** True when the column is the only one visible (cannot be hidden). */
-  isLastVisible: (colIndex: number) => boolean
+  /** Only the currently-visible columns, in definition order. */
+  visibleColumns: ColumnState[]
+  /** All columns (visible and hidden), in definition order. */
+  allColumns: ColumnState[]
+  /** id of the column currently sorted on, or null. */
+  sortKey: string | null
+  /** Current sort direction, or null when no sort is active. */
+  sortDirection: ColumnSortDirection | null
+  /**
+   * Toggle a column's visibility.
+   * Prevents hiding the last visible column (no-op in that case).
+   */
+  toggleColumnVisibility: (id: string) => void
+  /**
+   * Set sort on a column.
+   * Cycling: none → asc → desc → none (same column each call).
+   * A different id always resets to asc.
+   */
+  setSort: (id: string) => void
+  /** Clear sort state. */
+  resetSort: () => void
 }
 
 /**
- * Manages column visibility state for a table.
+ * Manages column visibility and sort state for any table.
  *
- * Enforces a minimum of 1 visible column — toggling the last visible column
- * is a no-op.
+ * Does not import or call prepare() / layout() — purely UI state.
  */
-export function useColumnControls({
-  columnCount,
-  initialHidden = [],
-}: UseColumnControlsOptions): UseColumnControlsResult {
-  const [hiddenSet, setHiddenSet] = useState<Set<number>>(
-    () => new Set(initialHidden.filter((i) => i >= 0 && i < columnCount))
+export function useColumnControls(columns: UseColumnControlsOptions[]): UseColumnControlsResult {
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => {
+    const s = new Set<string>()
+    for (const col of columns) {
+      if (col.defaultVisible === false) s.add(col.id)
+    }
+    return s
+  })
+
+  const [sortState, setSortState] = useState<{
+    key: string | null
+    direction: ColumnSortDirection | null
+  }>({ key: null, direction: null })
+
+  const allColumns = useMemo<ColumnState[]>(
+    () =>
+      columns.map((col) => ({
+        id: col.id,
+        label: col.label,
+        defaultVisible: col.defaultVisible ?? true,
+        sticky: col.sticky ?? false,
+        visible: !hiddenIds.has(col.id),
+      })),
+    [columns, hiddenIds]
   )
 
-  const visibility = useMemo(() => {
-    return Array.from({ length: columnCount }, (_, i) => !hiddenSet.has(i))
-  }, [hiddenSet, columnCount])
+  const visibleColumns = useMemo(() => allColumns.filter((c) => c.visible), [allColumns])
 
-  const visibleIndices = useMemo(() => {
-    return visibility.reduce<number[]>((acc, v, i) => {
-      if (v) acc.push(i)
-      return acc
-    }, [])
-  }, [visibility])
-
-  const visibleCount = visibleIndices.length
-
-  const isLastVisible = useCallback(
-    (colIndex: number) => visibility[colIndex] === true && visibleCount === 1,
-    [visibility, visibleCount]
-  )
-
-  const toggleColumn = useCallback(
-    (colIndex: number) => {
-      setHiddenSet((prev) => {
-        const isCurrentlyHidden = prev.has(colIndex)
-        // If showing a column, always allow
-        if (isCurrentlyHidden) {
+  const toggleColumnVisibility = useCallback(
+    (id: string) => {
+      setHiddenIds((prev) => {
+        if (prev.has(id)) {
+          // Show the column
           const next = new Set(prev)
-          next.delete(colIndex)
+          next.delete(id)
           return next
         }
-        // If hiding, check we won't go below 1 visible
-        const currentVisible = columnCount - prev.size
+        // Hide — enforce minimum 1 visible
+        const currentVisible = columns.length - prev.size
         if (currentVisible <= 1) return prev
         const next = new Set(prev)
-        next.add(colIndex)
+        next.add(id)
         return next
       })
     },
-    [columnCount]
+    [columns.length]
   )
 
-  return { visibility, visibleIndices, toggleColumn, isLastVisible }
+  const setSort = useCallback((id: string) => {
+    setSortState((prev) => {
+      if (prev.key !== id) return { key: id, direction: 'asc' }
+      if (prev.direction === 'asc') return { key: id, direction: 'desc' }
+      // desc → reset
+      return { key: null, direction: null }
+    })
+  }, [])
+
+  const resetSort = useCallback(() => {
+    setSortState({ key: null, direction: null })
+  }, [])
+
+  return {
+    visibleColumns,
+    allColumns,
+    sortKey: sortState.key,
+    sortDirection: sortState.direction,
+    toggleColumnVisibility,
+    setSort,
+    resetSort,
+  }
 }

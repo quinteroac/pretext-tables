@@ -332,7 +332,11 @@ export function App() {
           <div className="demo-table-wrapper demo-table-wrapper--fit">
             <ColumnControlsTable
               rows={ROWS}
-              headers={['Name', 'Role Summary', 'Department']}
+              columns={[
+                { id: 'name', label: 'Name' },
+                { id: 'role', label: 'Role Summary' },
+                { id: 'dept', label: 'Department' },
+              ]}
               columnWidths={COLUMN_WIDTHS}
               renderCell={renderDeptCell}
             />
