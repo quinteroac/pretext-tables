@@ -153,6 +153,33 @@ body {
   background: var(--accent-dim);
 }
 
+.demo-sidebar__footer {
+  padding: 20px 18px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+.demo-sidebar__github {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-mid);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.demo-sidebar__github:hover {
+  color: var(--bright);
+}
+
+.demo-sidebar__github:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* ─────────────────────────────────────────────────────────────
    HAMBURGER BUTTON — visible only below 768 px
 ───────────────────────────────────────────────────────────── */
