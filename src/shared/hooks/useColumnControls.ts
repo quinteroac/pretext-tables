@@ -95,9 +95,14 @@ export function useColumnControls(columns: UseColumnControlsOptions[]): UseColum
 
   const setSort = useCallback((id: string) => {
     setSortState((prev) => {
-      if (prev.key !== id) return { key: id, direction: 'asc' }
-      if (prev.direction === 'asc') return { key: id, direction: 'desc' }
-      // desc → reset
+      // No active sort → start ascending on the clicked column
+      if (prev.key === null) return { key: id, direction: 'asc' }
+      // Same column → cycle asc → desc → none
+      if (prev.key === id) {
+        if (prev.direction === 'asc') return { key: id, direction: 'desc' }
+        return { key: null, direction: null }
+      }
+      // Different column while a sort is active → reset to unsorted (AC03)
       return { key: null, direction: null }
     })
   }, [])

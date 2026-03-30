@@ -12,6 +12,8 @@ export interface ColumnControlsTableProps {
   /** Column definitions — id maps to the cell index by position. */
   columns: UseColumnControlsOptions[]
   columnWidths: number[]
+  /** Optional max height for the scroll container. Enables vertical scroll with a sticky header. */
+  maxHeight?: number | string
   renderCell?: (value: string, rowIndex: number, colIndex: number) => React.ReactNode
 }
 
@@ -19,6 +21,7 @@ export function ColumnControlsTable({
   rows,
   columns,
   columnWidths,
+  maxHeight,
   renderCell,
 }: ColumnControlsTableProps) {
   const { visibleColumns, allColumns, sortKey, sortDirection, toggleColumnVisibility, setSort } =
@@ -71,7 +74,10 @@ export function ColumnControlsTable({
         })}
       </div>
 
-      <div className="cc-scroll">
+      <div
+        className="cc-scroll"
+        style={maxHeight !== undefined ? { maxHeight, overflowY: 'auto' } : undefined}
+      >
         <table
           className="cc-table"
           style={{ '--cc-table-font': BODY_FONT } as React.CSSProperties}

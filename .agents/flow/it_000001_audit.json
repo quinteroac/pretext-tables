@@ -1,0 +1,26 @@
+{
+  "iteration": "000001",
+  "fixes": [
+    {
+      "id": "fix-1",
+      "title": "Reset sort to unsorted when clicking a different column header",
+      "file": "src/shared/hooks/useColumnControls.ts",
+      "description": "US-001 AC03 requires that clicking a different header resets sort to none. Change the setSort callback so that prev.key !== id returns { key: null, direction: null } instead of { key: id, direction: 'asc' }.",
+      "before": "if (prev.key !== id) return { key: id, direction: 'asc' }",
+      "after": "if (prev.key !== id) return { key: null, direction: null }"
+    },
+    {
+      "id": "fix-2",
+      "title": "Add MIN_COLUMN_WIDTH to measure.ts",
+      "file": "src/tables/column-controls-table/measure.ts",
+      "description": "FR-9 lists MIN_COLUMN_WIDTH as an expected constant. Add it with the standard value of 60.",
+      "after": "export const MIN_COLUMN_WIDTH = 60"
+    },
+    {
+      "id": "fix-3",
+      "title": "Update setSort different-id test to expect unsorted result",
+      "file": "src/tests/use-column-controls.test.ts",
+      "description": "The test 'setSort(different id) resets to asc on new column' must be updated to assert { key: null, direction: null } after the setSort fix."
+    }
+  ]
+}

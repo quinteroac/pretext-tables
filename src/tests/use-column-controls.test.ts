@@ -71,8 +71,11 @@ function toggleId(
 type SortState = { key: string | null; direction: ColumnSortDirection | null }
 
 function applySetSort(prev: SortState, id: string): SortState {
-  if (prev.key !== id) return { key: id, direction: 'asc' }
-  if (prev.direction === 'asc') return { key: id, direction: 'desc' }
+  if (prev.key === null) return { key: id, direction: 'asc' }
+  if (prev.key === id) {
+    if (prev.direction === 'asc') return { key: id, direction: 'desc' }
+    return { key: null, direction: null }
+  }
   return { key: null, direction: null }
 }
 
@@ -147,11 +150,11 @@ describe('US-004 AC02: return shape', () => {
     expect(state.direction).toBeNull()
   })
 
-  it('setSort(different id) resets to asc on new column', () => {
+  it('setSort(different id) resets sort to unsorted', () => {
     let state: SortState = { key: 'a', direction: 'desc' }
     state = applySetSort(state, 'b')
-    expect(state.key).toBe('b')
-    expect(state.direction).toBe('asc')
+    expect(state.key).toBeNull()
+    expect(state.direction).toBeNull()
   })
 
   it('resetSort clears sortKey and sortDirection', () => {

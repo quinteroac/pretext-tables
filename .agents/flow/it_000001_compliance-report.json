@@ -1,0 +1,90 @@
+{
+  "iteration": "000001",
+  "executive_summary": "The ColumnControlsTable implementation is largely compliant with the PRD. All 9 functional requirements are met or nearly met, and 4 of 5 user stories fully comply. The sole notable gap is in US-001 AC03: clicking a *different* column header should reset sort to unsorted per the acceptance criterion, but the implementation transitions to ascending on the new column instead — a common UX pattern that nonetheless deviates from the literal specification. A secondary minor gap is FR-9: measure.ts correctly contains only numeric constants but is missing the specified MIN_COLUMN_WIDTH export. All 37 unit tests pass. The hook (useColumnControls) is purely stateful with zero pretext calls, sort is applied before useMeasure, hidden columns are excluded from measurement, sticky is CSS-only, and the demo showcases all features with 5 columns and 12 rows.",
+
+  "verification_by_fr": [
+    {
+      "frId": "FR-1",
+      "assessment": "comply",
+      "notes": "useColumnControls imports only from 'react'. No pretext import, no prepare() or layout() call anywhere in the file."
+    },
+    {
+      "frId": "FR-2",
+      "assessment": "comply",
+      "notes": "ColumnControlsTable calls useMeasure(visibleRows, visibleWidths, { lineHeight, cellPadding }). No getBoundingClientRect, offsetHeight, or any DOM measurement present."
+    },
+    {
+      "frId": "FR-3",
+      "assessment": "comply",
+      "notes": "sortedRows is computed first via localeCompare, then visibleRows is derived from sortedRows before being passed to useMeasure — heights are always computed in final display order."
+    },
+    {
+      "frId": "FR-4",
+      "assessment": "comply",
+      "notes": "visibleIndices and visibleWidths are derived from visibleColumns only. visibleRows re-maps cells to visible indices exclusively, so useMeasure never sees hidden column data."
+    },
+    {
+      "frId": "FR-5",
+      "assessment": "comply",
+      "notes": "Sticky is applied via .cc-table th:first-child and .cc-table td:first-child CSS rules. No runtime sticky column selection; always first child by position."
+    },
+    {
+      "frId": "FR-6",
+      "assessment": "comply",
+      "notes": "All imports across the new files are from 'react', '@chenglou/pretext' (via useMeasure), or local modules. No new external packages added."
+    },
+    {
+      "frId": "FR-7",
+      "assessment": "comply",
+      "notes": "BODY_FONT and HEADER_FONT are imported from '../../shared/fonts.js'. No inline font strings found in index.tsx or measure.ts."
+    },
+    {
+      "frId": "FR-8",
+      "assessment": "comply",
+      "notes": "src/tables/index.ts exports both ColumnControlsTable and ColumnControlsTableProps from './column-controls-table/index.js'."
+    },
+    {
+      "frId": "FR-9",
+      "assessment": "partially_comply",
+      "notes": "measure.ts contains only numeric constants (LINE_HEIGHT = 20, CELL_PADDING = 16) with no logic or non-numeric exports — the 'only constants' constraint is met. However, MIN_COLUMN_WIDTH, explicitly listed in the PRD's parenthetical, is absent. The component does not enforce a minimum column width."
+    }
+  ],
+
+  "verification_by_us": [
+    {
+      "usId": "US-001",
+      "assessment": "partially_comply",
+      "notes": "AC01 ✓ (no sort → asc on first click), AC02 ✓ (asc → desc on second click), AC03 ✗ (clicking a *different* header should reset to unsorted per AC; instead the implementation starts ascending on the new column — deviates from the literal criterion), AC04 ✓ (▲/▼ indicator shown, absent when unsorted), AC05 ✓ (sortedRows passed to useMeasure so heights computed in final order), AC06 not automatically verifiable (typecheck), AC07 not automatically verifiable (browser)."
+    },
+    {
+      "usId": "US-002",
+      "assessment": "comply",
+      "notes": "AC01 ✓ (toggle changes visibleColumns state), AC02 ✓ (hidden columns excluded from visibleRows and useMeasure), AC03 ✓ (checkbox list rendered in .cc-visibility-controls above the table), AC04 ✓ (last visible column's checkbox is disabled; hook is a no-op when currentVisible <= 1). All 37 tests covering visibility logic pass."
+    },
+    {
+      "usId": "US-003",
+      "assessment": "comply",
+      "notes": "AC01 ✓ (position: sticky; left: 0 on th:first-child and td:first-child), AC02 ✓ (box-shadow: 2px 0 5px -1px separator present in CSS), AC03 ✓ (pure CSS, no JS scroll listeners), AC04 ✓ (first visible column is always at visibleIndices[0] so its width is included in useMeasure)."
+    },
+    {
+      "usId": "US-004",
+      "assessment": "comply",
+      "notes": "AC01 ✓ (UseColumnControlsOptions has id, label, defaultVisible?, sticky?), AC02 ✓ (hook returns visibleColumns, allColumns, sortKey, sortDirection, toggleColumnVisibility, setSort, resetSort), AC03 ✓ (exported from src/shared/hooks/index.ts), AC04 ✓ (no pretext import confirmed by both code inspection and test reading the source file at runtime). All 17 hook-specific tests pass."
+    },
+    {
+      "usId": "US-005",
+      "assessment": "comply",
+      "notes": "AC01 ✓ (CC_COLUMNS has 5 columns, CC_ROWS has 12 rows), AC02 ✓ (visibility toggle is rendered inside ColumnControlsTable and visible in demo), AC03 ✓ (total column widths 930px inside a constrained demo-table-wrapper; cc-scroll has overflow-x: auto so sticky column is observable), AC04 not automatically verifiable (browser)."
+    }
+  ],
+
+  "minor_observations": [
+    "US-001 AC03 ambiguity: 'clicking a different header resets sort to none' could be read as 'the previous column's sort indicator clears' (which does happen) rather than 'no sort is active after the click'. The implementation follows the more common UX pattern (start ascending on the new column). Clarify the intended cycle in the PRD if strict no-sort-on-header-change behaviour is desired.",
+    "FR-9 / measure.ts: MIN_COLUMN_WIDTH is listed in the PRD but absent from the file. The component accepts externally-provided columnWidths with no internal clamping. If minimum widths should be enforced (e.g. when columns are resizable later), this constant should be added.",
+    "useSortable hook (src/shared/hooks/useSortable.ts) already exists in the codebase and provides overlapping sort-state logic. useColumnControls duplicates a subset of this logic inline. No extraction is required by the current PRD (three-table rule not met), but this overlap is worth tracking.",
+    "The 'components' counter in the demo header displays 6, which now correctly reflects all six exported table components after adding ColumnControlsTable.",
+    "renderCell receives the original colIndex (not the visible-column position) — this is consistent with the other table components and keeps the external API predictable, but it may surprise consumers who expect a remapped index when columns are hidden."
+  ],
+
+  "conclusions_and_recommendations": "The implementation is high quality and production-ready with one specification gap: US-001 AC03 should be revisited to align the sort cycling behaviour for 'clicking a different header' with the PRD intent. If the desired behaviour is truly 'unsorted after clicking any new header', the setSort function needs a code change (return { key: null, direction: null } when id !== prev.key). If ascending-on-new-column is the desired UX, the AC should be updated. Additionally, MIN_COLUMN_WIDTH should be added to measure.ts as a named constant even if the component does not enforce it yet, so future resizable variants have a consistent baseline. All other requirements are fully satisfied; no architectural, performance, or accessibility regressions were found."
+}
