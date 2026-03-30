@@ -152,14 +152,129 @@ body {
   background: var(--accent-dim);
 }
 
-/* Hide sidebar below 860px — content stacks on small screens */
-@media (max-width: 860px) {
-  .demo-sidebar {
-    display: none;
-  }
+/* ─────────────────────────────────────────────────────────────
+   HAMBURGER BUTTON — visible only below 768 px
+───────────────────────────────────────────────────────────── */
 
+.demo-hamburger {
+  display: none; /* hidden on wide screens; shown via media query below */
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 300;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border-hi);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.demo-hamburger:hover {
+  background: var(--surface-hi);
+  border-color: var(--accent);
+}
+
+.demo-hamburger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.demo-hamburger__bar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 1px;
+  transition: background 0.12s;
+}
+
+.demo-hamburger:hover .demo-hamburger__bar {
+  background: var(--bright);
+}
+
+/* Close button — only visible on mobile inside the open panel */
+.demo-sidebar__close {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.demo-sidebar__close:hover {
+  color: var(--bright);
+  border-color: var(--accent);
+}
+
+.demo-sidebar__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Backdrop — rendered by React when the mobile panel is open */
+.demo-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: oklch(0% 0 0 / 0.55);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE — below 768 px
+───────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
   body {
     padding-left: 0;
+  }
+
+  /* Hamburger becomes visible */
+  .demo-hamburger {
+    display: flex;
+  }
+
+  /* Sidebar slides in from the left as an overlay */
+  .demo-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.22s ease;
+    z-index: 200;
+    box-shadow: none;
+  }
+
+  .demo-sidebar--open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px oklch(0% 0 0 / 0.4);
+  }
+
+  /* Show the dedicated close button inside the open panel */
+  .demo-sidebar__close {
+    display: flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-sidebar {
+    transition: none;
   }
 }
 
