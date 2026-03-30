@@ -689,21 +689,16 @@ function ShrinkWrapDemo() {
 
   return (
     <section className="demo-section">
-      <span className="demo-section-eyebrow">Shrink-wrap · Binary-search fit</span>
+      <span className="demo-section-eyebrow">Shrink-wrap · Double-click to fit</span>
       <h2 className="demo-section-title">useShrinkWrap</h2>
       <p className="demo-section-desc">
-        Click a <em>Fit</em> button to snap the column to the narrowest width
-        where no cell text wraps. Uses binary search over{' '}
+        Double-click a column-resize handle to snap it to the narrowest
+        wrap-free width. Uses binary search over{' '}
         <code className="demo-code">walkLineRanges()</code> — zero DOM
         measurements, zero reflows.
       </p>
 
       <div className="demo-shrinkwrap-controls">
-        {SW_HEADERS.map((header, i) => (
-          <button key={i} className="demo-fit-btn" onClick={() => handleFit(i)}>
-            Fit: {header}
-          </button>
-        ))}
         <button
           className="demo-fit-btn demo-fit-btn--reset"
           onClick={() => setColumnWidths(SW_DEFAULT_WIDTHS)}
@@ -733,8 +728,18 @@ function ShrinkWrapDemo() {
           <thead>
             <tr>
               {SW_HEADERS.map((h, i) => (
-                <th key={i} style={{ width: columnWidths[i] }}>
-                  {h}
+                <th key={i} style={{ width: columnWidths[i], position: 'relative' }}>
+                  <span className="demo-sw-header-text">{h}</span>
+                  {i < SW_HEADERS.length - 1 && (
+                    <span
+                      className="demo-col-fit-handle"
+                      onDoubleClick={() => handleFit(i)}
+                      title="Double-click to auto-fit this column"
+                      role="separator"
+                      tabIndex={0}
+                      aria-label={`Auto-fit ${h} column`}
+                    />
+                  )}
                 </th>
               ))}
             </tr>
@@ -799,6 +804,7 @@ const SA_INITIAL_ROWS: Row[] = Array.from({ length: 12 }, (_, i) =>
 
 function ScrollAnchorDemo() {
   const [rows, setRows] = useState<Row[]>(SA_INITIAL_ROWS)
+  const [isLive, setIsLive] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const { rowHeights } = useMeasure(rows, SA_COLUMN_WIDTHS)
   const { prepend } = useScrollAnchor(rowHeights, scrollRef)
@@ -817,21 +823,39 @@ function ScrollAnchorDemo() {
     setRows((prev) => [...newRows, ...prev])
   }
 
+  // Live feed simulation: auto-prepend one new message every 2 s.
+  useEffect(() => {
+    if (!isLive) return
+    const id = setInterval(() => {
+      const newRow = makeSaRow(0)
+      prepend([newRow])
+      setRows((prev) => [newRow, ...prev])
+    }, 2000)
+    return () => clearInterval(id)
+  }, [isLive, prepend])
+
   return (
     <section className="demo-section">
-      <span className="demo-section-eyebrow">Scroll anchor · Prepend without jump</span>
+      <span className="demo-section-eyebrow">Scroll anchor · Prepend / Live feed</span>
       <h2 className="demo-section-title">useScrollAnchor</h2>
       <p className="demo-section-desc">
-        Click <em>Load older messages</em> to prepend rows. The currently
-        visible content stays stable — <code className="demo-code">scrollTop</code>{' '}
-        is corrected atomically using pretext-computed offsets before the browser
-        paints. No <code className="demo-code">getBoundingClientRect</code>, no{' '}
+        Click <em>Load older messages</em> to prepend rows, or toggle{' '}
+        <em>Live feed</em> to simulate a real-time stream. The visible content
+        stays put — <code className="demo-code">scrollTop</code> is adjusted
+        using pretext-computed offsets before the browser paints. No{' '}
+        <code className="demo-code">getBoundingClientRect</code>, no{' '}
         <code className="demo-code">scrollHeight</code> reads.
       </p>
 
       <div className="demo-shrinkwrap-controls">
         <button className="demo-fit-btn" onClick={handlePrepend}>
           ↑ Load older messages
+        </button>
+        <button
+          className={`demo-fit-btn${isLive ? ' demo-fit-btn--live-active' : ''}`}
+          onClick={() => setIsLive((v) => !v)}
+        >
+          {isLive ? '⏸ Stop live feed' : '▶ Start live feed'}
         </button>
       </div>
 

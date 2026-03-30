@@ -416,3 +416,66 @@ body {
 .demo-sw-table tr:nth-child(even) td {
   background: oklch(14.5% 0.016 255);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   SHRINK-WRAP DEMO — column auto-fit handle (double-click)
+───────────────────────────────────────────────────────────── */
+
+.demo-sw-header-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12px;
+}
+
+/* Right-edge handle — responds to double-click to auto-fit the column */
+.demo-col-fit-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.demo-col-fit-handle::after {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 60%;
+  border-radius: 1px;
+  background: var(--border-hi);
+  transition: background 0.15s, height 0.15s;
+}
+
+.demo-col-fit-handle:hover::after {
+  background: var(--accent);
+  height: 80%;
+}
+
+.demo-col-fit-handle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SCROLL ANCHOR DEMO — live feed button state
+───────────────────────────────────────────────────────────── */
+
+.demo-fit-btn--live-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.demo-fit-btn--live-active:hover {
+  background: oklch(22% 0.022 255);
+  border-color: var(--accent);
+  color: var(--accent);
+}
