@@ -52,6 +52,12 @@
   cursor: inherit;
 }
 
+/* ── Scroll container for horizontal overflow ───────────────── */
+
+.cc-scroll {
+  overflow-x: auto;
+}
+
 /* ── Table ──────────────────────────────────────────────────── */
 
 .cc-table {
@@ -84,6 +90,22 @@
 
 .cc-table th:hover {
   background: var(--surface-hover, oklch(19% 0.020 255));
+}
+
+/* ── Sticky first column (AC01–AC03) ────────────────────────── */
+
+.cc-table th:first-child,
+.cc-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  /* Separator shadow distinguishes sticky column from scrolling columns (AC02) */
+  box-shadow: 2px 0 5px -1px var(--shadow, rgba(0, 0, 0, 0.45));
+}
+
+/* Header must stack above body cells while scrolling */
+.cc-table th:first-child {
+  z-index: 2;
 }
 
 .cc-table-sort-indicator {

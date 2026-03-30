@@ -178,8 +178,47 @@ describe('column visibility – minimum 1 visible column', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Edge cases
+// US-003 AC04: sticky column included in measurement widths
 // ---------------------------------------------------------------------------
+
+describe('US-003 sticky column – measurement widths (AC04)', () => {
+  it('sticky column (first visible) is always at visibleIndices[0]', () => {
+    const vis = buildVisibility(4, new Set())
+    const indices = visibleIndices(vis)
+    expect(indices[0]).toBe(0)
+  })
+
+  it('sticky column width is the first entry in the widths passed to useMeasure', () => {
+    const columnWidths = [120, 200, 150, 180]
+    const vis = buildVisibility(4, new Set())
+    const indices = visibleIndices(vis)
+    const widths = indices.map((i) => columnWidths[i]!)
+    expect(widths[0]).toBe(120)
+  })
+
+  it('hiding a non-sticky column leaves the sticky column width at position 0', () => {
+    const columnWidths = [120, 200, 150, 180]
+    let hidden = new Set<number>()
+    hidden = toggle(hidden, 1, 4)
+    const vis = buildVisibility(4, hidden)
+    const indices = visibleIndices(vis)
+    const widths = indices.map((i) => columnWidths[i]!)
+    expect(indices[0]).toBe(0)
+    expect(widths[0]).toBe(120)
+    expect(widths).toEqual([120, 150, 180])
+  })
+
+  it('visibleWidths covers all visible columns including the sticky one', () => {
+    const columnWidths = [100, 200, 150]
+    const vis = buildVisibility(3, new Set([2]))
+    const indices = visibleIndices(vis)
+    const widths = indices.map((i) => columnWidths[i]!)
+    // sticky (col 0) and non-sticky (col 1) both present
+    expect(widths).toEqual([100, 200])
+    expect(widths.length).toBe(2)
+  })
+})
+
 
 describe('column visibility – edge cases', () => {
   it('single column table: that column cannot be hidden', () => {

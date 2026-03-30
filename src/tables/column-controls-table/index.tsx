@@ -61,6 +61,7 @@ export function ColumnControlsTable({
         })}
       </div>
 
+      <div className="cc-scroll">
       <table
         className="cc-table"
         style={{ '--cc-table-font': BODY_FONT } as React.CSSProperties}
@@ -107,6 +108,7 @@ export function ColumnControlsTable({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }
