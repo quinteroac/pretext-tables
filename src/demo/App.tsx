@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes, useDynamicFont, useExportCanvas } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes, useDynamicFont, useExportCanvas, useSearch } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT, FONT_FAMILY_SANS, FONT_FAMILY_SERIF, FONT_FAMILY_MONO, FONT_FAMILY_SYSTEM } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
@@ -597,8 +597,149 @@ const { rowHeights } = useMeasure(
         <DynamicFontDemo />
 
         <ExportCanvasDemo />
+
+        <SearchDemo />
       </main>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// SearchDemo — useSearch: text input + match-coordinate highlight overlay
+// ---------------------------------------------------------------------------
+
+const SEARCH_ROWS: Row[] = [
+  { id: 'sr1', cells: ['Alice Johnson', 'Leads the frontend architecture team and is responsible for establishing coding standards across all product surfaces.'] },
+  { id: 'sr2', cells: ['Bob Martinez', 'Works on backend API design with a focus on performance and scalability for high-traffic endpoints.'] },
+  { id: 'sr3', cells: ['Carol White', 'Manages the design system and ensures visual consistency from the component library down to individual page layouts.'] },
+  { id: 'sr4', cells: ['David Kim', 'Full-stack engineer who primarily owns the billing and subscription management subsystem.'] },
+  { id: 'sr5', cells: ['Eva Schulz', 'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses.'] },
+  { id: 'sr6', cells: ['Frank Okafor', 'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation strategies.'] },
+  { id: 'sr7', cells: ['Grace Tanaka', 'Product manager for the core editor experience, gathering user feedback and shaping the feature roadmap.'] },
+  { id: 'sr8', cells: ['Hiro Nakamura', 'Security engineer who performs threat modelling and conducts regular penetration tests on all customer-facing services.'] },
+]
+
+const SEARCH_COLUMN_WIDTHS = [200, 440]
+const SEARCH_HEADERS = ['Name', 'Role Summary']
+const SEARCH_CELL_PADDING = 16
+
+function SearchDemo() {
+  const [query, setQuery] = useState('')
+
+  const { filteredRows, matchCoords } = useSearch(
+    SEARCH_ROWS,
+    SEARCH_COLUMN_WIDTHS,
+    BODY_FONT,
+    query,
+    { cellPadding: SEARCH_CELL_PADDING },
+  )
+
+  const { rowHeights } = useMeasure(filteredRows, SEARCH_COLUMN_WIDTHS, {
+    cellPadding: SEARCH_CELL_PADDING,
+  })
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Search · highlight overlay · match coordinates</span>
+      <h2 className="demo-section-title">useSearch</h2>
+      <p className="demo-section-desc">
+        Filters rows by a search query and returns pixel-accurate{' '}
+        <code className="demo-code">matchCoords</code> for every occurrence —
+        derived from <code className="demo-code">layoutWithLines()</code>, no DOM
+        reads. Each rect is an <code className="demo-code">{'{ x, y, width, height }'}</code>{' '}
+        bounding box relative to the cell content area, ready to drive a highlight
+        overlay. Type in the input below to see matches highlighted live.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-search-controls">
+            <input
+              className="demo-search-input"
+              type="text"
+              placeholder="Search rows…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search table rows"
+              spellCheck={false}
+              autoComplete="off"
+            />
+            {query.length > 0 && (
+              <span className="demo-search-count">
+                {filteredRows.length === 0
+                  ? 'No matches'
+                  : `${filteredRows.length} row${filteredRows.length === 1 ? '' : 's'}`}
+              </span>
+            )}
+          </div>
+
+          <div className="demo-table-wrapper">
+            <table className="demo-search-table">
+              <thead>
+                <tr>
+                  {SEARCH_HEADERS.map((h, ci) => (
+                    <th key={ci} style={{ width: SEARCH_COLUMN_WIDTHS[ci] }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row, ri) => (
+                  <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} style={{ width: SEARCH_COLUMN_WIDTHS[ci] }}>
+                        <div className="demo-search-cell">
+                          {cell}
+                          {matchCoords[ri]?.[ci]?.map((rect, hi) => (
+                            <span
+                              key={hi}
+                              className="demo-search-highlight"
+                              style={{
+                                left: rect.x,
+                                top: rect.y,
+                                width: rect.width,
+                                height: rect.height,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useSearch"
+            code={`const [query, setQuery] = useState('')
+
+const { filteredRows, matchCoords } =
+  useSearch(rows, columnWidths, BODY_FONT, query)
+
+const { rowHeights } =
+  useMeasure(filteredRows, columnWidths)
+
+// matchCoords is parallel to filteredRows.
+// Each entry maps colIndex → MatchRect[]:
+//   { x, y, width, height }
+// All coords from layoutWithLines() — no DOM reads.
+
+// Render highlight overlay per cell:
+matchCoords[ri]?.[ci]?.map(rect => (
+  <span style={{
+    position: 'absolute',
+    left: rect.x, top: rect.y,
+    width: rect.width,
+    height: rect.height,
+  }} />
+))`}
+          />
+        </div>
+      </div>
+    </section>
   )
 }
 
