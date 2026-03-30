@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells } from '../shared/hooks/index.js'
+import type { MediaSpec } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
@@ -584,8 +585,177 @@ const { rowHeights } = useMeasure(
         <DetachableDemo />
 
         <CanvasCellDemo />
+
+        <MediaCellsDemo />
       </main>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// MediaCellsDemo — useMediaCells: product-catalogue with toggleable image previews
+// ---------------------------------------------------------------------------
+
+const MC_LINE_HEIGHT = 20
+const MC_CELL_PADDING = 16
+const MC_COLUMN_WIDTHS = [200, 320, 140]
+const MC_HEADERS = ['Product', 'Description', 'Price']
+
+// Product catalogue rows. Image dimensions are declared as props — zero DOM reads.
+const MC_ROWS: Row[] = [
+  { id: 'mc1', cells: ['Wireless Headphones', 'Studio-quality audio with 40 h battery life, active noise cancellation, and a foldable design that travels well.', '$299'] },
+  { id: 'mc2', cells: ['Mechanical Keyboard', 'Tenkeyless layout with Cherry MX Brown switches, per-key RGB backlighting, and a detachable USB-C cable.', '$149'] },
+  { id: 'mc3', cells: ['4K Webcam', 'Ultra-sharp 4 K/30 fps capture with dual built-in microphones, auto-focus, and a privacy shutter.', '$199'] },
+  { id: 'mc4', cells: ['Portable SSD', '2 TB of NVMe storage in a palm-sized enclosure. Reads up to 1 050 MB/s over USB 3.2 Gen 2.', '$119'] },
+  { id: 'mc5', cells: ['Monitor Light Bar', 'Screenbar that illuminates your desk without glare on the display. Auto-dimming via built-in ambient sensor.', '$79'] },
+]
+
+// Media specs — all heights come from props, never from DOM measurement.
+const MC_MEDIA: Record<string, MediaSpec> = {
+  mc1: { mediaHeight: 180 },
+  mc2: { mediaHeight: 160 },
+  mc3: { width: 320, aspectRatio: 16 / 9 }, // derived: ~180 px
+  mc4: { mediaHeight: 140 },
+  mc5: { mediaHeight: 120 },
+}
+
+// Placeholder gradient palettes used instead of real images so the demo is
+// self-contained. Each palette is a [from, to] oklch pair.
+const MC_PALETTES: [string, string][] = [
+  ['oklch(35% 0.15 260)', 'oklch(55% 0.20 310)'],
+  ['oklch(30% 0.12 145)', 'oklch(55% 0.18 185)'],
+  ['oklch(35% 0.14 30)',  'oklch(60% 0.20 60)'],
+  ['oklch(30% 0.10 200)', 'oklch(55% 0.15 240)'],
+  ['oklch(35% 0.12 350)', 'oklch(60% 0.18 15)'],
+]
+
+function MediaCellsDemo() {
+  const { mediaVisible, toggleMedia, getEffectiveRows } = useMediaCells({
+    media: MC_MEDIA,
+    lineHeight: MC_LINE_HEIGHT,
+  })
+
+  // Pass effective rows (with synthetic padding) to useMeasure so heights
+  // include the media space when a row is expanded. No DOM reads involved.
+  const { rowHeights } = useMeasure(getEffectiveRows(MC_ROWS), MC_COLUMN_WIDTHS, {
+    lineHeight: MC_LINE_HEIGHT,
+    cellPadding: MC_CELL_PADDING,
+  })
+
+  const totalWidth = MC_COLUMN_WIDTHS.reduce((a, b) => a + b, 0)
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Media rows · pre-computed heights</span>
+      <h2 className="demo-section-title">useMediaCells</h2>
+      <p className="demo-section-desc">
+        Each row can expand to show an image or video preview whose height is
+        passed as a prop — <code className="demo-code">{'{ mediaHeight }'}</code> or{' '}
+        <code className="demo-code">{'{ width, aspectRatio }'}</code>. The total
+        row height (<em>text + media</em>) is computed by injecting synthetic
+        newline padding before calling{' '}
+        <code className="demo-code">layout()</code>. No{' '}
+        <code className="demo-code">ResizeObserver</code>, no{' '}
+        <code className="demo-code">getBoundingClientRect</code>.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-table-meta">
+            {MC_HEADERS.map((h, i) => (
+              <span key={i} className="demo-pill">{h} · {MC_COLUMN_WIDTHS[i]}px</span>
+            ))}
+          </div>
+          <div className="demo-table-wrapper demo-table-wrapper--fit">
+            <table className="mc-table" style={{ width: totalWidth }}>
+              <thead>
+                <tr className="mc-header-row">
+                  {MC_HEADERS.map((h, i) => (
+                    <th key={i} className="mc-th" style={{ width: MC_COLUMN_WIDTHS[i] }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {MC_ROWS.map((row, ri) => {
+                  const hasMedia = row.id in MC_MEDIA
+                  const isExpanded = !!mediaVisible[row.id]
+                  const mediaHeight = hasMedia
+                    ? (MC_MEDIA[row.id]! as { mediaHeight?: number; width?: number; aspectRatio?: number }).mediaHeight
+                      ?? ((MC_MEDIA[row.id] as { width: number; aspectRatio: number }).width /
+                          (MC_MEDIA[row.id] as { width: number; aspectRatio: number }).aspectRatio)
+                    : 0
+                  const [fromColor, toColor] = MC_PALETTES[ri % MC_PALETTES.length]!
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`mc-row${isExpanded ? ' mc-row--expanded' : ''}`}
+                      style={{ height: rowHeights[ri] }}
+                    >
+                      {row.cells.map((cell, ci) => (
+                        <td
+                          key={ci}
+                          className={`mc-td${ci === 0 && hasMedia ? ' mc-td--clickable' : ''}`}
+                          style={{ width: MC_COLUMN_WIDTHS[ci], verticalAlign: 'top' }}
+                          onClick={ci === 0 && hasMedia ? () => toggleMedia(row.id) : undefined}
+                        >
+                          {ci === 0 && hasMedia && (
+                            <span className="mc-toggle-icon" aria-label={isExpanded ? 'Hide preview' : 'Show preview'}>
+                              {isExpanded ? '▼' : '▶'}
+                            </span>
+                          )}
+                          <span className="mc-cell-text">{cell}</span>
+                          {ci === 0 && isExpanded && (
+                            <div
+                              className="mc-media-preview"
+                              style={{
+                                height: mediaHeight,
+                                background: `linear-gradient(135deg, ${fromColor}, ${toColor})`,
+                              }}
+                              aria-label="Product image preview"
+                            >
+                              <span className="mc-preview-label">image preview · {Math.round(mediaHeight)}px</span>
+                            </div>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useMediaCells"
+            code={`const { mediaVisible, toggleMedia, getEffectiveRows } =
+  useMediaCells({
+    media: {
+      'row-1': { mediaHeight: 180 },
+      'row-2': { width: 320, aspectRatio: 16/9 },
+    },
+    lineHeight: LINE_HEIGHT,
+  })
+
+// Pass effective rows — heights = textHeight + mediaHeight
+const { rowHeights } = useMeasure(
+  getEffectiveRows(rows),
+  columnWidths,
+  { lineHeight: LINE_HEIGHT }
+)
+
+// Render with original rows; click to toggle
+<tr style={{ height: rowHeights[i] }}>
+  <td onClick={() => toggleMedia(row.id)}>
+    {row.cells[0]}
+    {mediaVisible[row.id] && <ImagePreview />}
+  </td>
+</tr>`}
+          />
+        </div>
+      </div>
+    </section>
   )
 }
 

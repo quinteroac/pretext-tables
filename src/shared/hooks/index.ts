@@ -45,3 +45,12 @@ export type {
 
 export { useDetachable, toggleSet } from './useDetachable.js'
 export type { UseDetachableOptions, UseDetachableResult } from './useDetachable.js'
+
+export { useMediaCells, resolveMediaHeight } from './useMediaCells.js'
+export type {
+  MediaHeightSpec,
+  MediaVideoSpec,
+  MediaSpec,
+  UseMediaCellsOptions,
+  UseMediaCellsResult,
+} from './useMediaCells.js'
