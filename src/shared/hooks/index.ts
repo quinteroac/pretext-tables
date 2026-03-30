@@ -9,3 +9,6 @@ export type { ExpandableOptions } from './useExpandable.js'
 
 export { useVirtualization, computeOffsets, computeTotalHeight, computeVirtualWindow } from './useVirtualization.js'
 export type { UseVirtualizationOptions, UseVirtualizationResult } from './useVirtualization.js'
+
+export { useDraggable, reorder } from './useDraggable.js'
+export type { UseDraggableOptions, DraggableResult } from './useDraggable.js'

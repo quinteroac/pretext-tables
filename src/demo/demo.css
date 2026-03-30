@@ -1,4 +1,37 @@
-/* Demo page layout */
+/* ─────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────────────────────────── */
+
+:root {
+  /* Background scale */
+  --bg:            oklch(9.5%  0.016 255);
+  --surface:       oklch(13%   0.016 255);
+  --surface-alt:   oklch(14.5% 0.016 255);  /* alternating table rows */
+  --surface-hi:    oklch(17%   0.018 255);
+  --surface-hover: oklch(19%   0.020 255);  /* interactive row hover */
+
+  /* Borders */
+  --border:      oklch(22%   0.020 255);
+  --border-hi:   oklch(34%   0.022 255);
+
+  /* Text */
+  --muted:       oklch(50%   0.016 258);
+  --text:        oklch(83%   0.012 257);
+  --bright:      oklch(96%   0.007 254);
+
+  /* Accent — warm amber: precise, technical, not neon */
+  --accent:      oklch(72%   0.148 66);
+  --accent-dim:  oklch(72%   0.148 66 / 0.10);
+
+  /* Type stacks */
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-body:    "Space Grotesk", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", "Fira Code", Consolas, monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RESET + BASE
+───────────────────────────────────────────────────────────── */
 
 *,
 *::before,
@@ -9,120 +42,290 @@
 }
 
 body {
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
-  background: #f0f4f8;
-  color: #1a202c;
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Root container */
+/* ─────────────────────────────────────────────────────────────
+   PAGE SHELL
+───────────────────────────────────────────────────────────── */
 
 .demo-root {
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 48px 24px 80px;
+  padding: 0 40px 120px;
 }
 
-/* Header */
+/* ─────────────────────────────────────────────────────────────
+   HERO HEADER
+───────────────────────────────────────────────────────────── */
 
 .demo-header {
-  margin-bottom: 40px;
+  padding: 72px 0 0;
 }
 
+/* Product wordmark — small amber mono label */
+.demo-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.demo-wordmark::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Hero headline */
 .demo-title {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: #1a202c;
-  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-size: clamp(52px, 8.5vw, 88px);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: var(--bright);
+  margin-bottom: 28px;
 }
 
+.demo-title em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* Subtitle */
 .demo-subtitle {
-  font-size: 14px;
-  color: #4a5568;
-  max-width: 560px;
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 500px;
+  line-height: 1.72;
+  margin-bottom: 52px;
 }
 
-.demo-code {
-  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
-  font-size: 13px;
-  background: #e2e8f0;
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: #2d3748;
+/* Stats bar */
+.demo-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
-/* Section */
+.demo-stat {
+  padding: 18px 0 18px 20px;
+  border-right: 1px solid var(--border);
+}
+
+.demo-stat:first-child {
+  padding-left: 0;
+}
+
+.demo-stat:last-child {
+  border-right: none;
+}
+
+.demo-stat-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--bright);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.demo-stat-value--good {
+  color: oklch(68% 0.12 145);
+}
+
+.demo-stat-value--info {
+  color: oklch(68% 0.10 250);
+}
+
+.demo-stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTIONS  (no cards — sections breathe on the bare page)
+───────────────────────────────────────────────────────────── */
 
 .demo-main {
   display: flex;
   flex-direction: column;
-  gap: 48px;
 }
 
 .demo-section {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  padding: 28px 28px 32px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 56px 0;
+  border-bottom: 1px solid var(--border);
 }
 
+.demo-section:last-child {
+  border-bottom: none;
+}
+
+/* Amber mono eyebrow above section title */
+.demo-section-eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 10px;
+}
+
+/* Section title */
 .demo-section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--bright);
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  margin-bottom: 8px;
 }
 
+/* Sub-label within a section (e.g. "CUSTOM COMPOSITION") */
+.demo-section-subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--border-hi);
+  margin-top: 36px;
+  margin-bottom: 12px;
+}
+
+/* Section description */
 .demo-section-desc {
   font-size: 13px;
-  color: #718096;
-  margin-bottom: 16px;
+  color: var(--muted);
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 20px;
 }
 
-/* Column meta pills */
+/* ─────────────────────────────────────────────────────────────
+   INLINE CODE
+───────────────────────────────────────────────────────────── */
+
+.demo-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   COLUMN-WIDTH LABELS  (pills → minimal mono tokens)
+───────────────────────────────────────────────────────────── */
 
 .demo-table-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 0;
+  margin-bottom: 16px;
 }
 
 .demo-pill {
-  font-size: 12px;
-  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
-  background: #edf2f7;
-  color: #4a5568;
-  border-radius: 999px;
-  padding: 3px 10px;
-  border: 1px solid #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  padding: 3px 16px 3px 0;
+  margin-right: 16px;
   white-space: nowrap;
 }
 
-/* Table wrapper — give it a subtle shadow and let BasicTable fill it */
-
-.demo-table-wrapper {
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
+.demo-pill:last-child {
+  border-right: none;
+  margin-right: 0;
 }
 
-/* Variant: user can drag the right edge to resize the whole table */
+/* ─────────────────────────────────────────────────────────────
+   TABLE WRAPPERS
+───────────────────────────────────────────────────────────── */
 
-.demo-table-wrapper--resizable {
-  resize: horizontal;
-  overflow: auto;
-  min-width: 200px;
+.demo-table-wrapper {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Fix: BasicTable uses width:auto so the wrapper must shrink to table width */
+.demo-table-wrapper--fit {
+  width: fit-content;
   max-width: 100%;
 }
 
-/* Override basic-table widths so they don't stretch to 100% inside the card */
+/* ─────────────────────────────────────────────────────────────
+   FOCUS STATES — keyboard-accessible handles
+───────────────────────────────────────────────────────────── */
 
-.demo-table-wrapper .basic-table {
-  width: auto;
-  min-width: 100%;
+.resizable-table-handle--col:focus-visible,
+.resizable-table-handle--row:focus-visible {
+  outline: 2px solid oklch(72% 0.148 66);
+  outline-offset: 0;
 }
+
+.draggable-table-grip:focus-visible {
+  outline: 2px solid oklch(72% 0.148 66);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   REDUCED MOTION
+───────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DEPARTMENT BADGES
+───────────────────────────────────────────────────────────── */
+
+.demo-dept-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+

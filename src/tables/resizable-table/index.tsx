@@ -1,3 +1,4 @@
+import type React from 'react'
 import type { Row } from '../../shared/types.js'
 import { LINE_HEIGHT, CELL_PADDING, MIN_COLUMN_WIDTH } from './measure.js'
 import { useMeasure } from '../../shared/hooks/useMeasure.js'
@@ -13,6 +14,7 @@ export interface ResizableTableProps {
   horizontal?: boolean
   /** Enable vertical row-resize handles. Default false. */
   vertical?: boolean
+  renderCell?: (value: string, rowIndex: number, colIndex: number) => React.ReactNode
 }
 
 /**
@@ -25,6 +27,7 @@ export function ResizableTable({
   defaultColumnWidths,
   horizontal = true,
   vertical = false,
+  renderCell,
 }: ResizableTableProps) {
   const { columnWidths, manualRowHeights, getColHandleProps, getRowHandleProps } =
     useResizable({
@@ -69,7 +72,10 @@ export function ResizableTable({
                   <span
                     className="resizable-table-handle resizable-table-handle--col"
                     {...getColHandleProps(colIndex)}
-                    title="Drag to resize column"
+                    tabIndex={0}
+                    role="separator"
+                    aria-label={`Resize ${headers[colIndex]} column`}
+                    title="Drag to resize this column"
                   />
                 )}
               </th>
@@ -87,12 +93,15 @@ export function ResizableTable({
                     style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}
                     className={vertical && isLast ? 'resizable-table-td--last' : undefined}
                   >
-                    {cell}
+                    {renderCell ? renderCell(cell, rowIndex, colIndex) : cell}
                     {vertical && isLast && (
                       <span
                         className="resizable-table-handle resizable-table-handle--row"
                         {...getRowHandleProps(rowIndex, rowHeights[rowIndex])}
-                        title="Drag to resize row"
+                        tabIndex={0}
+                        role="separator"
+                        aria-label={`Resize row ${rowIndex + 1} height`}
+                        title="Drag to set row height"
                       />
                     )}
                   </td>

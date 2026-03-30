@@ -1,13 +1,14 @@
 .basic-table {
   border-collapse: collapse;
   font: var(--basic-table-font);
-  width: 100%;
+  table-layout: fixed;
+  width: auto;
 }
 
 .basic-table th,
 .basic-table td {
-  border: 1px solid #e2e8f0;
-  padding: 4px 8px;
+  border: 1px solid var(--border, oklch(22% 0.020 255));
+  padding: 7px 10px;
   text-align: left;
   vertical-align: top;
   word-break: break-word;
@@ -17,10 +18,20 @@
 }
 
 .basic-table th {
-  background-color: #f8fafc;
-  font-weight: bold;
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  color: var(--bright, oklch(92% 0.008 255));
+  font-weight: 600;
+}
+
+.basic-table td {
+  background: var(--surface, oklch(13% 0.016 255));
+  color: var(--text, oklch(83% 0.012 257));
 }
 
 .basic-table tr:nth-child(even) td {
-  background-color: #f8fafc;
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+.basic-table tbody tr:hover td {
+  background: var(--surface-hover, oklch(19% 0.020 255));
 }

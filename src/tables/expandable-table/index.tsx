@@ -1,3 +1,4 @@
+import type React from 'react'
 import type { Row } from '../../shared/types.js'
 import { LINE_HEIGHT, CELL_PADDING, MIN_COLUMN_WIDTH } from './measure.js'
 import { useMeasure } from '../../shared/hooks/useMeasure.js'
@@ -10,6 +11,7 @@ export interface ExpandableTableProps {
   rows: Row[]
   headers: string[]
   defaultColumnWidths: number[]
+  renderCell?: (value: string, rowIndex: number, colIndex: number) => React.ReactNode
 }
 
 /**
@@ -17,7 +19,7 @@ export interface ExpandableTableProps {
  * The wrapper has `resize: horizontal` so users can drag the right edge.
  * All measuring is done with @chenglou/pretext — no DOM layout calls.
  */
-export function ExpandableTable({ rows, headers, defaultColumnWidths }: ExpandableTableProps) {
+export function ExpandableTable({ rows, headers, defaultColumnWidths, renderCell }: ExpandableTableProps) {
   const { columnWidths, setColumnWidths } = useResizable({
     defaultColumnWidths,
     minColumnWidth: MIN_COLUMN_WIDTH,
@@ -72,7 +74,7 @@ export function ExpandableTable({ rows, headers, defaultColumnWidths }: Expandab
                   key={colIndex}
                   style={{ width: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }}
                 >
-                  {cell}
+                  {renderCell ? renderCell(cell, rowIndex, colIndex) : cell}
                 </td>
               ))}
             </tr>
@@ -82,3 +84,4 @@ export function ExpandableTable({ rows, headers, defaultColumnWidths }: Expandab
     </div>
   )
 }
+

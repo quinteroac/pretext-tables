@@ -1,6 +1,42 @@
-import { BasicTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
+import type React from 'react'
+import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
 import './demo.css'
+
+// ── Department color map ──────────────────────────────────────────────────
+// Each department gets a distinct hue in oklch (uniform lightness/chroma so
+// all badges feel equally weighted — no one department "shouts").
+const DEPT_COLORS: Record<string, { text: string; bg: string }> = {
+  'Engineering':        { text: 'oklch(68% 0.08 240)', bg: 'oklch(16% 0.03 240)' },
+  'Platform':           { text: 'oklch(68% 0.08 280)', bg: 'oklch(16% 0.03 280)' },
+  'Design':             { text: 'oklch(68% 0.08 350)', bg: 'oklch(16% 0.03 350)' },
+  'Analytics':          { text: 'oklch(68% 0.08 185)', bg: 'oklch(16% 0.03 185)' },
+  'Infrastructure':     { text: 'oklch(68% 0.08 50)',  bg: 'oklch(16% 0.03 50)'  },
+  'Product':            { text: 'oklch(68% 0.08 140)', bg: 'oklch(16% 0.03 140)' },
+  'Security':           { text: 'oklch(68% 0.08 15)',  bg: 'oklch(16% 0.03 15)'  },
+  'Customer Success':   { text: 'oklch(68% 0.08 160)', bg: 'oklch(16% 0.03 160)' },
+  'Mobile':             { text: 'oklch(68% 0.08 295)', bg: 'oklch(16% 0.03 295)' },
+  'Documentation':      { text: 'oklch(68% 0.08 225)', bg: 'oklch(16% 0.03 225)' },
+  'Quality Assurance':  { text: 'oklch(68% 0.08 90)',  bg: 'oklch(16% 0.03 90)'  },
+  'Data Science':       { text: 'oklch(68% 0.08 200)', bg: 'oklch(16% 0.03 200)' },
+  'DevOps':             { text: 'oklch(68% 0.08 55)',  bg: 'oklch(16% 0.03 55)'  },
+  'Finance':            { text: 'oklch(68% 0.08 155)', bg: 'oklch(16% 0.03 155)' },
+  'Legal':              { text: 'oklch(68% 0.08 260)', bg: 'oklch(16% 0.03 260)' },
+}
+
+function renderDeptCell(value: string, _rowIndex: number, colIndex: number): React.ReactNode {
+  if (colIndex !== 2) return value
+  const colors = DEPT_COLORS[value]
+  if (!colors) return value
+  return (
+    <span
+      className="demo-dept-badge"
+      style={{ color: colors.text, background: colors.bg }}
+    >
+      {value}
+    </span>
+  )
+}
 
 const COLUMN_WIDTHS = [200, 300, 220]
 
@@ -164,59 +200,81 @@ export function App() {
   return (
     <div className="demo-root">
       <header className="demo-header">
-        <h1 className="demo-title">BasicTable Demo</h1>
+        <div className="demo-wordmark">pretext-tables</div>
+        <h1 className="demo-title">
+          Measure text.<br />
+          <em>Skip the DOM.</em>
+        </h1>
         <p className="demo-subtitle">
-          Cell heights are pre-calculated by{' '}
-          <code className="demo-code">@chenglou/pretext</code> — no DOM
-          measurement, no layout thrash.
+          Five table components powered by{' '}
+          <code className="demo-code">@chenglou/pretext</code> — row heights
+          calculated before the browser renders. No DOM reads. No layout
+          reflows.
         </p>
+        <div className="demo-stats">
+          <div className="demo-stat">
+            <div className="demo-stat-value demo-stat-value--good">0</div>
+            <div className="demo-stat-label">DOM reflows</div>
+          </div>
+          <div className="demo-stat">
+            <div className="demo-stat-value">5</div>
+            <div className="demo-stat-label">components</div>
+          </div>
+          <div className="demo-stat">
+            <div className="demo-stat-value demo-stat-value--info">1</div>
+            <div className="demo-stat-label">measure pass</div>
+          </div>
+          <div className="demo-stat">
+            <div className="demo-stat-value demo-stat-value--good">∞</div>
+            <div className="demo-stat-label">layout calls saved</div>
+          </div>
+        </div>
       </header>
 
       <main className="demo-main">
         <section className="demo-section">
-          <h2 className="demo-section-title">Team Directory</h2>
+          <span className="demo-section-eyebrow">Basic · Fixed widths</span>
+          <h2 className="demo-section-title">BasicTable</h2>
           <p className="demo-section-desc">
-            12 rows &times; 3 columns. The &ldquo;Role Summary&rdquo; column
-            contains long text designed to trigger multi-line wrapping.
+            Fixed column widths, variable-height rows. Text wraps correctly
+            without ever measuring the DOM.
           </p>
 
           <div className="demo-table-meta">
-            <span className="demo-pill">Name — 200 px</span>
-            <span className="demo-pill">Role Summary — 300 px</span>
-            <span className="demo-pill">Department — 220 px</span>
+            <span className="demo-pill">Name · 200px</span>
+            <span className="demo-pill">Role Summary · 300px</span>
+            <span className="demo-pill">Department · 220px</span>
           </div>
 
-          <div className="demo-table-wrapper">
-            <BasicTable rows={ROWS} columnWidths={COLUMN_WIDTHS} />
+          <div className="demo-table-wrapper demo-table-wrapper--fit">
+            <BasicTable rows={ROWS} columnWidths={COLUMN_WIDTHS} renderCell={renderDeptCell} />
           </div>
         </section>
 
         <section className="demo-section">
+          <span className="demo-section-eyebrow">Expandable · Proportional scaling</span>
           <h2 className="demo-section-title">ExpandableTable</h2>
           <p className="demo-section-desc">
-            Drag the right edge of the table to resize the whole container.
-            All columns scale proportionally via{' '}
-            <code className="demo-code">useExpandable</code> —{' '}
-            <code className="demo-code">layout()</code> recalculates row
-            heights on every change,{' '}
-            <code className="demo-code">prepare()</code> runs once on load.
+            Drag the right edge of the table to resize it. All columns scale
+            proportionally and row heights update instantly — no DOM reads
+            needed.
           </p>
           <div className="demo-table-wrapper">
             <ExpandableTable
               rows={ROWS}
               headers={EXPANDABLE_HEADERS}
               defaultColumnWidths={EXPANDABLE_DEFAULT_WIDTHS}
+              renderCell={renderDeptCell}
             />
           </div>
         </section>
 
         <section className="demo-section">
+          <span className="demo-section-eyebrow">Resizable · Column + row handles</span>
           <h2 className="demo-section-title">ResizableTable</h2>
           <p className="demo-section-desc">
-            Drag a column divider to resize it{' '}
-            (<code className="demo-code">useResizable horizontal</code>), or
-            drag the bottom edge of any row to override its height{' '}
-            (<code className="demo-code">useResizable vertical</code>).
+            Drag a column's right edge to resize it. Drag the bottom of any
+            row to set a custom height.
           </p>
           <div className="demo-table-wrapper">
             <ResizableTable
@@ -225,34 +283,78 @@ export function App() {
               defaultColumnWidths={RESIZABLE_DEFAULT_WIDTHS}
               horizontal
               vertical
+              renderCell={renderDeptCell}
             />
           </div>
         </section>
 
         <section className="demo-section">
+          <span className="demo-section-eyebrow">Virtual · 500 rows · Windowed</span>
           <h2 className="demo-section-title">VirtualizedTable</h2>
           <p className="demo-section-desc">
-            500 rows — only the rows visible in the viewport are in the DOM at
-            any given time. All row heights are pre-calculated by{' '}
-            <code className="demo-code">@chenglou/pretext</code> before any
-            rendering, so the total scroll height is exact from the start — no
-            estimation, no layout jumps. Every third row has a longer
-            description that wraps across multiple lines.
+            500 rows — only the visible rows are in the DOM at any time.
+            Because heights are calculated before rendering, the scrollbar is
+            perfectly sized from the first frame — no estimation, no layout
+            jumps.
           </p>
 
           <div className="demo-table-meta">
-            <span className="demo-pill">Name — 180 px</span>
-            <span className="demo-pill">Role Summary — 340 px</span>
-            <span className="demo-pill">Department — 160 px</span>
+            <span className="demo-pill">Name · 180px</span>
+            <span className="demo-pill">Role Summary · 340px</span>
+            <span className="demo-pill">Department · 160px</span>
           </div>
 
-          <VirtualizedTable
-            rows={VIRTUAL_ROWS}
-            columnWidths={VIRTUAL_COLUMN_WIDTHS}
-            height={400}
-          />
+          <div className="demo-table-wrapper">
+            <VirtualizedTable
+              rows={VIRTUAL_ROWS}
+              columnWidths={VIRTUAL_COLUMN_WIDTHS}
+              height={400}
+              renderCell={renderDeptCell}
+            />
+          </div>
         </section>
+
+        <DraggableDemo />
       </main>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// DraggableDemo — shows <DraggableTable> first, then hook-only composition
+// ---------------------------------------------------------------------------
+
+const DRAGGABLE_ROWS: Row[] = [
+  { id: 'd1', cells: ['Alice Johnson', 'Leads the frontend architecture team and establishes coding standards.', 'Engineering'] },
+  { id: 'd2', cells: ['Bob Martinez', 'Works on backend API design with a focus on performance and scalability.', 'Platform'] },
+  { id: 'd3', cells: ['Carol White', 'Manages the design system and ensures visual consistency across surfaces.', 'Design'] },
+  { id: 'd4', cells: ['David Kim', 'Full-stack engineer who owns the billing and subscription management subsystem.', 'Engineering'] },
+  { id: 'd5', cells: ['Eva Schulz', 'Data analyst responsible for building dashboards and running A/B test analyses.', 'Analytics'] },
+]
+
+const DRAGGABLE_COLUMN_WIDTHS = [160, 300, 140]
+const DRAGGABLE_HEADERS = ['Name', 'Role Summary', 'Department']
+
+function DraggableDemo() {
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Draggable · Row + column reorder</span>
+      <h2 className="demo-section-title">DraggableTable</h2>
+      <p className="demo-section-desc">
+        Drag any row or column header to reorder it. Uses native browser
+        drag-and-drop — no extra library needed. Row heights stay correct
+        through every reorder.
+      </p>
+
+      <div className="demo-table-wrapper">
+        <DraggableTable
+          rows={DRAGGABLE_ROWS}
+          headers={DRAGGABLE_HEADERS}
+          columnWidths={DRAGGABLE_COLUMN_WIDTHS}
+          renderCell={renderDeptCell}
+        />
+      </div>
+
+    </section>
   )
 }
