@@ -24,7 +24,8 @@
   --accent-dim:  oklch(72%   0.148 66 / 0.10);
 
   /* Shadow — for sticky column separators and elevation */
-  --shadow:      rgba(0, 0, 0, 0.45);
+  --shadow:      oklch(0% 0 0 / 0.45);
+  --backdrop:    oklch(0% 0 0 / 0.55);  /* mobile sidebar backdrop */
 
   /* Extended tokens for demo-specific components */
   --text-mid:      oklch(68% 0.012 257);  /* secondary/dimmer text */
@@ -58,6 +59,10 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-body);
   font-size: 14px;
@@ -66,6 +71,7 @@ body {
   color: var(--text);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  padding-left: 220px;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -79,6 +85,237 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   SIDEBAR — fixed navigation
+───────────────────────────────────────────────────────────── */
+
+.demo-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  z-index: 100;
+}
+
+.demo-sidebar__inner {
+  padding: 32px 0 40px;
+}
+
+.demo-sidebar__heading {
+  padding: 0 18px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  user-select: none;
+}
+
+.demo-sidebar__list {
+  list-style: none;
+}
+
+.demo-sidebar__item {
+  display: block;
+}
+
+.demo-sidebar__link {
+  display: block;
+  padding: 8px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-mid);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.12s, background 0.12s;
+}
+
+.demo-sidebar__link:hover {
+  color: var(--bright);
+  background: var(--surface-hi);
+}
+
+.demo-sidebar__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.demo-sidebar__link--active {
+  color: var(--accent);
+  border-left: 2px solid var(--accent);
+  padding-left: 16px; /* 18px - 2px border = same visual indent */
+  background: var(--accent-dim);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HAMBURGER BUTTON — visible only below 768 px
+───────────────────────────────────────────────────────────── */
+
+.demo-hamburger {
+  display: none; /* hidden on wide screens; shown via media query below */
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 300;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border-hi);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.demo-hamburger:hover {
+  background: var(--surface-hi);
+  border-color: var(--accent);
+}
+
+.demo-hamburger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.demo-hamburger__bar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 1px;
+  transition: background 0.12s;
+}
+
+.demo-hamburger:hover .demo-hamburger__bar {
+  background: var(--bright);
+}
+
+/* Close button — only visible on mobile inside the open panel */
+.demo-sidebar__close {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.demo-sidebar__close:hover {
+  color: var(--bright);
+  border-color: var(--accent);
+}
+
+.demo-sidebar__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Backdrop — rendered by React when the mobile panel is open */
+.demo-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: var(--backdrop);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE — below 768 px
+───────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  body {
+    padding-left: 0;
+    font-size: 16px; /* prevent iOS auto-zoom on inputs */
+  }
+
+  /* Hamburger becomes visible */
+  .demo-hamburger {
+    display: flex;
+  }
+
+  /* Sidebar slides in from the left as an overlay */
+  .demo-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.22s ease;
+    z-index: 200;
+    box-shadow: none;
+  }
+
+  .demo-sidebar--open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px var(--shadow);
+  }
+
+  /* Show the dedicated close button inside the open panel */
+  .demo-sidebar__close {
+    display: flex;
+  }
+
+  /* Tighter page chrome on small screens */
+  .demo-root    { padding: 0 20px 60px; }
+  .demo-header  { padding: 36px 0 0; }
+  .demo-section { padding: 36px 0; }
+  .demo-subtitle { margin-bottom: 32px; }
+
+  /* Search: full-width input, controls allowed to wrap */
+  .demo-search-controls { flex-wrap: wrap; }
+  .demo-search-input    { width: 100%; box-sizing: border-box; }
+
+  /* Resize preview: stack table above bar-chart panel */
+  .rp-layout         { flex-direction: column; }
+  .rp-layout__preview {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* Code snippet: tighter padding, slightly smaller font */
+  .demo-snippet__pre { font-size: 11px; padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-sidebar {
+    transition: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TABLET — 768px–1023px
+   Sidebar is fixed and visible. Reduce padding from desktop
+   defaults; split layout inherits the narrower 1100px rule.
+───────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .demo-root    { padding: 0 36px 80px; }
+  .demo-header  { padding: 52px 0 0; }
+  .demo-section { padding: 44px 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────
    HERO HEADER
 ───────────────────────────────────────────────────────────── */
 
@@ -86,11 +323,10 @@ body {
   padding: 72px 0 0;
 }
 
-/* Product wordmark — small amber mono label */
+/* Product wordmark */
 .demo-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
@@ -98,16 +334,6 @@ body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   margin-bottom: 28px;
-}
-
-.demo-wordmark::before {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
 }
 
 /* Hero headline */
@@ -129,57 +355,10 @@ body {
 /* Subtitle */
 .demo-subtitle {
   font-size: 15px;
-  color: var(--muted);
+  color: var(--text-mid);
   max-width: 600px;
   line-height: 1.72;
   margin-bottom: 52px;
-}
-
-/* Stats bar */
-.demo-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.demo-stat {
-  padding: 18px 0 18px 20px;
-  border-right: 1px solid var(--border);
-}
-
-.demo-stat:first-child {
-  padding-left: 0;
-}
-
-.demo-stat:last-child {
-  border-right: none;
-}
-
-.demo-stat-value {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--bright);
-  letter-spacing: -0.03em;
-  line-height: 1;
-  margin-bottom: 5px;
-}
-
-.demo-stat-value--good {
-  color: var(--stat-good);
-}
-
-.demo-stat-value--info {
-  color: var(--stat-info);
-}
-
-.demo-stat-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
-  color: var(--muted);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -200,16 +379,15 @@ body {
   border-bottom: none;
 }
 
-/* Amber mono eyebrow above section title */
+/* Capability tags above section title */
 .demo-section-eyebrow {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
   font-weight: 500;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  margin-bottom: 10px;
+  color: var(--text-mid);
+  letter-spacing: 0.01em;
+  margin-bottom: 6px;
 }
 
 /* Section title */
@@ -223,22 +401,21 @@ body {
   margin-bottom: 8px;
 }
 
-/* Sub-label within a section (e.g. "CUSTOM COMPOSITION") */
+/* Sub-label within a section (e.g. "Custom Composition") */
 .demo-section-subtitle {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--border-hi);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
   margin-top: 36px;
   margin-bottom: 12px;
 }
 
 /* Section description */
 .demo-section-desc {
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 14px;
+  color: var(--text);
   max-width: 640px;
   line-height: 1.7;
   margin-bottom: 20px;
@@ -270,7 +447,7 @@ body {
 
 .demo-pill {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   background: transparent;
   border: none;
@@ -340,13 +517,12 @@ body {
 
 .demo-dept-badge {
   display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-body);
+  font-size: 12px;
   font-weight: 500;
   padding: 2px 7px;
   border-radius: 3px;
   white-space: nowrap;
-  letter-spacing: 0.01em;
 }
 
 
@@ -371,8 +547,7 @@ body {
   border: 1px solid var(--border-hi);
   background: var(--surface-hi);
   color: var(--text);
-  font: 12px/1.4 var(--font-mono, monospace);
-  letter-spacing: 0.02em;
+  font: 12px/1.4 var(--font-body);
   cursor: pointer;
   transition: background 80ms, border-color 80ms;
 }
@@ -508,10 +683,19 @@ body {
   align-items: start;
 }
 
+/* Narrow the code panel before stacking so the table column stays usable */
+@media (max-width: 1100px) {
+  .demo-split {
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+}
+
 /* Below 900px, stack vertically */
 @media (max-width: 900px) {
   .demo-split {
     grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 
@@ -519,7 +703,11 @@ body {
   min-width: 0;
 }
 
-.demo-split__code {
+/* When stacked, add top margin to separate code panel from table */
+@media (max-width: 900px) {
+  .demo-split__code {
+    margin-top: 20px;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -536,26 +724,14 @@ body {
 .demo-snippet__label {
   display: flex;
   align-items: center;
-  gap: 8px;
   padding: 9px 14px;
   border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.02em;
   user-select: none;
-}
-
-.demo-snippet__label::before {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
 }
 
 .demo-snippet__pre {
@@ -644,9 +820,10 @@ body {
 }
 
 .rp-preview-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 8px;
@@ -689,8 +866,8 @@ body {
 }
 
 .rp-row-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
   color: var(--muted);
 }
 
@@ -822,7 +999,7 @@ body {
 }
 
 .dt-expand-icon {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
   display: inline-block;
   transition: color 0.15s;
@@ -866,22 +1043,22 @@ body {
 }
 
 .dt-child-table th {
-  background: oklch(14% 0.016 255);
+  background: var(--surface-alt);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .dt-child-table td {
-  background: var(--surface-low, oklch(11% 0.014 255));
+  background: var(--surface-low);
   color: var(--text, oklch(83% 0.012 257));
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .dt-child-table tbody tr:hover td {
-  background: oklch(14% 0.018 255);
+  background: var(--surface-hi);
 }
 
 /* ── MediaCells demo ─────────────────────────────────────────────────────── */
@@ -893,40 +1070,40 @@ body {
 }
 
 .mc-header-row {
-  background: oklch(14% 0.018 255);
+  background: var(--surface-alt);
 }
 
 .mc-th {
   padding: 8px 12px;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted, oklch(55% 0.018 255));
-  border-bottom: 1px solid oklch(22% 0.02 255);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
   overflow: hidden;
 }
 
 .mc-row {
-  border-bottom: 1px solid oklch(20% 0.016 255);
+  border-bottom: 1px solid var(--border);
   transition: background 0.12s ease;
 }
 
 .mc-row:hover td {
-  background: oklch(16% 0.018 255);
+  background: var(--surface-hi);
 }
 
 .mc-row--expanded td {
-  background: oklch(15% 0.022 255);
+  background: var(--surface-hi);
 }
 
 .mc-td {
   padding: 10px 12px;
   color: var(--text, oklch(83% 0.012 257));
   overflow: hidden;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
 }
 
@@ -936,21 +1113,21 @@ body {
 }
 
 .mc-td--clickable:hover .mc-toggle-icon {
-  color: oklch(72% 0.16 260);
+  color: var(--accent);
 }
 
 .mc-toggle-icon {
   display: inline-block;
   margin-right: 6px;
-  font-size: 10px;
-  color: var(--muted, oklch(55% 0.018 255));
+  font-size: 11px;
+  color: var(--muted, oklch(50% 0.016 258));
   vertical-align: middle;
   transition: color 0.12s ease, transform 0.15s ease;
   line-height: 1;
 }
 
 .mc-row--expanded .mc-toggle-icon {
-  color: oklch(68% 0.15 260);
+  color: var(--accent);
 }
 
 .mc-cell-text {
@@ -968,10 +1145,10 @@ body {
 }
 
 .mc-preview-label {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.04em;
-  color: oklch(85% 0.04 255 / 0.7);
-  font-family: var(--mono, monospace);
+  color: var(--text-mid);
+  font-family: var(--font-mono, monospace);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1082,7 +1259,7 @@ body {
   padding: 0 8px 10px;
   color: var(--muted);
   font-weight: 600;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
@@ -1129,7 +1306,7 @@ body {
 
 .demo-export-btn:hover:not(:disabled) {
   background: var(--accent);
-  color: #fff;
+  color: var(--bright);
 }
 
 .demo-export-btn:active:not(:disabled) {
@@ -1168,7 +1345,7 @@ body {
   font-weight: 600;
   background: var(--surface-hi);
   color: var(--bright);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1204,7 +1381,7 @@ body {
   border: 1px solid var(--border-hi);
   background: var(--surface-hi);
   color: var(--bright);
-  font: 13px/1.4 var(--font-body, system-ui, sans-serif);
+  font: 14px/1.4 var(--font-body, system-ui, sans-serif);
   outline: none;
   transition: border-color 80ms;
 }
@@ -1218,7 +1395,7 @@ body {
 }
 
 .demo-search-count {
-  font: 11px/1 var(--font-mono, monospace);
+  font: 12px/1 var(--font-mono, monospace);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -1244,7 +1421,7 @@ body {
   font-weight: 600;
   background: var(--surface-hi);
   color: var(--bright);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1273,6 +1450,6 @@ body {
   position: absolute;
   pointer-events: none;
   border-radius: 2px;
-  background: oklch(72% 0.148 66 / 0.25);
-  outline: 1px solid oklch(72% 0.148 66 / 0.55);
+  background: color-mix(in oklch, var(--accent) 25%, transparent);
+  outline: 1px solid color-mix(in oklch, var(--accent) 55%, transparent);
 }

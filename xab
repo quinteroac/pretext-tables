@@ -1,0 +1,440 @@
+   REDUCED MOTION
+───────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DEPARTMENT BADGES
+───────────────────────────────────────────────────────────── */
+
+.demo-dept-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   SHRINK-WRAP DEMO — fit buttons + inline table
+───────────────────────────────────────────────────────────── */
+
+.demo-shrinkwrap-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.demo-fit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px;
+  border-radius: 4px;
+  border: 1px solid var(--border-hi);
+  background: var(--surface-hi);
+  color: var(--text);
+  font: 12px/1.4 var(--font-mono, monospace);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms;
+}
+
+.demo-fit-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--bright);
+}
+
+.demo-fit-btn:active {
+  background: var(--accent-dim);
+}
+
+.demo-fit-btn--reset {
+  color: var(--text-mid);
+  border-color: var(--border);
+}
+
+.demo-fit-btn--reset:hover {
+  border-color: var(--border-hi);
+  color: var(--text);
+}
+
+.demo-sw-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font: 14px/1.5 var(--font-body, system-ui, sans-serif);
+}
+
+.demo-sw-table th,
+.demo-sw-table td {
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: width 120ms ease;
+}
+
+.demo-sw-table th {
+  font-weight: 600;
+  background: var(--surface-hi);
+  color: var(--bright);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.demo-sw-table td {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.demo-sw-table tr:nth-child(even) td {
+  background: var(--surface-alt);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SHRINK-WRAP DEMO — column auto-fit handle (double-click)
+───────────────────────────────────────────────────────────── */
+
+.demo-sw-header-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12px;
+}
+
+/* Right-edge handle — responds to double-click to auto-fit the column */
+.demo-col-fit-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.demo-col-fit-handle::after {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 60%;
+  border-radius: 1px;
+  background: var(--border-hi);
+  transition: background 0.15s, height 0.15s;
+}
+
+.demo-col-fit-handle:hover::after {
+  background: var(--accent);
+  height: 80%;
+}
+
+.demo-col-fit-handle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SCROLL ANCHOR DEMO — live feed button state
+───────────────────────────────────────────────────────────── */
+
+.demo-fit-btn--live-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.demo-fit-btn--live-active:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DEMO SPLIT LAYOUT — table (left) + code snippet (right)
+───────────────────────────────────────────────────────────── */
+
+.demo-split {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 40px;
+  align-items: start;
+}
+
+/* Below 900px, stack vertically */
+@media (max-width: 900px) {
+  .demo-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.demo-split__table {
+  min-width: 0;
+}
+
+.demo-split__code {
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CODE SNIPPET PANEL
+───────────────────────────────────────────────────────────── */
+
+.demo-snippet {
+  background: var(--surface-low);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.demo-snippet__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  user-select: none;
+}
+
+.demo-snippet__label::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.demo-snippet__pre {
+  margin: 0;
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--snippet-text);
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* Minimal token colors — only 3 tones, no full syntax highlighter needed */
+.demo-snippet__keyword { color: var(--syntax-kw); }
+.demo-snippet__string  { color: var(--syntax-str); }
+.demo-snippet__comment { color: var(--muted); font-style: italic; }
+.demo-snippet__hook    { color: var(--accent); font-weight: 600; }
+
+/* ─────────────────────────────────────────────────────────────
+   RESIZE PREVIEW DEMO — custom table + preview panel
+───────────────────────────────────────────────────────────── */
+
+.rp-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.rp-layout__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.rp-layout__preview {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.rp-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font: 14px/1.5 var(--font-body, system-ui, sans-serif);
+}
+
+.rp-table th {
+  padding: 7px 10px;
+  font: bold 14px/1.4 var(--font-body, system-ui, sans-serif);
+  text-align: left;
+  border-bottom: 2px solid var(--border-hi);
+  position: relative;
+  user-select: none;
+  background: var(--surface-hi);
+  color: var(--bright);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.rp-table td {
+  padding: 7px 10px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.rp-table tr:nth-child(even) td {
+  background: var(--surface-alt);
+}
+
+.rp-col-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: var(--border-hi);
+  transition: background 0.15s;
+}
+
+.rp-col-handle--active {
+  background: var(--bar-grow);
+}
+
+.rp-preview-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  transition: color 150ms;
+}
+
+.rp-preview-label--active {
+  color: var(--accent);
+}
+
+.rp-preview-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rp-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rp-bar {
+  width: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  transition: height 0ms;
+}
+
+.rp-bar--committed {
+  background: var(--border-hi);
+}
+
+.rp-bar--grow {
+  background: var(--bar-grow);
+}
+
+.rp-bar--shrink {
+  background: var(--bar-shrink);
+}
+
+.rp-row-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SCROLL ANCHOR DEMO — scroll container
+───────────────────────────────────────────────────────────── */
+
+.sa-scroll-container {
+  height: var(--demo-table-h);
+  overflow-y: auto;
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INFINITE SCROLL DEMO
+───────────────────────────────────────────────────────────── */
+
+.is-scroll-container {
+  height: var(--demo-table-h, 320px);
+  overflow-y: auto;
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  position: relative;
+}
+
+.is-loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
+.is-loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-hi);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: is-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes is-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CANVAS CELL DEMO
+───────────────────────────────────────────────────────────── */
+
+.cv-table-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.cv-canvas-wrapper {
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  overflow: hidden;
+  display: inline-block;
+  max-width: 100%;
