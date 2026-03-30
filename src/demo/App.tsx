@@ -386,6 +386,7 @@ export function App() {
               rows={CC_ROWS}
               columns={CC_COLUMNS}
               columnWidths={CC_COLUMN_WIDTHS}
+              maxHeight={320}
               renderCell={renderCCCell}
             />
           </div>

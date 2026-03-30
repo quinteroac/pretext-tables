@@ -5,6 +5,28 @@
   max-width: 100%;
 }
 
+.expandable-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.expandable-table-container::-webkit-scrollbar-track {
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
+.expandable-table-container::-webkit-scrollbar-thumb {
+  background: var(--border-hi, oklch(34% 0.022 255));
+  border-radius: 4px;
+}
+
+.expandable-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--muted, oklch(50% 0.016 258));
+}
+
+.expandable-table-container::-webkit-scrollbar-corner {
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
 .expandable-table {
   border-collapse: collapse;
   font: var(--expandable-table-font);
@@ -28,7 +50,7 @@
 .expandable-table th {
   font: var(--expandable-table-header-font);
   background: var(--surface-hi, oklch(17% 0.018 255));
-  color: var(--bright, oklch(92% 0.008 255));
+  color: var(--bright, oklch(96% 0.007 254));
   white-space: nowrap;
   user-select: none;
 }

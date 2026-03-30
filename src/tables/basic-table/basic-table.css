@@ -19,7 +19,7 @@
 
 .basic-table th {
   background: var(--surface-hi, oklch(17% 0.018 255));
-  color: var(--bright, oklch(92% 0.008 255));
+  color: var(--bright, oklch(96% 0.007 254));
   font-weight: 600;
 }
 

@@ -11,7 +11,7 @@
 .draggable-table th {
   font: var(--draggable-table-header-font);
   background: var(--surface-hi, oklch(17% 0.018 255));
-  color: var(--bright, oklch(92% 0.008 255));
+  color: var(--bright, oklch(96% 0.007 254));
   text-align: left;
   padding: 7px 10px;
   border-bottom: 1px solid var(--border, oklch(22% 0.020 255));

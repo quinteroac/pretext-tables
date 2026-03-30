@@ -46,7 +46,7 @@
 }
 
 .vt-viewport::-webkit-scrollbar-thumb:hover {
-  background: var(--muted, oklch(40% 0.022 255));
+  background: var(--muted, oklch(50% 0.016 258));
 }
 
 .vt-cell {

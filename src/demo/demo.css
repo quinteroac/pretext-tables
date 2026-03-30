@@ -23,6 +23,9 @@
   --accent:      oklch(72%   0.148 66);
   --accent-dim:  oklch(72%   0.148 66 / 0.10);
 
+  /* Shadow — for sticky column separators and elevation */
+  --shadow:      rgba(0, 0, 0, 0.45);
+
   /* Type stacks */
   --font-display: "Syne", system-ui, sans-serif;
   --font-body:    "Space Grotesk", system-ui, sans-serif;
@@ -290,12 +293,12 @@ body {
 
 .resizable-table-handle--col:focus-visible,
 .resizable-table-handle--row:focus-visible {
-  outline: 2px solid oklch(72% 0.148 66);
+  outline: 2px solid var(--accent);
   outline-offset: 0;
 }
 
 .draggable-table-grip:focus-visible {
-  outline: 2px solid oklch(72% 0.148 66);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 2px;
 }
