@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest'
+import { test, expect } from 'vitest'
 import { reorder } from '../shared/hooks/useDraggable.js'
 
 test('reorder columns: move index 0 to index 2', () => {
