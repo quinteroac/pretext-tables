@@ -33,3 +33,12 @@ export type { UseStickyColumnsOptions, UseStickyColumnsResult } from './useStick
 
 export { useInfiniteScroll, computeDistanceFromBottom } from './useInfiniteScroll.js'
 export type { UseInfiniteScrollOptions, UseInfiniteScrollResult } from './useInfiniteScroll.js'
+
+export { useCanvasCell, createDrawCell } from './useCanvasCell.js'
+export type {
+  UseCanvasCellOptions,
+  UseCanvasCellInput,
+  UseCanvasCellResult,
+  CanvasCellEffect,
+  DrawCellFn,
+} from './useCanvasCell.js'
