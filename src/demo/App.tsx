@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
+import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes } from '../shared/hooks/index.js'
+import type { MediaSpec } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
@@ -581,9 +582,256 @@ const { rowHeights } = useMeasure(
 
         <InfiniteScrollDemo />
 
+        <DetachableDemo />
+
         <CanvasCellDemo />
+
+        <SpanningTableDemo />
+
+        <MediaCellsDemo />
+
+        <EditableDemo />
+
+        <CellNotesDemo />
       </main>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// SpanningTableDemo — useSpanningCell: full-height side column aligned to rows
+// ---------------------------------------------------------------------------
+
+const SP_ROWS: Row[] = [
+  { id: 'sp1', cells: ['Alice Johnson', 'Leads the frontend architecture team and establishes coding standards across all product surfaces.'] },
+  { id: 'sp2', cells: ['Bob Martinez', 'Works on backend API design with a focus on performance and scalability.'] },
+  { id: 'sp3', cells: ['Carol White', 'Manages the design system and ensures visual consistency from the component library down to individual page layouts, including the new token system.'] },
+  { id: 'sp4', cells: ['David Kim', 'Full-stack engineer who primarily owns the billing and subscription management subsystem.'] },
+  { id: 'sp5', cells: ['Eva Schulz', 'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses for the growth team.'] },
+  { id: 'sp6', cells: ['Frank Okafor', 'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation.'] },
+]
+
+const SP_COLUMN_WIDTHS: [number, number] = [180, 320]
+
+function SpanningTableDemo() {
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Side column · pixel-aligned with every row</span>
+      <h2 className="demo-section-title">useSpanningCell</h2>
+      <p className="demo-section-desc">
+        <code className="demo-code">useSpanningCell(rowHeights)</code> returns{' '}
+        <code className="demo-code">totalHeight</code> and{' '}
+        <code className="demo-code">offsets[]</code> derived from{' '}
+        <code className="demo-code">useMeasure</code> output — thin wrappers over{' '}
+        <code className="demo-code">computeTotalHeight</code> /{' '}
+        <code className="demo-code">computeOffsets</code> from{' '}
+        <code className="demo-code">useVirtualization</code>. The SVG chart on the
+        right renders a horizontal tick at the top of every row: even when row
+        heights differ (due to text wrapping), every tick stays aligned.
+      </p>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-table-meta">
+            <span className="demo-pill">Col 1 · 180px</span>
+            <span className="demo-pill">Col 2 · 320px</span>
+            <span className="demo-pill">Chart · 180px</span>
+          </div>
+          <SpanningTable
+            rows={SP_ROWS}
+            columnWidths={SP_COLUMN_WIDTHS}
+            chartWidth={180}
+            chartLabel="Activity"
+          />
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useSpanningCell"
+            code={`const { rowHeights } =
+  useMeasure(rows, columnWidths)
+
+const { totalHeight, offsets } =
+  useSpanningCell(rowHeights)
+
+// SVG chart aligned to every row:
+<svg height={totalHeight}>
+  {offsets.map((y, i) => (
+    <line key={i}
+      x1={0} y1={y}
+      x2={chartWidth} y2={y}
+    />
+  ))}
+</svg>`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// MediaCellsDemo — useMediaCells: product-catalogue with toggleable image previews
+// ---------------------------------------------------------------------------
+
+const MC_LINE_HEIGHT = 20
+const MC_CELL_PADDING = 16
+const MC_COLUMN_WIDTHS = [200, 320, 140]
+const MC_HEADERS = ['Product', 'Description', 'Price']
+
+// Product catalogue rows. Image dimensions are declared as props — zero DOM reads.
+const MC_ROWS: Row[] = [
+  { id: 'mc1', cells: ['Wireless Headphones', 'Studio-quality audio with 40 h battery life, active noise cancellation, and a foldable design that travels well.', '$299'] },
+  { id: 'mc2', cells: ['Mechanical Keyboard', 'Tenkeyless layout with Cherry MX Brown switches, per-key RGB backlighting, and a detachable USB-C cable.', '$149'] },
+  { id: 'mc3', cells: ['4K Webcam', 'Ultra-sharp 4 K/30 fps capture with dual built-in microphones, auto-focus, and a privacy shutter.', '$199'] },
+  { id: 'mc4', cells: ['Portable SSD', '2 TB of NVMe storage in a palm-sized enclosure. Reads up to 1 050 MB/s over USB 3.2 Gen 2.', '$119'] },
+  { id: 'mc5', cells: ['Monitor Light Bar', 'Screenbar that illuminates your desk without glare on the display. Auto-dimming via built-in ambient sensor.', '$79'] },
+]
+
+// Media specs — all heights come from props, never from DOM measurement.
+const MC_MEDIA: Record<string, MediaSpec> = {
+  mc1: { mediaHeight: 180 },
+  mc2: { mediaHeight: 160 },
+  mc3: { width: 320, aspectRatio: 16 / 9 }, // derived: ~180 px
+  mc4: { mediaHeight: 140 },
+  mc5: { mediaHeight: 120 },
+}
+
+// Placeholder gradient palettes used instead of real images so the demo is
+// self-contained. Each palette is a [from, to] oklch pair.
+const MC_PALETTES: [string, string][] = [
+  ['oklch(35% 0.15 260)', 'oklch(55% 0.20 310)'],
+  ['oklch(30% 0.12 145)', 'oklch(55% 0.18 185)'],
+  ['oklch(35% 0.14 30)',  'oklch(60% 0.20 60)'],
+  ['oklch(30% 0.10 200)', 'oklch(55% 0.15 240)'],
+  ['oklch(35% 0.12 350)', 'oklch(60% 0.18 15)'],
+]
+
+function MediaCellsDemo() {
+  const { mediaVisible, toggleMedia, getEffectiveRows } = useMediaCells({
+    media: MC_MEDIA,
+    lineHeight: MC_LINE_HEIGHT,
+  })
+
+  // Pass effective rows (with synthetic padding) to useMeasure so heights
+  // include the media space when a row is expanded. No DOM reads involved.
+  const { rowHeights } = useMeasure(getEffectiveRows(MC_ROWS), MC_COLUMN_WIDTHS, {
+    lineHeight: MC_LINE_HEIGHT,
+    cellPadding: MC_CELL_PADDING,
+  })
+
+  const totalWidth = MC_COLUMN_WIDTHS.reduce((a, b) => a + b, 0)
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Media rows · pre-computed heights</span>
+      <h2 className="demo-section-title">useMediaCells</h2>
+      <p className="demo-section-desc">
+        Each row can expand to show an image or video preview whose height is
+        passed as a prop — <code className="demo-code">{'{ mediaHeight }'}</code> or{' '}
+        <code className="demo-code">{'{ width, aspectRatio }'}</code>. The total
+        row height (<em>text + media</em>) is computed by injecting synthetic
+        newline padding before calling{' '}
+        <code className="demo-code">layout()</code>. No{' '}
+        <code className="demo-code">ResizeObserver</code>, no{' '}
+        <code className="demo-code">getBoundingClientRect</code>.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-table-meta">
+            {MC_HEADERS.map((h, i) => (
+              <span key={i} className="demo-pill">{h} · {MC_COLUMN_WIDTHS[i]}px</span>
+            ))}
+          </div>
+          <div className="demo-table-wrapper demo-table-wrapper--fit">
+            <table className="mc-table" style={{ width: totalWidth }}>
+              <thead>
+                <tr className="mc-header-row">
+                  {MC_HEADERS.map((h, i) => (
+                    <th key={i} className="mc-th" style={{ width: MC_COLUMN_WIDTHS[i] }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {MC_ROWS.map((row, ri) => {
+                  const hasMedia = row.id in MC_MEDIA
+                  const isExpanded = !!mediaVisible[row.id]
+                  const mediaHeight = hasMedia
+                    ? (MC_MEDIA[row.id]! as { mediaHeight?: number; width?: number; aspectRatio?: number }).mediaHeight
+                      ?? ((MC_MEDIA[row.id] as { width: number; aspectRatio: number }).width /
+                          (MC_MEDIA[row.id] as { width: number; aspectRatio: number }).aspectRatio)
+                    : 0
+                  const [fromColor, toColor] = MC_PALETTES[ri % MC_PALETTES.length]!
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`mc-row${isExpanded ? ' mc-row--expanded' : ''}`}
+                      style={{ height: rowHeights[ri] }}
+                    >
+                      {row.cells.map((cell, ci) => (
+                        <td
+                          key={ci}
+                          className={`mc-td${ci === 0 && hasMedia ? ' mc-td--clickable' : ''}`}
+                          style={{ width: MC_COLUMN_WIDTHS[ci], verticalAlign: 'top' }}
+                          onClick={ci === 0 && hasMedia ? () => toggleMedia(row.id) : undefined}
+                        >
+                          {ci === 0 && hasMedia && (
+                            <span className="mc-toggle-icon" aria-label={isExpanded ? 'Hide preview' : 'Show preview'}>
+                              {isExpanded ? '▼' : '▶'}
+                            </span>
+                          )}
+                          <span className="mc-cell-text">{cell}</span>
+                          {ci === 0 && isExpanded && (
+                            <div
+                              className="mc-media-preview"
+                              style={{
+                                height: mediaHeight,
+                                background: `linear-gradient(135deg, ${fromColor}, ${toColor})`,
+                              }}
+                              aria-label="Product image preview"
+                            >
+                              <span className="mc-preview-label">image preview · {Math.round(mediaHeight)}px</span>
+                            </div>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useMediaCells"
+            code={`const { mediaVisible, toggleMedia, getEffectiveRows } =
+  useMediaCells({
+    media: {
+      'row-1': { mediaHeight: 180 },
+      'row-2': { width: 320, aspectRatio: 16/9 },
+    },
+    lineHeight: LINE_HEIGHT,
+  })
+
+// Pass effective rows — heights = textHeight + mediaHeight
+const { rowHeights } = useMeasure(
+  getEffectiveRows(rows),
+  columnWidths,
+  { lineHeight: LINE_HEIGHT }
+)
+
+// Render with original rows; click to toggle
+<tr style={{ height: rowHeights[i] }}>
+  <td onClick={() => toggleMedia(row.id)}>
+    {row.cells[0]}
+    {mediaVisible[row.id] && <ImagePreview />}
+  </td>
+</tr>`}
+          />
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -1372,6 +1620,196 @@ function InfiniteScrollDemo() {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// DetachableDemo — useDetachable: expand rows into inline child tables
+// ---------------------------------------------------------------------------
+
+// Parent rows: teams with a short description and a project count
+const DT_PARENT_ROWS: Row[] = [
+  { id: 'dt-team-1', cells: ['Frontend', 'Owns the component library, design system, and all customer-facing web surfaces. Works closely with Design to ship pixel-perfect interfaces.', '4 projects'] },
+  { id: 'dt-team-2', cells: ['Platform',  'Responsible for core API infrastructure, authentication services, and the internal developer platform that all product teams rely on.',             '3 projects'] },
+  { id: 'dt-team-3', cells: ['Data',       'Builds the analytics pipeline, event ingestion, and all reporting dashboards consumed by business stakeholders and product managers.',       '5 projects'] },
+]
+
+const DT_PARENT_COL_WIDTHS = [140, 360, 120]
+
+// Child rows per parent: individual project entries
+const DT_CHILD_ROWS: Record<string, Row[]> = {
+  'dt-team-1': [
+    { id: 'dt-p-1a', cells: ['Design System v3',        'Migrate all components to the new token architecture and add dark-mode support across the full component set.',     'In Progress'] },
+    { id: 'dt-p-1b', cells: ['Accessibility Audit',     'Full WCAG 2.2 AA compliance pass covering keyboard navigation, colour contrast, and screen-reader annotations.',   'Planned']     },
+    { id: 'dt-p-1c', cells: ['Performance Dashboard',   'Surface Core Web Vitals per page, track regressions in CI, and expose a public status page for stakeholders.',      'In Progress'] },
+    { id: 'dt-p-1d', cells: ['Component Playground',    'Interactive Storybook environment with live prop controls, automatically published on every main-branch merge.',      'Shipped']     },
+  ],
+  'dt-team-2': [
+    { id: 'dt-p-2a', cells: ['Auth Service Rewrite',    'Replace the legacy session-cookie auth with short-lived JWTs and refresh-token rotation to improve security posture.', 'In Progress'] },
+    { id: 'dt-p-2b', cells: ['Internal Dev Portal',     'Self-service portal for spinning up staging environments, viewing service health, and triggering manual deploys.',    'Planned']     },
+    { id: 'dt-p-2c', cells: ['API Rate Limiting',       'Implement per-tenant rate limiting with configurable tiers; surface quota usage in the developer dashboard.',         'Shipped']     },
+  ],
+  'dt-team-3': [
+    { id: 'dt-p-3a', cells: ['Event Pipeline v2',       'Rewrite the ingestion layer with Kafka to support 10× throughput while reducing end-to-end latency to under 200 ms.', 'In Progress'] },
+    { id: 'dt-p-3b', cells: ['Revenue Dashboard',       'Real-time MRR, churn, and LTV charts with cohort breakdown; built on top of the new query engine.',                   'Shipped']     },
+    { id: 'dt-p-3c', cells: ['Experiment Framework',    'A/B testing infrastructure that integrates with feature flags to track metric impact per variant automatically.',     'In Progress'] },
+    { id: 'dt-p-3d', cells: ['Data Quality Monitor',    'Automated schema validation, anomaly detection, and Slack alerting so bad data never silently corrupts reports.',     'Planned']     },
+    { id: 'dt-p-3e', cells: ['ML Feature Store',        'Centralised registry for training features; versioned snapshots, lineage tracking, and an online serving API.',       'Planned']     },
+  ],
+}
+
+const DT_CHILD_COL_WIDTHS = [200, 370, 100]
+const DT_CHILD_HEADERS = ['Project', 'Description', 'Status']
+
+const DT_STATUS_COLORS: Record<string, { text: string; bg: string }> = {
+  'In Progress': { text: 'oklch(72% 0.12 200)', bg: 'oklch(16% 0.04 200)' },
+  'Planned':     { text: 'oklch(68% 0.08 280)', bg: 'oklch(16% 0.03 280)' },
+  'Shipped':     { text: 'oklch(72% 0.12 145)', bg: 'oklch(16% 0.04 145)' },
+}
+
+/** Inline child table — owns its own independent useMeasure instance. */
+function DetachableChildPanel({ rows }: { rows: Row[] }) {
+  // Independent useMeasure — no shared or recursive measurement with the parent.
+  const { rowHeights } = useMeasure(rows, DT_CHILD_COL_WIDTHS, {
+    lineHeight: 20,
+    cellPadding: 16,
+  })
+  return (
+    <div className="dt-child-panel">
+      <table className="dt-child-table" style={{ '--dt-child-font': BODY_FONT } as React.CSSProperties}>
+        <thead>
+          <tr>
+            {DT_CHILD_HEADERS.map((h) => (
+              <th key={h} style={{ width: DT_CHILD_COL_WIDTHS[DT_CHILD_HEADERS.indexOf(h)] }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, ri) => (
+            <tr key={row.id} style={{ height: rowHeights[ri] }}>
+              {row.cells.map((cell, ci) => {
+                if (ci === 2) {
+                  const colors = DT_STATUS_COLORS[cell]
+                  return (
+                    <td key={ci} style={{ width: DT_CHILD_COL_WIDTHS[ci] }}>
+                      {colors
+                        ? <span className="demo-dept-badge" style={{ color: colors.text, background: colors.bg }}>{cell}</span>
+                        : cell}
+                    </td>
+                  )
+                }
+                return <td key={ci} style={{ width: DT_CHILD_COL_WIDTHS[ci] }}>{cell}</td>
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function DetachableDemo() {
+  const { expandedRows, toggle, getChildRows } = useDetachable({
+    getChildRows: (row) => DT_CHILD_ROWS[row.id] ?? [],
+  })
+
+  // Independent parent useMeasure instance.
+  const { rowHeights } = useMeasure(DT_PARENT_ROWS, DT_PARENT_COL_WIDTHS, {
+    lineHeight: 20,
+    cellPadding: 16,
+  })
+
+  const DT_PARENT_HEADERS = ['Team', 'Mission', 'Projects']
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Nested data · expand inline child table</span>
+      <h2 className="demo-section-title">useDetachable</h2>
+      <p className="demo-section-desc">
+        Clicking a row expands an inline child table below it. Each child table
+        runs its own independent{' '}
+        <code className="demo-code">useMeasure</code> instance — no shared or
+        recursive measurement. Cells stay typed as{' '}
+        <code className="demo-code">string[]</code>; child data is supplied
+        entirely via <code className="demo-code">getChildRows</code>.
+      </p>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <table
+            className="dt-parent-table"
+            style={{ '--dt-parent-font': BODY_FONT } as React.CSSProperties}
+          >
+            <thead>
+              <tr>
+                <th className="dt-expand-col" />
+                {DT_PARENT_HEADERS.map((h) => (
+                  <th key={h}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DT_PARENT_ROWS.map((row, ri) => {
+                const isExpanded = expandedRows.has(row.id)
+                const childRows = getChildRows(row)
+                return (
+                  <React.Fragment key={row.id}>
+                    <tr
+                      className={`dt-parent-row${isExpanded ? ' dt-parent-row--expanded' : ''}`}
+                      style={{ height: rowHeights[ri] }}
+                      onClick={() => toggle(row.id)}
+                    >
+                      <td className="dt-expand-col">
+                        <span className="dt-expand-icon" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+                          {isExpanded ? '▼' : '▶'}
+                        </span>
+                      </td>
+                      {row.cells.map((cell, ci) => (
+                        <td key={ci} style={{ width: DT_PARENT_COL_WIDTHS[ci] }}>{cell}</td>
+                      ))}
+                    </tr>
+                    {isExpanded && (
+                      <tr className="dt-child-row">
+                        <td />
+                        <td colSpan={DT_PARENT_COL_WIDTHS.length}>
+                          <DetachableChildPanel rows={childRows} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useDetachable"
+            code={`const { expandedRows, toggle, getChildRows } =
+  useDetachable({ getChildRows: (row) => childData[row.id] })
+
+// Parent measure — independent instance
+const { rowHeights } = useMeasure(parentRows, colWidths)
+
+// In the parent <tbody>:
+{parentRows.map((row, i) => (<>
+  <tr onClick={() => toggle(row.id)}
+      style={{ height: rowHeights[i] }}>
+    ...
+  </tr>
+  {expandedRows.has(row.id) && (
+    <ChildPanel rows={getChildRows(row)} />
+  )}
+</>))}
+
+// ChildPanel — owns its own useMeasure
+function ChildPanel({ rows }) {
+  const { rowHeights } = useMeasure(rows, childColWidths)
+  return <table>...</table>
+}`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // CanvasCellDemo — useCanvasCell: pixel-accurate canvas cell rendering
 // ---------------------------------------------------------------------------
 
@@ -1503,6 +1941,363 @@ const { drawCell } = useCanvasCell({
 
 // In a useEffect paint loop:
 drawCell(ctx, rowIndex, colIndex, x, y)`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// EditableDemo — useEditable: inline editing with live per-keystroke heights
+// ---------------------------------------------------------------------------
+
+const EDIT_ROWS_INITIAL: Row[] = [
+  {
+    id: 'ed1',
+    cells: [
+      'Alice Johnson',
+      'Leads the frontend architecture team. Try typing in either cell to see the row grow.',
+    ],
+  },
+  {
+    id: 'ed2',
+    cells: ['Bob Martinez', 'Short note. Keep it brief, or expand — the height follows.'],
+  },
+  {
+    id: 'ed3',
+    cells: [
+      'Carol White',
+      'Manages the design system and ensures visual consistency from the component library down to individual page layouts. This row starts tall.',
+    ],
+  },
+  {
+    id: 'ed4',
+    cells: ['David Kim', 'Type here.'],
+  },
+]
+
+const EDIT_HEADERS = ['Name', 'Notes']
+const EDIT_COL_WIDTHS_DEFAULT = [180, 380]
+
+function EditableDemo() {
+  const { columnWidths, getColHandleProps } = useResizable({
+    defaultColumnWidths: EDIT_COL_WIDTHS_DEFAULT,
+    horizontal: true,
+    vertical: false,
+  })
+
+  const { previewHeights, getEditProps } = useEditable(EDIT_ROWS_INITIAL, columnWidths)
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Inline editing · live height updates</span>
+      <h2 className="demo-section-title">useEditable</h2>
+      <p className="demo-section-desc">
+        Type in any cell — the row height updates on every keystroke using{' '}
+        <code className="demo-code">layout()</code> against a debounced{' '}
+        <code className="demo-code">prepare()</code> state. No{' '}
+        <code className="demo-code">getBoundingClientRect</code>, no{' '}
+        <code className="demo-code">ResizeObserver</code>, no DOM reads. Column
+        headers are drag-resizable to verify that{' '}
+        <code className="demo-code">columnWidths</code> from{' '}
+        <code className="demo-code">useResizable</code> are honoured during editing.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <table
+            className="editable-demo-table"
+            style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}
+          >
+            <thead>
+              <tr>
+                {EDIT_HEADERS.map((header, colIndex) => (
+                  <th
+                    key={colIndex}
+                    style={{
+                      width: columnWidths[colIndex],
+                      position: 'relative',
+                      textAlign: 'left',
+                      padding: '0 8px 10px',
+                      color: 'oklch(55% 0.02 240)',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      borderBottom: '1px solid oklch(22% 0.02 240)',
+                    }}
+                  >
+                    {header}
+                    {colIndex < EDIT_HEADERS.length - 1 && (
+                      <span
+                        className="resizable-table__col-handle"
+                        aria-hidden="true"
+                        {...getColHandleProps(colIndex)}
+                      />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {EDIT_ROWS_INITIAL.map((row, rowIndex) => (
+                <tr
+                  key={row.id}
+                  style={{
+                    height: previewHeights[rowIndex],
+                    borderBottom: '1px solid oklch(22% 0.02 240)',
+                    transition: 'height 80ms ease-out',
+                  }}
+                >
+                  {row.cells.map((_, colIndex) => {
+                    const editProps = getEditProps(rowIndex, colIndex)
+                    return (
+                      <td
+                        key={colIndex}
+                        style={{
+                          width: columnWidths[colIndex],
+                          maxWidth: columnWidths[colIndex],
+                          padding: 0,
+                          verticalAlign: 'top',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <textarea
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            height: '100%',
+                            padding: '8px',
+                            boxSizing: 'border-box',
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            resize: 'none',
+                            font: 'inherit',
+                            color: 'inherit',
+                            lineHeight: '1.43',
+                            overflow: 'hidden',
+                          }}
+                          aria-label={`Edit ${EDIT_HEADERS[colIndex]}, row ${rowIndex + 1}`}
+                          {...editProps}
+                        />
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useEditable"
+            code={`// Compose with useResizable (AC04)
+const { columnWidths, getColHandleProps } =
+  useResizable({ defaultColumnWidths, horizontal: true })
+
+const { previewHeights, getEditProps } =
+  useEditable(rows, columnWidths)
+
+// In render:
+<tr style={{ height: previewHeights[rowIndex] }}>
+  <td>
+    <textarea {...getEditProps(rowIndex, colIndex)} />
+  </td>
+</tr>
+
+// prepare() debounced ~150 ms (AC03)
+// layout() runs every input event (AC02)
+// No ResizeObserver, no DOM reads (AC05)`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// CellNotesDemo — useCellNotes: pre-measured tooltips with zero reposition flash
+// ---------------------------------------------------------------------------
+
+const CN_COLUMN_WIDTHS = [180, 320, 140]
+const CN_HEADERS = ['Name', 'Role Summary', 'Status']
+
+const CN_NOTES: Record<string, string> = {
+  'cn1:0': 'Alice leads a team of 8 engineers across three time zones. She introduced the current component token system.',
+  'cn1:1': 'Responsible for the Q3 migration to the new design system — reduced bundle size by 22%.',
+  'cn3:1': 'The token system Carol built is now used across 4 product surfaces and serves as the single source of truth for all visual constants.',
+  'cn4:2': "David's contract was recently extended through Q4 after successfully launching the new billing portal.",
+  'cn5:0': 'Eva presented her A/B test framework at the internal data summit. Mentors two junior analysts.',
+  'cn6:1': 'Frank automated the entire staging deploy pipeline, cutting release time from 45 minutes to under 6.',
+}
+
+const CN_ROWS: Row[] = [
+  { id: 'cn1', cells: ['Alice Johnson',  'Leads the frontend architecture team and establishes coding standards across all product surfaces.',  'Active']    },
+  { id: 'cn2', cells: ['Bob Martinez',   'Works on backend API design with a focus on performance and scalability for high-traffic endpoints.',  'Remote']    },
+  { id: 'cn3', cells: ['Carol White',    'Manages the design system and ensures visual consistency from the component library down to individual page layouts.',  'Active'] },
+  { id: 'cn4', cells: ['David Kim',      'Full-stack engineer who primarily owns the billing and subscription management subsystem.',           'Contract']  },
+  { id: 'cn5', cells: ['Eva Schulz',     'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses.', 'Remote']    },
+  { id: 'cn6', cells: ['Frank Okafor',   'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation.',  'Remote']    },
+]
+
+const CN_STATUS_COLORS: Record<string, { text: string; bg: string }> = {
+  Active:   { text: 'oklch(68% 0.12 145)', bg: 'oklch(16% 0.04 145)' },
+  Remote:   { text: 'oklch(68% 0.08 200)', bg: 'oklch(16% 0.03 200)' },
+  Contract: { text: 'oklch(68% 0.08 280)', bg: 'oklch(16% 0.03 280)' },
+}
+
+function CellNotesDemo() {
+  const { getNoteTriggerProps, hasNote, NoteTooltip } = useCellNotes({
+    rows: CN_ROWS,
+    notes: CN_NOTES,
+    columnWidths: CN_COLUMN_WIDTHS,
+    tooltipWidth: 240,
+    lineHeight: 20,
+    cellPadding: 16,
+  })
+
+  const { rowHeights } = useMeasure(CN_ROWS, CN_COLUMN_WIDTHS)
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Cell notes · zero-flash tooltip</span>
+      <h2 className="demo-section-title">useCellNotes</h2>
+      <p className="demo-section-desc">
+        Hover any cell that has a{' '}
+        <span style={{ color: 'oklch(72% 0.14 55)', fontWeight: 600 }}>●</span> indicator to see a
+        tooltip whose height is pre-computed by{' '}
+        <code className="demo-code">layout()</code> before mount. The tooltip
+        appears at the correct size on the very first paint — no{' '}
+        <code className="demo-code">getBoundingClientRect</code>, no{' '}
+        <code className="demo-code">ResizeObserver</code>, no repositioning flash.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div style={{ position: 'relative' }}>
+            <table
+              style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}
+            >
+              <thead>
+                <tr>
+                  {CN_HEADERS.map((header, colIndex) => (
+                    <th
+                      key={colIndex}
+                      style={{
+                        width: CN_COLUMN_WIDTHS[colIndex],
+                        textAlign: 'left',
+                        padding: '0 8px 10px',
+                        color: 'oklch(55% 0.02 240)',
+                        fontWeight: 600,
+                        fontSize: 12,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        borderBottom: '1px solid oklch(22% 0.02 240)',
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {CN_ROWS.map((row, rowIndex) => (
+                  <tr
+                    key={row.id}
+                    style={{
+                      height: rowHeights[rowIndex],
+                      borderBottom: '1px solid oklch(22% 0.02 240)',
+                    }}
+                  >
+                    {row.cells.map((cell, colIndex) => {
+                      const triggerProps = getNoteTriggerProps(rowIndex, colIndex)
+                      const cellHasNote = hasNote(rowIndex, colIndex)
+                      return (
+                        <td
+                          key={colIndex}
+                          style={{
+                            width: CN_COLUMN_WIDTHS[colIndex],
+                            maxWidth: CN_COLUMN_WIDTHS[colIndex],
+                            padding: '8px',
+                            verticalAlign: 'top',
+                            overflow: 'hidden',
+                            fontSize: 13,
+                            color: cellHasNote ? 'oklch(86% 0.03 240)' : 'oklch(70% 0.02 240)',
+                            cursor: cellHasNote ? 'help' : 'default',
+                          }}
+                          {...triggerProps}
+                        >
+                          <span style={{ position: 'relative' }}>
+                            {colIndex === 2 ? (
+                              (() => {
+                                const colors = CN_STATUS_COLORS[cell]
+                                return colors ? (
+                                  <span
+                                    className="demo-dept-badge"
+                                    style={{ color: colors.text, background: colors.bg }}
+                                  >
+                                    {cell}
+                                  </span>
+                                ) : cell
+                              })()
+                            ) : cell}
+                            {cellHasNote && (
+                              <span
+                                aria-hidden="true"
+                                style={{
+                                  display: 'inline-block',
+                                  marginLeft: 4,
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  background: 'oklch(72% 0.14 55)',
+                                  verticalAlign: 'middle',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                          </span>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* NoteTooltip renders at position:fixed — place once outside the table */}
+          <NoteTooltip />
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useCellNotes"
+            code={`const { getNoteTriggerProps, NoteTooltip } =
+  useCellNotes({
+    rows,
+    notes: {
+      'row1:0': 'Alice leads a team of…',
+      'row3:1': 'The token system Carol…',
+    },
+    columnWidths,
+    tooltipWidth: 240,
+  })
+
+// In each cell:
+<td {...getNoteTriggerProps(rowIndex, colIndex)}>
+  {cell}
+</td>
+
+// Once, outside the table:
+<NoteTooltip />
+
+// prepare() runs once per notes change (AC01)
+// layout() computes height before mount (AC02)
+// position: fixed from mouse event (AC04)
+// No getBoundingClientRect, no DOM reads`}
           />
         </div>
       </div>

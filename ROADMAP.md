@@ -114,6 +114,15 @@ Returns `getEditProps(rowIndex, colIndex)` — spreads onto a `<textarea>` or `c
 ### `useCellNotes` hook
 Accepts a `notes` map (`Record<"rowId:colIndex", string>`) and pre-measures all note texts with `prepare()` alongside the main table data. Returns `getNoteTriggerProps(rowIndex, colIndex)` for hover targets and a `<NoteTooltip>` component whose dimensions are known before it appears — so positioning is correct on the first frame with zero repositioning flash. Standard tooltip libraries measure content after mount and correct position in a follow-up paint; pretext eliminates that step entirely.
 
+### `useDynamicFont` hook
+Accepts a `font` string that can change at runtime — a slider-controlled size, a user-selected typeface, or a density toggle — and returns `rowHeights[]` that update synchronously whenever the font changes. Because all measurement happens in pretext (canvas), switching from `'14px Inter'` to `'20px Inter'` triggers `prepare()` + `layout()` with zero DOM reflow and no `ResizeObserver`.
+
+Key design constraint: `prepare()` is debounced when the font changes continuously (e.g. a live size slider) to avoid a canvas pass on every paint frame. `layout()` runs immediately against the previous prepared state for a smooth visual update during the debounce window.
+
+Returns `{ rowHeights: number[], setFont: (font: string) => void, currentFont: string }`. Composable with `useResizable` and `useVirtualization` — virtual offsets and drag-resized widths stay correct across font changes. The demo shows a font-size slider and a font-family selector that smoothly reshape all row heights with no DOM cost.
+
+> This is a showcase feature: the instant row-height recalculation on font change is something DOM-measurement-based libraries cannot do cheaply — they require a full reflow. With pretext, it is a single `layout()` call.
+
 ---
 
 ## Speculative / exploratory
@@ -128,6 +137,19 @@ Filters `rows[]` by a query string and returns match coordinates per cell using 
 
 ### `whiteSpace: 'pre-wrap'` option in `useMeasure`
 Expose the existing pretext `{ whiteSpace: 'pre-wrap' }` option as a `useMeasure` parameter. Enables cells with tab-indented or newline-separated content (code snippets, addresses). Requires matching `white-space: pre-wrap` in the table CSS.
+
+### `GridTable` — CSS Grid table (no `<table>`, `<tr>`, `<td>`)
+A table-like component built entirely with CSS Grid (`display: grid`) instead of HTML table semantics. Each row is a `<div>` with `grid-template-columns` matching the column widths; each cell is a `<div>`. Row heights come from `useMeasure` as usual — the only difference is the DOM structure.
+
+Why this matters: `<table>` layout is controlled by the browser's table algorithm, which can fight against explicit heights in subtle ways (cells expanding beyond their declared height, border-collapse quirks, sticky positioning limitations). A Grid-based table gives full control over geometry — the `rowHeight` from pretext is applied as an explicit `height` on the row div with no interference.
+
+Additional advantages over `<table>`:
+- `position: sticky` on column headers and frozen columns works without workarounds.
+- `overflow: hidden` on cells is reliable (table cells can overflow their declared height).
+- Easier to animate row enter/leave with `height` transitions.
+- Simpler CSS — no `border-collapse`, no `table-layout: fixed` hacks needed.
+
+The hook layer is unchanged — `useMeasure`, `useResizable`, `useVirtualization` all remain valid. Only the rendered markup changes. `GridTable` ships as a new pre-built component alongside the existing `BasicTable`.
 
 ---
 

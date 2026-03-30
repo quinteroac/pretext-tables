@@ -767,3 +767,209 @@ body {
 .cv-canvas {
   display: block;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   DETACHABLE DEMO — parent table + inline child table panel
+───────────────────────────────────────────────────────────── */
+
+.dt-parent-table {
+  border-collapse: collapse;
+  font: var(--dt-parent-font);
+  table-layout: fixed;
+  width: auto;
+}
+
+.dt-parent-table th,
+.dt-parent-table td {
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+
+.dt-parent-table th {
+  background: var(--surface-hi);
+  color: var(--bright, oklch(96% 0.007 254));
+  font-weight: 600;
+}
+
+.dt-parent-table td {
+  background: var(--surface);
+  color: var(--text, oklch(83% 0.012 257));
+}
+
+.dt-expand-col {
+  width: 32px;
+  max-width: 32px;
+  text-align: center !important;
+}
+
+.dt-parent-row {
+  cursor: pointer;
+  user-select: none;
+}
+
+.dt-parent-row:hover td {
+  background: var(--surface-hover);
+}
+
+.dt-parent-row--expanded td {
+  background: var(--surface-alt);
+  border-bottom-color: transparent;
+}
+
+.dt-expand-icon {
+  font-size: 10px;
+  color: var(--muted);
+  display: inline-block;
+  transition: color 0.15s;
+}
+
+.dt-parent-row:hover .dt-expand-icon {
+  color: var(--accent);
+}
+
+/* Row that wraps the child table panel — no visible cell background */
+.dt-child-row > td {
+  background: transparent !important;
+  border-top: none;
+  padding: 0 0 8px 0;
+}
+
+/* Child table panel container */
+.dt-child-panel {
+  background: var(--surface-low, oklch(11% 0.014 255));
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dt-child-table {
+  border-collapse: collapse;
+  font: var(--dt-child-font);
+  table-layout: fixed;
+  width: auto;
+}
+
+.dt-child-table th,
+.dt-child-table td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+
+.dt-child-table th {
+  background: oklch(14% 0.016 255);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dt-child-table td {
+  background: var(--surface-low, oklch(11% 0.014 255));
+  color: var(--text, oklch(83% 0.012 257));
+  font-size: 13px;
+}
+
+.dt-child-table tbody tr:hover td {
+  background: oklch(14% 0.018 255);
+}
+
+/* ── MediaCells demo ─────────────────────────────────────────────────────── */
+
+.mc-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14px;
+}
+
+.mc-header-row {
+  background: oklch(14% 0.018 255);
+}
+
+.mc-th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted, oklch(55% 0.018 255));
+  border-bottom: 1px solid oklch(22% 0.02 255);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mc-row {
+  border-bottom: 1px solid oklch(20% 0.016 255);
+  transition: background 0.12s ease;
+}
+
+.mc-row:hover td {
+  background: oklch(16% 0.018 255);
+}
+
+.mc-row--expanded td {
+  background: oklch(15% 0.022 255);
+}
+
+.mc-td {
+  padding: 10px 12px;
+  color: var(--text, oklch(83% 0.012 257));
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.mc-td--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.mc-td--clickable:hover .mc-toggle-icon {
+  color: oklch(72% 0.16 260);
+}
+
+.mc-toggle-icon {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 10px;
+  color: var(--muted, oklch(55% 0.018 255));
+  vertical-align: middle;
+  transition: color 0.12s ease, transform 0.15s ease;
+  line-height: 1;
+}
+
+.mc-row--expanded .mc-toggle-icon {
+  color: oklch(68% 0.15 260);
+}
+
+.mc-cell-text {
+  vertical-align: middle;
+}
+
+.mc-media-preview {
+  margin-top: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mc-preview-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: oklch(85% 0.04 255 / 0.7);
+  font-family: var(--mono, monospace);
+}

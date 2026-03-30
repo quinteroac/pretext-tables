@@ -1,0 +1,110 @@
+.st-root {
+  display: flex;
+  align-items: flex-start;
+  font: var(--st-font);
+}
+
+/* ── Left table area ─────────────────────────────────────────────────────── */
+
+.st-table-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.st-header {
+  display: flex;
+  height: var(--st-header-height, 35px);
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  border-top: 1px solid var(--border, oklch(22% 0.020 255));
+  border-left: 1px solid var(--border, oklch(22% 0.020 255));
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+  box-sizing: border-box;
+}
+
+.st-th {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--bright, oklch(96% 0.007 254));
+  font-weight: 600;
+  border-right: 1px solid var(--border, oklch(22% 0.020 255));
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.st-body {
+  position: relative;
+  border-left: 1px solid var(--border, oklch(22% 0.020 255));
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+}
+
+.st-row {
+  position: absolute;
+  left: 0;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.st-cell {
+  padding: 7px 10px;
+  color: var(--text, oklch(83% 0.012 257));
+  border-right: 1px solid var(--border, oklch(22% 0.020 255));
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+  background: var(--surface, oklch(13% 0.016 255));
+}
+
+.st-row:nth-child(even) .st-cell {
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+/* ── Spanning chart column ───────────────────────────────────────────────── */
+
+.st-chart {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border, oklch(22% 0.020 255));
+  background: var(--surface, oklch(13% 0.016 255));
+  box-sizing: border-box;
+}
+
+.st-chart__header {
+  height: var(--st-header-height, 35px);
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  color: var(--bright, oklch(96% 0.007 254));
+  font-weight: 600;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border, oklch(22% 0.020 255));
+  box-sizing: border-box;
+}
+
+.st-chart__svg {
+  display: block;
+  overflow: visible;
+}
+
+.st-tick {
+  stroke: var(--border, oklch(22% 0.020 255));
+  stroke-width: 1;
+}
+
+.st-bar {
+  fill: oklch(55% 0.18 260);
+  opacity: 0.65;
+  transition: opacity 0.1s;
+}
+
+.st-bar:hover {
+  opacity: 1;
+}
+
+.st-bar-label {
+  fill: oklch(62% 0.012 257);
+  font: 11px system-ui, sans-serif;
+  pointer-events: none;
+}

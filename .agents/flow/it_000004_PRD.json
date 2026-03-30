@@ -1,0 +1,233 @@
+{
+  "goals": [
+    "Add `useDetachable` so developers can expand a row into a child table panel without recursive measurement.",
+    "Add `useMediaCells` so rows can mix text with images/video of known dimensions, keeping row heights fully computable.",
+    "Add `useSpanningCell` so consumers can render a full-height side column (chart, timeline, viz) pixel-aligned to every row.",
+    "Add `useEditable` so inline editing updates row height synchronously per keystroke with no DOM reflow.",
+    "Add `useCellNotes` so tooltip/note content is pre-measured and positioned correctly on its first paint.",
+    "Demonstrate every hook with a working interactive example on the demo page."
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "useDetachable — expand a row into a child table panel",
+      "description": "As a developer, I want a `useDetachable` hook that manages expand/collapse state for rows that open a child table, so that I can render nested data without recursive measurement or DOM reflows.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-001-AC01",
+          "text": "`useDetachable({ getChildRows })` returns `{ expandedRows: Set<string>, toggle(rowId): void, getChildRows(row): Row[] }`."
+        },
+        {
+          "id": "US-001-AC02",
+          "text": "Parent and child table each use independent `useMeasure` instances — no shared or recursive measurement."
+        },
+        {
+          "id": "US-001-AC03",
+          "text": "Cells remain typed as `string[]`; child data is provided entirely via `getChildRows`."
+        },
+        {
+          "id": "US-001-AC04",
+          "text": "Toggling a row adds/removes it from `expandedRows` and triggers a child `useMeasure` call for the newly expanded rows."
+        },
+        {
+          "id": "US-001-AC05",
+          "text": "A demo section on the demo page shows a parent table where clicking a row expands an inline child table below it."
+        },
+        {
+          "id": "US-001-AC06",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-001-AC07",
+          "text": "Visually verified in browser: expand/collapse works; child table rows have correct heights."
+        }
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "useMediaCells — rows with text + media of known dimensions",
+      "description": "As a developer, I want a `useMediaCells` hook that adds image/video rows whose heights are `textHeight + mediaHeight`, so that row heights remain fully pre-computed without any DOM measurement.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-002-AC01",
+          "text": "Hook accepts a `media` map keyed by `rowId`, each entry carrying `{ mediaHeight: number }` (or `{ width: number, aspectRatio: number }` for video, with `mediaHeight` derived as `width / aspectRatio`)."
+        },
+        {
+          "id": "US-002-AC02",
+          "text": "Hook returns `{ mediaVisible: Record<string, boolean>, toggleMedia(rowId): void, getEffectiveRows(rows): Row[] }` where `getEffectiveRows` injects media-height padding into the relevant rows for `useMeasure`."
+        },
+        {
+          "id": "US-002-AC03",
+          "text": "When a row's media is hidden, `layout()` recalculates the collapsed height from the text alone — no `ResizeObserver`, no `getBoundingClientRect`."
+        },
+        {
+          "id": "US-002-AC04",
+          "text": "No DOM measurement of any kind is used to determine media dimensions — all dimensions come from props."
+        },
+        {
+          "id": "US-002-AC05",
+          "text": "A demo section shows a product-catalogue-style table with toggleable image previews; row heights expand/collapse correctly."
+        },
+        {
+          "id": "US-002-AC06",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-002-AC07",
+          "text": "Visually verified in browser: media toggle changes row height without layout flash."
+        }
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "useSpanningCell — full-height side column aligned to every row",
+      "description": "As a developer, I want a `useSpanningCell` hook that exposes `totalHeight` and `offsets[]` derived from `useMeasure` output, so that I can render a chart or visualisation in a side column that is pixel-aligned with every row without measuring the DOM.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-003-AC01",
+          "text": "Hook accepts `rowHeights: number[]` (the output of `useMeasure`) and returns `{ totalHeight: number, offsets: number[] }`."
+        },
+        {
+          "id": "US-003-AC02",
+          "text": "`totalHeight` equals the sum of all `rowHeights` values."
+        },
+        {
+          "id": "US-003-AC03",
+          "text": "`offsets[i]` equals the cumulative sum of `rowHeights[0..i-1]` (i.e. the Y position of the top of row `i`)."
+        },
+        {
+          "id": "US-003-AC04",
+          "text": "Values are derived from `computeTotalHeight()` / `computeOffsets()` already in `useVirtualization.ts` — the hook is a thin wrapper; no new measurement logic is introduced."
+        },
+        {
+          "id": "US-003-AC05",
+          "text": "A `SpanningTable` demo component is added: two text columns + a spanning SVG chart that renders horizontal tick lines aligned with each row."
+        },
+        {
+          "id": "US-003-AC06",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-003-AC07",
+          "text": "Visually verified in browser: chart ticks align with row boundaries at all row heights."
+        }
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "useEditable — inline editing with live per-keystroke row height updates",
+      "description": "As an end user, I want the row height to expand smoothly as I type in a cell, so that there is no layout jump or frame delay while editing.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-004-AC01",
+          "text": "`useEditable({ rows, columnWidths })` returns `{ previewHeights: number[], getEditProps(rowIndex, colIndex): object }`."
+        },
+        {
+          "id": "US-004-AC02",
+          "text": "`getEditProps` spreads onto a `<textarea>` or `contenteditable`; on every `input` event, `layout()` runs on the current value and `previewHeights` updates in the same frame."
+        },
+        {
+          "id": "US-004-AC03",
+          "text": "`prepare()` is debounced (~150 ms) to avoid the expensive canvas pass on every keystroke; `layout()` runs against the previous prepared state during the debounce window."
+        },
+        {
+          "id": "US-004-AC04",
+          "text": "`useEditable` is composable with `useResizable`: the `columnWidths` passed in may come from `useResizable`, and the resized widths are honoured during editing."
+        },
+        {
+          "id": "US-004-AC05",
+          "text": "No `ResizeObserver`, `getBoundingClientRect`, or any DOM measurement is used to determine preview heights."
+        },
+        {
+          "id": "US-004-AC06",
+          "text": "A demo section shows an editable table where typing causes the row to smoothly grow/shrink."
+        },
+        {
+          "id": "US-004-AC07",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-004-AC08",
+          "text": "Visually verified in browser: row height updates on every keystroke with no visible delay or jump."
+        }
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "useCellNotes — pre-measured tooltip notes with zero repositioning flash",
+      "description": "As an end user, I want to hover a cell and see a note/tooltip whose position is correct on the first paint, so that there is no repositioning flicker after mount.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-005-AC01",
+          "text": "`useCellNotes({ notes: Record<\"rowId:colIndex\", string>, columnWidths, tooltipWidth })` pre-measures all note texts with `prepare()` alongside the main table and returns `{ getNoteTriggerProps(rowIndex, colIndex): object, NoteTooltip: React.FC<…> }`."
+        },
+        {
+          "id": "US-005-AC02",
+          "text": "Tooltip height is known before mount; no second-paint position correction occurs."
+        },
+        {
+          "id": "US-005-AC03",
+          "text": "`getNoteTriggerProps` returns `onMouseEnter` / `onMouseLeave` handlers; `NoteTooltip` renders the active note at the pre-computed position."
+        },
+        {
+          "id": "US-005-AC04",
+          "text": "No DOM measurement (`getBoundingClientRect`, `offsetHeight`, etc.) is used for tooltip sizing or positioning."
+        },
+        {
+          "id": "US-005-AC05",
+          "text": "A demo section shows a table with several cells annotated; hovering each cell opens a tooltip that appears at the correct position immediately."
+        },
+        {
+          "id": "US-005-AC06",
+          "text": "Typecheck / lint passes."
+        },
+        {
+          "id": "US-005-AC07",
+          "text": "Visually verified in browser: tooltip appears at correct position on first frame with no repositioning flash."
+        }
+      ]
+    }
+  ],
+  "functionalRequirements": [
+    {
+      "id": "FR-1",
+      "description": "All five hooks reside in `src/shared/hooks/` following existing naming and export conventions."
+    },
+    {
+      "id": "FR-2",
+      "description": "Each hook is exported from `src/shared/hooks/index.ts`."
+    },
+    {
+      "id": "FR-3",
+      "description": "No hook may call `getBoundingClientRect`, `offsetHeight`, `scrollHeight`, `ResizeObserver`, or any other DOM measurement API for the purpose of sizing rows or tooltips."
+    },
+    {
+      "id": "FR-4",
+      "description": "No hook may import or depend on external libraries beyond `@chenglou/pretext` and React."
+    },
+    {
+      "id": "FR-5",
+      "description": "Font constants used inside hooks must come from `src/shared/fonts.ts`; no inline font strings are permitted."
+    },
+    {
+      "id": "FR-6",
+      "description": "`prepare()` must never be called inside a render function or an effect without stable dependencies — all hooks must batch `prepare()` in a `useMemo` or equivalent stable-dependency path."
+    },
+    {
+      "id": "FR-7",
+      "description": "Each hook must have a corresponding demo section in the demo page (`src/demo/`)."
+    },
+    {
+      "id": "FR-8",
+      "description": "`useSpanningCell` must delegate height-summation to the already-implemented `computeTotalHeight()` / `computeOffsets()` utilities rather than re-implementing them."
+    },
+    {
+      "id": "FR-9",
+      "description": "`useEditable`'s `prepare()` debounce window must be configurable (default 150 ms) via an options argument."
+    },
+    {
+      "id": "FR-10",
+      "description": "`useCellNotes` must accept `tooltipWidth` as a required prop so that tooltip height is deterministic before mount."
+    }
+  ]
+}
