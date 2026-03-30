@@ -40,6 +40,55 @@ function renderDeptCell(value: string, _rowIndex: number, colIndex: number): Rea
 
 const COLUMN_WIDTHS = [200, 300, 220]
 
+// ── ColumnControlsTable demo data (5 columns, 12 rows) ───────────────────────
+const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
+  'Active':    { text: 'oklch(68% 0.12 145)', bg: 'oklch(16% 0.04 145)' },
+  'Remote':    { text: 'oklch(68% 0.08 200)', bg: 'oklch(16% 0.03 200)' },
+  'On Leave':  { text: 'oklch(68% 0.08 55)',  bg: 'oklch(16% 0.03 55)'  },
+  'Contract':  { text: 'oklch(68% 0.08 280)', bg: 'oklch(16% 0.03 280)' },
+}
+
+const CC_COLUMN_WIDTHS = [190, 300, 160, 120, 160]
+
+const CC_COLUMNS = [
+  { id: 'name',     label: 'Name'        },
+  { id: 'role',     label: 'Role Summary' },
+  { id: 'dept',     label: 'Department'  },
+  { id: 'status',   label: 'Status'      },
+  { id: 'location', label: 'Location'    },
+]
+
+const CC_ROWS: Row[] = [
+  { id: 'cc1',  cells: ['Alice Johnson',    'Leads the frontend architecture team and is responsible for establishing coding standards across all product surfaces.',              'Engineering',      'Active',   'San Francisco'] },
+  { id: 'cc2',  cells: ['Bob Martinez',     'Works on backend API design with a focus on performance and scalability for high-traffic endpoints.',                               'Platform',         'Remote',   'Berlin']        },
+  { id: 'cc3',  cells: ['Carol White',      'Manages the design system and ensures visual consistency from the component library down to individual page layouts.',              'Design',           'Active',   'London']        },
+  { id: 'cc4',  cells: ['David Kim',        'Full-stack engineer who primarily owns the billing and subscription management subsystem.',                                         'Engineering',      'Active',   'Seoul']         },
+  { id: 'cc5',  cells: ['Eva Schulz',       'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses.',                               'Analytics',        'Remote',   'Amsterdam']     },
+  { id: 'cc6',  cells: ['Frank Okafor',     'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation strategies.',                     'Infrastructure',   'Remote',   'Lagos']         },
+  { id: 'cc7',  cells: ['Grace Tanaka',     'Product manager for the core editor experience, gathering user feedback and shaping the feature roadmap for the next two quarters.','Product',          'Active',   'Tokyo']         },
+  { id: 'cc8',  cells: ['Hiro Nakamura',    'Security engineer who performs threat modelling and conducts regular penetration tests on all customer-facing services.',           'Security',         'On Leave', 'Osaka']         },
+  { id: 'cc9',  cells: ['Isabel Costa',     'Customer success manager who works closely with enterprise clients to ensure smooth onboarding and long-term retention.',           'Customer Success',  'Active',  'Lisbon']        },
+  { id: 'cc10', cells: ['James Li',         'Mobile engineer building the iOS and Android apps; also maintains the React Native component library shared across platforms.',     'Mobile',           'Contract', 'New York']      },
+  { id: 'cc11', cells: ['Karen Patel',      'Technical writer who owns all public API documentation, internal runbooks, and the developer-facing changelog.',                   'Documentation',    'Remote',   'Mumbai']        },
+  { id: 'cc12', cells: ['Luis Fernandez',   'QA lead responsible for test strategy, automation frameworks, and coordinating release sign-off across teams.',                    'Quality Assurance', 'Active',  'Buenos Aires']  },
+]
+
+function renderCCCell(value: string, _rowIndex: number, colIndex: number): React.ReactNode {
+  if (colIndex === 2) {
+    const colors = DEPT_COLORS[value]
+    if (colors) {
+      return <span className="demo-dept-badge" style={{ color: colors.text, background: colors.bg }}>{value}</span>
+    }
+  }
+  if (colIndex === 3) {
+    const colors = STATUS_COLORS[value]
+    if (colors) {
+      return <span className="demo-dept-badge" style={{ color: colors.text, background: colors.bg }}>{value}</span>
+    }
+  }
+  return value
+}
+
 const ROWS: Row[] = [
   {
     id: '1',
@@ -315,30 +364,29 @@ export function App() {
         </section>
 
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Sortable + Visibility · Column controls</span>
+          <span className="demo-section-eyebrow">Sortable + Visibility · Sticky first column</span>
           <h2 className="demo-section-title">ColumnControlsTable</h2>
           <p className="demo-section-desc">
             Toggle columns on/off with the checkboxes above the table. Click
-            any header to sort. Hidden columns are fully removed from layout
-            and measurement — at least one column always stays visible.
+            any header to sort. The first column stays sticky as you scroll
+            right. Hidden columns are fully removed from layout and
+            measurement — at least one column always stays visible.
           </p>
 
           <div className="demo-table-meta">
-            <span className="demo-pill">Name · 200px</span>
+            <span className="demo-pill">Name · 190px</span>
             <span className="demo-pill">Role Summary · 300px</span>
-            <span className="demo-pill">Department · 220px</span>
+            <span className="demo-pill">Department · 160px</span>
+            <span className="demo-pill">Status · 120px</span>
+            <span className="demo-pill">Location · 160px</span>
           </div>
 
-          <div className="demo-table-wrapper demo-table-wrapper--fit">
+          <div className="demo-table-wrapper">
             <ColumnControlsTable
-              rows={ROWS}
-              columns={[
-                { id: 'name', label: 'Name' },
-                { id: 'role', label: 'Role Summary' },
-                { id: 'dept', label: 'Department' },
-              ]}
-              columnWidths={COLUMN_WIDTHS}
-              renderCell={renderDeptCell}
+              rows={CC_ROWS}
+              columns={CC_COLUMNS}
+              columnWidths={CC_COLUMN_WIDTHS}
+              renderCell={renderCCCell}
             />
           </div>
         </section>

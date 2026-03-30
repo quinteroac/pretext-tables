@@ -46,12 +46,12 @@
     },
     {
       "use_case_id": "US-005",
-      "status": "failed",
-      "attempt_count": 1,
-      "last_agent_exit_code": 1,
+      "status": "completed",
+      "attempt_count": 2,
+      "last_agent_exit_code": 0,
       "quality_checks": [],
-      "last_error_summary": "Agent or quality check failed",
-      "updated_at": "2026-03-30T00:46:18.343Z",
+      "last_error_summary": "",
+      "updated_at": "2026-03-30T01:08:02.335Z",
       "audit_artifact_path": ".agents/flow/it_000001_audit.json",
       "refactor_report_path": ".agents/flow/it_000001_refactor-report.md"
     }
