@@ -323,11 +323,12 @@ export function App() {
         </section>
 
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Resizable · Column + row handles</span>
+          <span className="demo-section-eyebrow">Resizable · Column + row handles · Shrink-wrap</span>
           <h2 className="demo-section-title">ResizableTable</h2>
           <p className="demo-section-desc">
             Drag a column's right edge to resize it. Drag the bottom of any
-            row to set a custom height.
+            row to set a custom height. <strong>Double-click a column handle</strong> to
+            auto-size that column to its tightest wrap-free width.
           </p>
           <div className="demo-table-wrapper">
             <ResizableTable
@@ -336,6 +337,7 @@ export function App() {
               defaultColumnWidths={RESIZABLE_DEFAULT_WIDTHS}
               horizontal
               vertical
+              shrinkWrap
               renderCell={renderDeptCell}
             />
           </div>
@@ -460,7 +462,7 @@ function ResizePreviewDemo() {
     return ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
   }, [fontsReady])
 
-  const rowHeights = useMeasure(ROWS, columnWidths, { lineHeight: RP_LINE_HEIGHT, cellPadding: RP_CELL_PADDING })
+  const { rowHeights } = useMeasure(ROWS, columnWidths, { lineHeight: RP_LINE_HEIGHT, cellPadding: RP_CELL_PADDING })
   const { previewHeights } = useResizePreview(prepared, previewDragState, {
     columnWidths,
     lineHeight: RP_LINE_HEIGHT,
@@ -677,7 +679,7 @@ function ShrinkWrapDemo() {
     return SW_ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
   }, [fontsReady])
 
-  const rowHeights = useMeasure(SW_ROWS, columnWidths, { font: BODY_FONT })
+  const { rowHeights } = useMeasure(SW_ROWS, columnWidths, { font: BODY_FONT })
   const { fitColumn } = useShrinkWrap(prepared, columnWidths)
 
   function handleFit(colIndex: number) {
@@ -798,7 +800,7 @@ const SA_INITIAL_ROWS: Row[] = Array.from({ length: 12 }, (_, i) =>
 function ScrollAnchorDemo() {
   const [rows, setRows] = useState<Row[]>(SA_INITIAL_ROWS)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const rowHeights = useMeasure(rows, SA_COLUMN_WIDTHS)
+  const { rowHeights } = useMeasure(rows, SA_COLUMN_WIDTHS)
   const { prepend } = useScrollAnchor(rowHeights, scrollRef)
 
   // Scroll to bottom on first render so the user sees the latest messages.

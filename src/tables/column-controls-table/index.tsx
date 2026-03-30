@@ -47,7 +47,7 @@ export function ColumnControlsTable({
     cells: visibleIndices.map((i) => row.cells[i]!),
   }))
 
-  const rowHeights = useMeasure(visibleRows, visibleWidths, {
+  const { rowHeights } = useMeasure(visibleRows, visibleWidths, {
     lineHeight: LINE_HEIGHT,
     cellPadding: CELL_PADDING,
   })

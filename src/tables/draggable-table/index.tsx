@@ -29,7 +29,7 @@ export function DraggableTable({ rows, headers, columnWidths, onRowsReorder, onC
   })
 
   // Pass original rows so prepare() only reruns when data changes, not on reorder.
-  const rowHeights = useMeasure(rows, columnWidths, {
+  const { rowHeights } = useMeasure(rows, columnWidths, {
     lineHeight: LINE_HEIGHT,
     cellPadding: CELL_PADDING,
   })

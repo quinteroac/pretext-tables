@@ -84,6 +84,26 @@ Supports cells that contain text alongside an image or video. Media dimensions m
 
 > **Note:** arbitrary JSX inside cells remains out of scope. Only media with known dimensions (passed as data, not measured from DOM) is supported.
 
+### `useSpanningCell` hook + `SpanningTable`
+Exposes the full table geometry — `totalHeight` and `offsets[]` — so a single cell can span the entire height of the table and stay pixel-aligned with each row. Useful for financial dashboards, commodity tables, and any layout where a chart, timeline, or visualization occupies a side column while text rows occupy the other columns.
+
+The hook returns:
+- `totalHeight` — sum of all row heights, ready to use as the container height of the spanning element
+- `offsets[]` — cumulative Y position of each row, ready to use as tick marks, grid lines, or data point anchors in the spanning SVG/canvas
+
+Both values come from `computeTotalHeight()` and `computeOffsets()` — already implemented in `useVirtualization.ts` — so the hook is a thin wrapper that exposes them at the table level. The consumer renders whatever they want in the spanning slot via a `renderSpanning(totalHeight, offsets) => ReactNode` prop. No DOM measurement needed: the chart knows its exact size before it mounts.
+
+```tsx
+// Example: commodity table with a live chart spanning all rows
+<SpanningTable
+  rows={commodities}
+  columnWidths={[220, 140]}
+  renderSpanning={(totalHeight, offsets) => (
+    <PriceChart height={totalHeight} rowTicks={offsets} data={trendData} />
+  )}
+/>
+```
+
 ### `useCellNotes` hook
 Accepts a `notes` map (`Record<"rowId:colIndex", string>`) and pre-measures all note texts with `prepare()` alongside the main table data. Returns `getNoteTriggerProps(rowIndex, colIndex)` for hover targets and a `<NoteTooltip>` component whose dimensions are known before it appears — so positioning is correct on the first frame with zero repositioning flash. Standard tooltip libraries measure content after mount and correct position in a follow-up paint; pretext eliminates that step entirely.
 

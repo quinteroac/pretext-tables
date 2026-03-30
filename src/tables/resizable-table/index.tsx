@@ -1,4 +1,6 @@
 import type React from 'react'
+import { useRef, useCallback, useEffect } from 'react'
+import type { PreparedTextWithSegments } from '@chenglou/pretext'
 import type { Row } from '../../shared/types.js'
 import { LINE_HEIGHT, CELL_PADDING, MIN_COLUMN_WIDTH } from './measure.js'
 import { useMeasure } from '../../shared/hooks/useMeasure.js'
@@ -14,6 +16,12 @@ export interface ResizableTableProps {
   horizontal?: boolean
   /** Enable vertical row-resize handles. Default false. */
   vertical?: boolean
+  /**
+   * When `true`, double-clicking a column handle auto-sizes that column to its
+   * tightest wrap-free width. Uses a lazy dynamic import of `useShrinkWrap` so
+   * the module is not bundled when the prop is omitted. Default false.
+   */
+  shrinkWrap?: boolean
   renderCell?: (value: string, rowIndex: number, colIndex: number) => React.ReactNode
 }
 
@@ -27,9 +35,10 @@ export function ResizableTable({
   defaultColumnWidths,
   horizontal = true,
   vertical = false,
+  shrinkWrap = false,
   renderCell,
 }: ResizableTableProps) {
-  const { columnWidths, manualRowHeights, getColHandleProps, getRowHandleProps } =
+  const { columnWidths, setColumnWidths, manualRowHeights, getColHandleProps, getRowHandleProps } =
     useResizable({
       defaultColumnWidths,
       minColumnWidth: MIN_COLUMN_WIDTH,
@@ -39,10 +48,34 @@ export function ResizableTable({
     })
 
   // layout() re-runs on every columnWidths change — prepare() only when rows change.
-  const pretextRowHeights = useMeasure(rows, columnWidths, {
+  const { rowHeights: pretextRowHeights, prepared } = useMeasure(rows, columnWidths, {
     lineHeight: LINE_HEIGHT,
     cellPadding: CELL_PADDING,
   })
+
+  // Keep a stable ref so the async double-click handler always reads the latest
+  // prepared grid without needing to capture it in its dependency array.
+  const preparedRef = useRef<PreparedTextWithSegments[][] | null>(prepared)
+  useEffect(() => { preparedRef.current = prepared }, [prepared])
+
+  // Lazy import: `useShrinkWrap` (and its transitive dep `walkLineRanges`) are
+  // NOT included in the initial bundle — they are fetched on first double-click
+  // only when shrinkWrap=true.  Satisfies AC03 (tree-shaking / lazy import).
+  const handleColDblClick = useCallback(
+    async (colIndex: number) => {
+      if (!preparedRef.current) return
+      const { shrinkWrapColumn } = await import('../../shared/hooks/useShrinkWrap.js')
+      const cells = preparedRef.current
+        .map((row) => row[colIndex])
+        .filter((c): c is PreparedTextWithSegments => c != null)
+      const newWidth = shrinkWrapColumn(cells, {
+        cellPadding: CELL_PADDING,
+        minWidth: MIN_COLUMN_WIDTH,
+      })
+      setColumnWidths((prev) => prev.map((w, i) => (i === colIndex ? newWidth : w)))
+    },
+    [setColumnWidths]
+  )
 
   // Merge pretext heights with user-dragged row overrides.
   const rowHeights = pretextRowHeights.map((h, i) =>
@@ -72,10 +105,15 @@ export function ResizableTable({
                   <span
                     className="resizable-table-handle resizable-table-handle--col"
                     {...getColHandleProps(colIndex)}
+                    onDoubleClick={shrinkWrap ? () => void handleColDblClick(colIndex) : undefined}
                     tabIndex={0}
                     role="separator"
                     aria-label={`Resize ${headers[colIndex]} column`}
-                    title="Drag to resize this column"
+                    title={
+                      shrinkWrap
+                        ? 'Double-click to auto-size; drag to resize'
+                        : 'Drag to resize this column'
+                    }
                   />
                 )}
               </th>

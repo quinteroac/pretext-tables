@@ -12,7 +12,7 @@ export interface BasicTableProps {
 }
 
 export function BasicTable({ rows, columnWidths, renderCell }: BasicTableProps) {
-  const rowHeights = useMeasure(rows, columnWidths, { lineHeight: LINE_HEIGHT, cellPadding: CELL_PADDING })
+  const { rowHeights } = useMeasure(rows, columnWidths, { lineHeight: LINE_HEIGHT, cellPadding: CELL_PADDING })
 
   return (
     <table className="basic-table" style={{ '--basic-table-font': BODY_FONT } as React.CSSProperties}>

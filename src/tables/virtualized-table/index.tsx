@@ -29,7 +29,7 @@ export function VirtualizedTable({ rows, columnWidths, height, overscan = 3, ren
   const [scrollTop, setScrollTop] = useState(0)
   const viewportRef = useRef<HTMLDivElement>(null)
 
-  const rowHeights = useMeasure(rows, columnWidths, { lineHeight: LINE_HEIGHT, cellPadding: CELL_PADDING })
+  const { rowHeights } = useMeasure(rows, columnWidths, { lineHeight: LINE_HEIGHT, cellPadding: CELL_PADDING })
 
   const { startIndex, endIndex, totalHeight, offsets } = useVirtualization({
     rowHeights,

@@ -1,5 +1,5 @@
 export { useMeasure } from './useMeasure.js'
-export type { UseMeasureOptions } from './useMeasure.js'
+export type { UseMeasureOptions, UseMeasureResult } from './useMeasure.js'
 
 export { useResizable } from './useResizable.js'
 export type { ResizableOptions, ResizableResult } from './useResizable.js'
