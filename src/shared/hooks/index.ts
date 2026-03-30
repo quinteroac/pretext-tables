@@ -27,3 +27,6 @@ export type { ResizePreviewDragState, UseResizePreviewOptions, UseResizePreviewR
 
 export { useScrollAnchor, computeScrollDelta } from './useScrollAnchor.js'
 export type { UseScrollAnchorOptions, UseScrollAnchorResult } from './useScrollAnchor.js'
+
+export { useStickyColumns, sliceStickyColumns } from './useStickyColumns.js'
+export type { UseStickyColumnsOptions, UseStickyColumnsResult } from './useStickyColumns.js'
