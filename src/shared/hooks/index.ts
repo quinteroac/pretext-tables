@@ -24,3 +24,6 @@ export type { UseShrinkWrapOptions, UseShrinkWrapResult } from './useShrinkWrap.
 
 export { useResizePreview, computePreviewHeights } from './useResizePreview.js'
 export type { ResizePreviewDragState, UseResizePreviewOptions, UseResizePreviewResult } from './useResizePreview.js'
+
+export { useScrollAnchor, computeScrollDelta } from './useScrollAnchor.js'
+export type { UseScrollAnchorOptions, UseScrollAnchorResult } from './useScrollAnchor.js'

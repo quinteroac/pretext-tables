@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { BasicTable, ColumnControlsTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
@@ -411,6 +411,8 @@ export function App() {
         <DraggableDemo />
 
         <ShrinkWrapDemo />
+
+        <ScrollAnchorDemo />
       </main>
     </div>
   )
@@ -740,6 +742,129 @@ function ShrinkWrapDemo() {
               <tr key={row.id} style={{ height: rowHeights[ri] }}>
                 {row.cells.map((cell, ci) => (
                   <td key={ci} style={{ width: columnWidths[ci] }}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// ScrollAnchorDemo — useScrollAnchor: prepend without scroll jump
+// ---------------------------------------------------------------------------
+
+const SA_COLUMN_WIDTHS = [80, 120, 480]
+const SA_HEADERS = ['Time', 'Author', 'Message']
+
+const SA_AUTHORS = ['Alice', 'Bob', 'Carol', 'David', 'Eva']
+const SA_MESSAGES = [
+  'Just deployed the new auth service to staging — let me know if you hit any issues.',
+  'Looks good to me. The latency numbers are better than last week.',
+  'I found a small bug in the token refresh path. Opening a PR now.',
+  'Can someone review the migration script before we run it in prod?',
+  'Done. Left a couple of comments about the rollback plan.',
+  'Updated the runbook with the new service endpoints.',
+  'Heads up: the canary is at 5 % traffic. Watching error rates.',
+  'Error rate is flat. Bumping to 25 %.',
+  'All metrics nominal at 25 %. Will go to 100 % at EOD.',
+  'Deployment complete. Closing the incident channel.',
+]
+
+let _saCounter = 0
+function makeSaRow(offsetMin = 0): Row {
+  const idx = _saCounter++
+  const d = new Date(Date.now() - offsetMin * 60_000)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return {
+    id: `sa-${idx}`,
+    cells: [
+      `${hh}:${mm}`,
+      SA_AUTHORS[idx % SA_AUTHORS.length]!,
+      SA_MESSAGES[idx % SA_MESSAGES.length]!,
+    ],
+  }
+}
+
+const SA_INITIAL_ROWS: Row[] = Array.from({ length: 12 }, (_, i) =>
+  makeSaRow((11 - i) * 3),
+)
+
+function ScrollAnchorDemo() {
+  const [rows, setRows] = useState<Row[]>(SA_INITIAL_ROWS)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const rowHeights = useMeasure(rows, SA_COLUMN_WIDTHS)
+  const { prepend } = useScrollAnchor(rowHeights, scrollRef)
+
+  // Scroll to bottom on first render so the user sees the latest messages.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [])
+
+  function handlePrepend() {
+    const newRows: Row[] = Array.from({ length: 3 }, (_, i) =>
+      makeSaRow((rows.length + 3 - i) * 3),
+    )
+    prepend(newRows)
+    setRows((prev) => [...newRows, ...prev])
+  }
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Scroll anchor · Prepend without jump</span>
+      <h2 className="demo-section-title">useScrollAnchor</h2>
+      <p className="demo-section-desc">
+        Click <em>Load older messages</em> to prepend rows. The currently
+        visible content stays stable — <code className="demo-code">scrollTop</code>{' '}
+        is corrected atomically using pretext-computed offsets before the browser
+        paints. No <code className="demo-code">getBoundingClientRect</code>, no{' '}
+        <code className="demo-code">scrollHeight</code> reads.
+      </p>
+
+      <div className="demo-shrinkwrap-controls">
+        <button className="demo-fit-btn" onClick={handlePrepend}>
+          ↑ Load older messages
+        </button>
+      </div>
+
+      <div
+        ref={scrollRef}
+        style={{
+          height: 320,
+          overflowY: 'auto',
+          border: '1px solid oklch(30% 0.02 240)',
+          borderRadius: 6,
+        }}
+      >
+        <table
+          className="demo-sw-table"
+          style={
+            {
+              '--font-body': BODY_FONT,
+              '--font-header': HEADER_FONT,
+            } as React.CSSProperties
+          }
+        >
+          <thead>
+            <tr>
+              {SA_HEADERS.map((h, i) => (
+                <th key={i} style={{ width: SA_COLUMN_WIDTHS[i] }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                {row.cells.map((cell, ci) => (
+                  <td key={ci} style={{ width: SA_COLUMN_WIDTHS[ci] }}>
                     {cell}
                   </td>
                 ))}
