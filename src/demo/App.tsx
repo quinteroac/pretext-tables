@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
-import { BasicTable, ColumnControlsTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
+import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
@@ -88,6 +88,10 @@ const CC_ROWS: Row[] = [
   { id: 'cc11', cells: ['Karen Patel',      'Technical writer who owns all public API documentation, internal runbooks, and the developer-facing changelog.',                   'Documentation',    'Remote',   'Mumbai']        },
   { id: 'cc12', cells: ['Luis Fernandez',   'QA lead responsible for test strategy, automation frameworks, and coordinating release sign-off across teams.',                    'Quality Assurance', 'Active',  'Buenos Aires']  },
 ]
+
+const CC_ID_TO_INDEX: Record<string, number> = Object.fromEntries(
+  CC_COLUMNS.map((col, i) => [col.id, i]),
+)
 
 function renderCCCell(value: string, _rowIndex: number, colIndex: number): React.ReactNode {
   if (colIndex === 2) {
@@ -514,14 +518,17 @@ export function App() {
 
         <section className="demo-section">
           <span className="demo-section-eyebrow">Visibility · Sorting · Sticky column</span>
-          <h2 className="demo-section-title">useColumnVisibility + useSorting</h2>
+          <h2 className="demo-section-title">useColumnControls + useStickyColumns</h2>
           <p className="demo-section-desc">
-            <code className="demo-code">useColumnVisibility</code> manages a boolean
-            mask — hidden columns are removed from layout and measurement entirely.{' '}
-            <code className="demo-code">useSorting</code> remaps row indices without
-            mutating data, so <code className="demo-code">prepare()</code> never
-            re-runs on sort. Toggle columns with the checkboxes; click any header to
-            sort. First column stays sticky on scroll.
+            <code className="demo-code">useColumnControls</code> manages column
+            visibility and sort state — hidden columns are removed from layout and
+            measurement entirely.{' '}
+            <code className="demo-code">useStickyColumns</code> slices the visible
+            widths into frozen and scrollable panes so the first column stays pinned
+            via <code className="demo-code">position: sticky</code>. A single{' '}
+            <code className="demo-code">useMeasure</code> call uses all widths to keep
+            row heights consistent across panes. Toggle columns with the checkboxes;
+            click any header to sort.
           </p>
           <div className="demo-split">
             <div className="demo-split__table">
@@ -533,30 +540,33 @@ export function App() {
                 <span className="demo-pill">Location · 160px</span>
               </div>
               <div className="demo-table-wrapper">
-                <ColumnControlsTable
-                  rows={CC_ROWS}
-                  columns={CC_COLUMNS}
-                  columnWidths={CC_COLUMN_WIDTHS}
-                  maxHeight={360}
-                  renderCell={renderCCCell}
-                />
+                <StickyColumnShowcase />
               </div>
             </div>
             <div className="demo-split__code">
               <CodeSnippet
-                label="useColumnVisibility + useSorting"
-                code={`const { visibleWidths, isVisible,
-        toggleColumn } =
-  useColumnVisibility(columnWidths)
+                label="useColumnControls + useStickyColumns"
+                code={`const { visibleColumns, allColumns,
+        toggleColumnVisibility,
+        sortKey, sortDirection,
+        setSort } =
+  useColumnControls(columns)
 
-const { sortedRows, sortColumn,
-        getSortHandleProps } =
-  useSorting(rows)
+const visibleWidths = visibleColumns
+  .map(col => columnWidths[idToIndex[col.id]])
 
-// Pass filtered widths to useMeasure:
-const rowHeights = useMeasure(
-  sortedRows,
-  visibleWidths,
+// AC01: frozenWidths/scrollWidths drive
+//       the frozen and scrollable panes
+const { frozenWidths, scrollWidths } =
+  useStickyColumns({
+    frozenCount: 1,
+    columnWidths: visibleWidths,
+  })
+
+// AC03: single useMeasure — all widths
+const { rowHeights } = useMeasure(
+  visibleRows,
+  frozenWidths.concat(scrollWidths),
 )`}
               />
             </div>
@@ -569,6 +579,183 @@ const rowHeights = useMeasure(
 
         <ScrollAnchorDemo />
       </main>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// StickyColumnShowcase — wires useStickyColumns into the visibility/sort demo
+// ---------------------------------------------------------------------------
+
+function StickyColumnShowcase() {
+  const {
+    visibleColumns,
+    allColumns,
+    sortKey,
+    sortDirection,
+    toggleColumnVisibility,
+    setSort,
+  } = useColumnControls(CC_COLUMNS)
+
+  const visibleIndices = useMemo(
+    () => visibleColumns.map((col) => CC_ID_TO_INDEX[col.id]!),
+    [visibleColumns],
+  )
+
+  const visibleWidths = useMemo(
+    () => visibleIndices.map((i) => CC_COLUMN_WIDTHS[i]!),
+    [visibleIndices],
+  )
+
+  // AC01: useStickyColumns drives the frozen / scrollable split
+  const { frozenWidths, scrollWidths } = useStickyColumns({
+    frozenCount: 1,
+    columnWidths: visibleWidths,
+  })
+
+  const sortColIndex = sortKey !== null ? (CC_ID_TO_INDEX[sortKey] ?? null) : null
+
+  const sortedRows = useMemo<Row[]>(() => {
+    if (sortColIndex === null || sortDirection === null) return CC_ROWS
+    const dir = sortDirection === 'asc' ? 1 : -1
+    return [...CC_ROWS].sort(
+      (a, b) =>
+        dir * (a.cells[sortColIndex] ?? '').localeCompare(b.cells[sortColIndex] ?? ''),
+    )
+  }, [sortColIndex, sortDirection])
+
+  const visibleRows = useMemo<Row[]>(
+    () =>
+      sortedRows.map((row) => ({
+        id: row.id,
+        cells: visibleIndices.map((i) => row.cells[i]!),
+      })),
+    [sortedRows, visibleIndices],
+  )
+
+  // AC03: single useMeasure call — all widths (frozen + scrollable)
+  const { rowHeights } = useMeasure(visibleRows, frozenWidths.concat(scrollWidths))
+
+  // Columns for each pane, derived from useStickyColumns output (AC04)
+  const frozenCols = visibleColumns.slice(0, frozenWidths.length)
+  const scrollCols = visibleColumns.slice(frozenWidths.length)
+
+  return (
+    <div className="cc-wrapper">
+      <div className="cc-visibility-controls" role="group" aria-label="Column visibility">
+        {allColumns.map((col) => {
+          const isLast = visibleColumns.length === 1 && col.visible
+          return (
+            <label
+              key={col.id}
+              className={`cc-visibility-toggle${col.visible ? ' cc-visibility-toggle--active' : ''}${isLast ? ' cc-visibility-toggle--disabled' : ''}`}
+            >
+              <input
+                type="checkbox"
+                checked={col.visible}
+                disabled={isLast}
+                onChange={() => toggleColumnVisibility(col.id)}
+              />
+              {col.label}
+            </label>
+          )
+        })}
+      </div>
+
+      {/* AC02: overflow-x:auto scroll container; frozen cells use position:sticky left:0 */}
+      <div className="cc-scroll" style={{ maxHeight: 360, overflowY: 'auto' }}>
+        <table
+          className="cc-table"
+          style={{ '--cc-table-font': BODY_FONT } as React.CSSProperties}
+        >
+          <thead>
+            <tr>
+              {frozenCols.map((col, fi) => {
+                const isSorted = sortKey === col.id
+                const leftOffset = frozenWidths.slice(0, fi).reduce((s, w) => s + w, 0)
+                return (
+                  <th
+                    key={col.id}
+                    style={{
+                      width: frozenWidths[fi],
+                      maxWidth: frozenWidths[fi],
+                      font: HEADER_FONT,
+                      position: 'sticky',
+                      left: leftOffset,
+                    }}
+                    onClick={() => setSort(col.id)}
+                  >
+                    {col.label}
+                    {isSorted && sortDirection !== null && (
+                      <span className="cc-table-sort-indicator">
+                        {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </th>
+                )
+              })}
+              {scrollCols.map((col, si) => {
+                const isSorted = sortKey === col.id
+                return (
+                  <th
+                    key={col.id}
+                    style={{
+                      width: scrollWidths[si],
+                      maxWidth: scrollWidths[si],
+                      font: HEADER_FONT,
+                    }}
+                    onClick={() => setSort(col.id)}
+                  >
+                    {col.label}
+                    {isSorted && sortDirection !== null && (
+                      <span className="cc-table-sort-indicator">
+                        {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </th>
+                )
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedRows.map((row, rowIndex) => (
+              <tr key={row.id} style={{ height: rowHeights[rowIndex] }}>
+                {frozenCols.map((col, fi) => {
+                  const colIndex = CC_ID_TO_INDEX[col.id]!
+                  const leftOffset = frozenWidths.slice(0, fi).reduce((s, w) => s + w, 0)
+                  return (
+                    <td
+                      key={col.id}
+                      style={{
+                        width: frozenWidths[fi],
+                        maxWidth: frozenWidths[fi],
+                        position: 'sticky',
+                        left: leftOffset,
+                      }}
+                    >
+                      {renderCCCell(row.cells[colIndex]!, rowIndex, colIndex)}
+                    </td>
+                  )
+                })}
+                {scrollCols.map((col, si) => {
+                  const colIndex = CC_ID_TO_INDEX[col.id]!
+                  return (
+                    <td
+                      key={col.id}
+                      style={{
+                        width: scrollWidths[si],
+                        maxWidth: scrollWidths[si],
+                      }}
+                    >
+                      {renderCCCell(row.cells[colIndex]!, rowIndex, colIndex)}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

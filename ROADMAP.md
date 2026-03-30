@@ -104,6 +104,13 @@ Both values come from `computeTotalHeight()` and `computeOffsets()` — already 
 />
 ```
 
+### `useEditable` hook
+Enables inline cell editing where the row height updates **synchronously with each keystroke** — no `ResizeObserver`, no frame delay. On every `input` event, `layout()` runs on the current value (~0.09 ms) and the preview height is set in the same frame, giving a perfectly smooth row expansion as the user types.
+
+Key design constraint: `prepare()` is debounced (~150 ms) to avoid the expensive Canvas pass on every keystroke. While the debounce is pending, `layout()` runs against the previous prepared state — which is accurate for incremental edits (the common case) and only approximates for entirely new text.
+
+Returns `getEditProps(rowIndex, colIndex)` — spreads onto a `<textarea>` or `contenteditable` — plus `previewHeights[]` (same shape as `useMeasure`'s output, with the active cell's height updated live). Composable with `useResizable` so drag-resized column widths are honoured during editing.
+
 ### `useCellNotes` hook
 Accepts a `notes` map (`Record<"rowId:colIndex", string>`) and pre-measures all note texts with `prepare()` alongside the main table data. Returns `getNoteTriggerProps(rowIndex, colIndex)` for hover targets and a `<NoteTooltip>` component whose dimensions are known before it appears — so positioning is correct on the first frame with zero repositioning flash. Standard tooltip libraries measure content after mount and correct position in a follow-up paint; pretext eliminates that step entirely.
 
