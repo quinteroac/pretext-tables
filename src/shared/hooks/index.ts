@@ -69,3 +69,6 @@ export type { UseDynamicFontOptions, UseDynamicFontResult } from './useDynamicFo
 
 export { useExportCanvas, renderTableToContext, renderTableToBlob } from './useExportCanvas.js'
 export type { UseExportCanvasOptions, UseExportCanvasResult } from './useExportCanvas.js'
+
+export { useSearch, computeCellMatchRects, computeSearchResults } from './useSearch.js'
+export type { MatchRect, CellMatchMap, UseSearchResult, UseSearchOptions } from './useSearch.js'
