@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
+import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
 import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
@@ -586,9 +586,81 @@ const { rowHeights } = useMeasure(
 
         <CanvasCellDemo />
 
+        <SpanningTableDemo />
+
         <MediaCellsDemo />
       </main>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// SpanningTableDemo — useSpanningCell: full-height side column aligned to rows
+// ---------------------------------------------------------------------------
+
+const SP_ROWS: Row[] = [
+  { id: 'sp1', cells: ['Alice Johnson', 'Leads the frontend architecture team and establishes coding standards across all product surfaces.'] },
+  { id: 'sp2', cells: ['Bob Martinez', 'Works on backend API design with a focus on performance and scalability.'] },
+  { id: 'sp3', cells: ['Carol White', 'Manages the design system and ensures visual consistency from the component library down to individual page layouts, including the new token system.'] },
+  { id: 'sp4', cells: ['David Kim', 'Full-stack engineer who primarily owns the billing and subscription management subsystem.'] },
+  { id: 'sp5', cells: ['Eva Schulz', 'Data analyst responsible for building dashboards, defining metrics, and running A/B test analyses for the growth team.'] },
+  { id: 'sp6', cells: ['Frank Okafor', 'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation.'] },
+]
+
+const SP_COLUMN_WIDTHS: [number, number] = [180, 320]
+
+function SpanningTableDemo() {
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Side column · pixel-aligned with every row</span>
+      <h2 className="demo-section-title">useSpanningCell</h2>
+      <p className="demo-section-desc">
+        <code className="demo-code">useSpanningCell(rowHeights)</code> returns{' '}
+        <code className="demo-code">totalHeight</code> and{' '}
+        <code className="demo-code">offsets[]</code> derived from{' '}
+        <code className="demo-code">useMeasure</code> output — thin wrappers over{' '}
+        <code className="demo-code">computeTotalHeight</code> /{' '}
+        <code className="demo-code">computeOffsets</code> from{' '}
+        <code className="demo-code">useVirtualization</code>. The SVG chart on the
+        right renders a horizontal tick at the top of every row: even when row
+        heights differ (due to text wrapping), every tick stays aligned.
+      </p>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-table-meta">
+            <span className="demo-pill">Col 1 · 180px</span>
+            <span className="demo-pill">Col 2 · 320px</span>
+            <span className="demo-pill">Chart · 180px</span>
+          </div>
+          <SpanningTable
+            rows={SP_ROWS}
+            columnWidths={SP_COLUMN_WIDTHS}
+            chartWidth={180}
+            chartLabel="Activity"
+          />
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useSpanningCell"
+            code={`const { rowHeights } =
+  useMeasure(rows, columnWidths)
+
+const { totalHeight, offsets } =
+  useSpanningCell(rowHeights)
+
+// SVG chart aligned to every row:
+<svg height={totalHeight}>
+  {offsets.map((y, i) => (
+    <line key={i}
+      x1={0} y1={y}
+      x2={chartWidth} y2={y}
+    />
+  ))}
+</svg>`}
+          />
+        </div>
+      </div>
+    </section>
   )
 }
 

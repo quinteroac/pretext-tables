@@ -15,3 +15,6 @@ export type { DraggableTableProps } from './draggable-table/index.js'
 
 export { ColumnControlsTable } from './column-controls-table/index.js'
 export type { ColumnControlsTableProps } from './column-controls-table/index.js'
+
+export { SpanningTable } from './spanning-table/index.js'
+export type { SpanningTableProps } from './spanning-table/index.js'

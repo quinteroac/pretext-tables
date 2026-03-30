@@ -54,3 +54,6 @@ export type {
   UseMediaCellsOptions,
   UseMediaCellsResult,
 } from './useMediaCells.js'
+
+export { useSpanningCell } from './useSpanningCell.js'
+export type { UseSpanningCellResult } from './useSpanningCell.js'

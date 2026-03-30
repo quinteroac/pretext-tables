@@ -114,6 +114,15 @@ Returns `getEditProps(rowIndex, colIndex)` — spreads onto a `<textarea>` or `c
 ### `useCellNotes` hook
 Accepts a `notes` map (`Record<"rowId:colIndex", string>`) and pre-measures all note texts with `prepare()` alongside the main table data. Returns `getNoteTriggerProps(rowIndex, colIndex)` for hover targets and a `<NoteTooltip>` component whose dimensions are known before it appears — so positioning is correct on the first frame with zero repositioning flash. Standard tooltip libraries measure content after mount and correct position in a follow-up paint; pretext eliminates that step entirely.
 
+### `useDynamicFont` hook
+Accepts a `font` string that can change at runtime — a slider-controlled size, a user-selected typeface, or a density toggle — and returns `rowHeights[]` that update synchronously whenever the font changes. Because all measurement happens in pretext (canvas), switching from `'14px Inter'` to `'20px Inter'` triggers `prepare()` + `layout()` with zero DOM reflow and no `ResizeObserver`.
+
+Key design constraint: `prepare()` is debounced when the font changes continuously (e.g. a live size slider) to avoid a canvas pass on every paint frame. `layout()` runs immediately against the previous prepared state for a smooth visual update during the debounce window.
+
+Returns `{ rowHeights: number[], setFont: (font: string) => void, currentFont: string }`. Composable with `useResizable` and `useVirtualization` — virtual offsets and drag-resized widths stay correct across font changes. The demo shows a font-size slider and a font-family selector that smoothly reshape all row heights with no DOM cost.
+
+> This is a showcase feature: the instant row-height recalculation on font change is something DOM-measurement-based libraries cannot do cheaply — they require a full reflow. With pretext, it is a single `layout()` call.
+
 ---
 
 ## Speculative / exploratory
