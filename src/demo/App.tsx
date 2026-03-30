@@ -1,5 +1,5 @@
 import type React from 'react'
-import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
+import { BasicTable, ColumnControlsTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
 import './demo.css'
 
@@ -217,7 +217,7 @@ export function App() {
             <div className="demo-stat-label">DOM reflows</div>
           </div>
           <div className="demo-stat">
-            <div className="demo-stat-value">5</div>
+            <div className="demo-stat-value">6</div>
             <div className="demo-stat-label">components</div>
           </div>
           <div className="demo-stat">
@@ -309,6 +309,31 @@ export function App() {
               rows={VIRTUAL_ROWS}
               columnWidths={VIRTUAL_COLUMN_WIDTHS}
               height={400}
+              renderCell={renderDeptCell}
+            />
+          </div>
+        </section>
+
+        <section className="demo-section">
+          <span className="demo-section-eyebrow">Sortable · Column controls</span>
+          <h2 className="demo-section-title">ColumnControlsTable</h2>
+          <p className="demo-section-desc">
+            Click any column header to sort rows ascending, then descending,
+            then back to the original order. Sort indicators (▲ / ▼) appear
+            in the active header. Row heights recompute for the new order.
+          </p>
+
+          <div className="demo-table-meta">
+            <span className="demo-pill">Name · 200px</span>
+            <span className="demo-pill">Role Summary · 300px</span>
+            <span className="demo-pill">Department · 220px</span>
+          </div>
+
+          <div className="demo-table-wrapper demo-table-wrapper--fit">
+            <ColumnControlsTable
+              rows={ROWS}
+              headers={['Name', 'Role Summary', 'Department']}
+              columnWidths={COLUMN_WIDTHS}
               renderCell={renderDeptCell}
             />
           </div>

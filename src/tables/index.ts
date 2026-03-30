@@ -12,3 +12,6 @@ export type { VirtualizedTableProps } from './virtualized-table/index.js'
 
 export { DraggableTable } from './draggable-table/index.js'
 export type { DraggableTableProps } from './draggable-table/index.js'
+
+export { ColumnControlsTable } from './column-controls-table/index.js'
+export type { ColumnControlsTableProps } from './column-controls-table/index.js'

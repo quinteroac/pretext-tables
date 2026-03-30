@@ -12,3 +12,6 @@ export type { UseVirtualizationOptions, UseVirtualizationResult } from './useVir
 
 export { useDraggable, reorder } from './useDraggable.js'
 export type { UseDraggableOptions, DraggableResult } from './useDraggable.js'
+
+export { useSortable, nextSortState, sortRows } from './useSortable.js'
+export type { SortDirection, SortState, UseSortableResult } from './useSortable.js'

@@ -1,0 +1,50 @@
+.cc-table {
+  border-collapse: collapse;
+  font: var(--cc-table-font);
+  table-layout: fixed;
+  width: auto;
+}
+
+.cc-table th,
+.cc-table td {
+  border: 1px solid var(--border, oklch(22% 0.020 255));
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+}
+
+.cc-table th {
+  background: var(--surface-hi, oklch(17% 0.018 255));
+  color: var(--bright, oklch(92% 0.008 255));
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.cc-table th:hover {
+  background: var(--surface-hover, oklch(19% 0.020 255));
+}
+
+.cc-table-sort-indicator {
+  margin-left: 6px;
+  opacity: 0.7;
+  font-size: 0.75em;
+}
+
+.cc-table td {
+  background: var(--surface, oklch(13% 0.016 255));
+  color: var(--text, oklch(83% 0.012 257));
+}
+
+.cc-table tr:nth-child(even) td {
+  background: var(--surface-alt, oklch(14.5% 0.016 255));
+}
+
+.cc-table tbody tr:hover td {
+  background: var(--surface-hover, oklch(19% 0.020 255));
+}
