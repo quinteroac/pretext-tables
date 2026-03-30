@@ -704,3 +704,66 @@ body {
   border: 1px solid var(--border-hi);
   border-radius: 4px;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   INFINITE SCROLL DEMO
+───────────────────────────────────────────────────────────── */
+
+.is-scroll-container {
+  height: var(--demo-table-h, 320px);
+  overflow-y: auto;
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  position: relative;
+}
+
+.is-loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
+.is-loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-hi);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: is-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes is-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CANVAS CELL DEMO
+───────────────────────────────────────────────────────────── */
+
+.cv-table-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.cv-canvas-wrapper {
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  overflow: hidden;
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.cv-canvas {
+  display: block;
+}

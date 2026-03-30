@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
@@ -578,6 +578,10 @@ const { rowHeights } = useMeasure(
         <ShrinkWrapDemo />
 
         <ScrollAnchorDemo />
+
+        <InfiniteScrollDemo />
+
+        <CanvasCellDemo />
       </main>
     </div>
   )
@@ -1226,6 +1230,279 @@ function handlePrepend() {
 
 // scrollTop is corrected atomically
 // using pretext offsets — before paint.`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// InfiniteScrollDemo — useInfiniteScroll: append rows on scroll-to-bottom
+// ---------------------------------------------------------------------------
+
+const IS_COLUMN_WIDTHS = [160, 300, 140]
+const IS_HEADERS = ['Name', 'Role Summary', 'Department']
+
+const IS_NAMES = [
+  'Frank Okafor', 'Grace Tanaka', 'Hiro Nakamura', 'Isabel Costa', 'James Li',
+  'Karen Patel', 'Luis Fernandez', 'Maria Singh', 'Nathan Brooks', 'Olivia Chen',
+]
+const IS_ROLES = [
+  'DevOps engineer overseeing CI/CD pipelines, container orchestration, and cloud cost optimisation.',
+  'Product manager shaping the feature roadmap and gathering user feedback each quarter.',
+  'Security engineer who performs threat modelling and regular penetration tests on all services.',
+  'Customer success manager working with enterprise clients to ensure smooth onboarding.',
+  'Mobile engineer building the iOS and Android apps with a shared React Native component library.',
+  'Technical writer owning all public API documentation, runbooks, and the developer changelog.',
+  'QA lead responsible for test strategy, automation frameworks, and release sign-off coordination.',
+  'Data scientist building predictive models and reporting pipelines for the analytics platform.',
+  'Backend engineer designing high-throughput message queues and event-driven microservices.',
+  'Frontend engineer focused on accessibility, performance, and cross-browser compatibility.',
+]
+const IS_DEPTS = [
+  'Infrastructure', 'Product', 'Security', 'Customer Success', 'Mobile',
+  'Documentation', 'Quality Assurance', 'Data Science', 'Platform', 'Engineering',
+]
+
+let _isCounter = 0
+
+function makeIsRow(): Row {
+  const i = _isCounter % IS_NAMES.length
+  return {
+    id: `is-${_isCounter++}`,
+    cells: [IS_NAMES[i]!, IS_ROLES[i]!, IS_DEPTS[i]!],
+  }
+}
+
+const IS_INITIAL_ROWS: Row[] = Array.from({ length: 8 }, () => makeIsRow())
+
+function InfiniteScrollDemo() {
+  const [rows, setRows] = useState<Row[]>(IS_INITIAL_ROWS)
+  const { rowHeights } = useMeasure(rows, IS_COLUMN_WIDTHS)
+
+  const onLoadMore = useCallback(async (): Promise<Row[]> => {
+    await new Promise<void>((resolve) => setTimeout(resolve, 700))
+    const batch = Array.from({ length: 6 }, () => makeIsRow())
+    setRows((prev) => [...prev, ...batch])
+    return batch
+  }, [])
+
+  const { onScroll, isLoading } = useInfiniteScroll({
+    onLoadMore,
+    threshold: 120,
+    rowHeights,
+  })
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Infinite scroll · append on demand</span>
+      <h2 className="demo-section-title">useInfiniteScroll</h2>
+      <p className="demo-section-desc">
+        Triggers <code className="demo-code">onLoadMore</code> when the user
+        scrolls within <code className="demo-code">threshold</code> px of the
+        bottom. Total content height is derived from pretext{' '}
+        <code className="demo-code">rowHeights</code> — not{' '}
+        <code className="demo-code">scrollHeight</code>. Guards against
+        concurrent loads with an in-flight ref. Scroll to the bottom of the
+        table below to load more rows.
+      </p>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div
+            className="is-scroll-container"
+            onScroll={onScroll}
+          >
+            <table
+              className="demo-sw-table"
+              style={{ tableLayout: 'fixed', width: IS_COLUMN_WIDTHS.reduce((a, b) => a + b, 0) }}
+            >
+              <thead>
+                <tr>
+                  {IS_HEADERS.map((h, i) => (
+                    <th key={i} style={{ width: IS_COLUMN_WIDTHS[i], font: HEADER_FONT }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, ri) => (
+                  <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} style={{ width: IS_COLUMN_WIDTHS[ci] }}>
+                        {renderDeptCell(cell, ri, ci)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {isLoading && (
+              <div className="is-loading-indicator" aria-live="polite" aria-busy="true">
+                <span className="is-loading-spinner" aria-hidden="true" />
+                Loading more rows…
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useInfiniteScroll"
+            code={`const { onScroll, isLoading } =
+  useInfiniteScroll({
+    onLoadMore,   // () => Promise<Row[]>
+    threshold: 120,
+    rowHeights,   // from useMeasure
+  })
+
+// Attach to the scroll container:
+<div onScroll={onScroll}>
+  ...rows...
+  {isLoading && <Spinner />}
+</div>
+
+// Total height = rowHeights sum,
+// not DOM scrollHeight.`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// CanvasCellDemo — useCanvasCell: pixel-accurate canvas cell rendering
+// ---------------------------------------------------------------------------
+
+const CV_COLUMN_WIDTHS = [160, 300, 140]
+const CV_HEADERS = ['Name', 'Role Summary', 'Department']
+const CV_LINE_HEIGHT = 20
+const CV_CELL_PADDING = 8
+
+const CV_ROWS: Row[] = [
+  { id: 'cv1', cells: ['Alice Johnson', 'Leads the frontend architecture team and establishes coding standards across all product surfaces.', 'Engineering'] },
+  { id: 'cv2', cells: ['Bob Martinez', 'Works on backend API design with a focus on performance and scalability for high-traffic endpoints.', 'Platform'] },
+  { id: 'cv3', cells: ['Carol White', 'Manages the design system and ensures visual consistency from component library to page layouts.', 'Design'] },
+  { id: 'cv4', cells: ['David Kim', 'Full-stack engineer who primarily owns the billing and subscription management subsystem.', 'Engineering'] },
+  { id: 'cv5', cells: ['Eva Schulz', 'Data analyst responsible for dashboards, defining metrics, and running A/B test analyses.', 'Analytics'] },
+]
+
+function CanvasCellDemo() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { rowHeights, prepared } = useMeasure(CV_ROWS, CV_COLUMN_WIDTHS, {
+    lineHeight: CV_LINE_HEIGHT,
+    cellPadding: CV_CELL_PADDING * 2,
+    font: BODY_FONT,
+  })
+
+  const { drawCell } = useCanvasCell({
+    prepared,
+    columnWidths: CV_COLUMN_WIDTHS,
+    options: {
+      font: BODY_FONT,
+      lineHeight: CV_LINE_HEIGHT,
+      cellPadding: CV_CELL_PADDING,
+      effect: { type: 'gradient', startColor: 'oklch(55% 0.20 260)', endColor: 'oklch(70% 0.18 330)' },
+    },
+  })
+
+  const totalWidth = CV_COLUMN_WIDTHS.reduce((a, b) => a + b, 0)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !prepared) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const dpr = (typeof window !== 'undefined' ? window.devicePixelRatio : null) ?? 1
+    const totalHeight = rowHeights.reduce((sum, h) => sum + h, 0)
+
+    canvas.width = totalWidth * dpr
+    canvas.height = totalHeight * dpr
+    canvas.style.width = `${totalWidth}px`
+    canvas.style.height = `${totalHeight}px`
+
+    // Draw alternating row backgrounds
+    ctx.save()
+    let bgY = 0
+    for (let ri = 0; ri < rowHeights.length; ri++) {
+      ctx.fillStyle = ri % 2 === 0 ? 'oklch(14% 0.01 240)' : 'oklch(16% 0.01 240)'
+      ctx.fillRect(0, bgY * dpr, totalWidth * dpr, rowHeights[ri]! * dpr)
+      bgY += rowHeights[ri]!
+    }
+    ctx.restore()
+
+    // Draw column separator lines
+    ctx.save()
+    ctx.strokeStyle = 'oklch(25% 0.02 240)'
+    ctx.lineWidth = dpr
+    let sepX = 0
+    for (let ci = 0; ci < CV_COLUMN_WIDTHS.length - 1; ci++) {
+      sepX += CV_COLUMN_WIDTHS[ci]!
+      ctx.beginPath()
+      ctx.moveTo(sepX * dpr, 0)
+      ctx.lineTo(sepX * dpr, totalHeight * dpr)
+      ctx.stroke()
+    }
+    ctx.restore()
+
+    // Draw text cells with gradient effect via useCanvasCell
+    let y = 0
+    for (let ri = 0; ri < CV_ROWS.length; ri++) {
+      let x = 0
+      for (let ci = 0; ci < CV_COLUMN_WIDTHS.length; ci++) {
+        drawCell(ctx, ri, ci, x * dpr, y * dpr, dpr)
+        x += CV_COLUMN_WIDTHS[ci]!
+      }
+      y += rowHeights[ri]!
+    }
+  }, [drawCell, prepared, rowHeights, totalWidth])
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Canvas rendering · gradient cell effect</span>
+      <h2 className="demo-section-title">useCanvasCell</h2>
+      <p className="demo-section-desc">
+        Renders table cells onto a <code className="demo-code">&lt;canvas&gt;</code>{' '}
+        using positions from <code className="demo-code">layoutWithLines()</code> —
+        never <code className="demo-code">ctx.measureText</code>. Supports{' '}
+        <code className="demo-code">gradient</code>,{' '}
+        <code className="demo-code">shadow</code>, and{' '}
+        <code className="demo-code">fadeTruncation</code> effects. The gradient fill
+        below is computed per-line without any DOM measurement.
+      </p>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="cv-table-meta">
+            {CV_HEADERS.map((h, i) => (
+              <span key={i} className="demo-pill">{h} · {CV_COLUMN_WIDTHS[i]}px</span>
+            ))}
+          </div>
+          <div className="cv-canvas-wrapper">
+            <canvas ref={canvasRef} className="cv-canvas" />
+          </div>
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useCanvasCell"
+            code={`const { rowHeights, prepared } =
+  useMeasure(rows, columnWidths)
+
+const { drawCell } = useCanvasCell({
+  prepared,
+  columnWidths,
+  options: {
+    effect: {
+      type: 'gradient',
+      startColor: '#1e3a8a',
+      endColor: '#7c3aed',
+    },
+  },
+})
+
+// In a useEffect paint loop:
+drawCell(ctx, rowIndex, colIndex, x, y)`}
           />
         </div>
       </div>
