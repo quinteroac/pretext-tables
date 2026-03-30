@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
+import { BasicTable, DraggableTable, ExpandableTable, GridTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
 import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes, useDynamicFont, useExportCanvas, useSearch } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
@@ -209,6 +209,8 @@ const ROWS: Row[] = [
   },
 ]
 
+const GRID_HEADERS = ['Name', 'Role Summary', 'Department']
+
 const RESIZABLE_HEADERS = ['Name', 'Role Summary', 'Department']
 const RESIZABLE_DEFAULT_WIDTHS = [160, 280, 160]
 
@@ -337,6 +339,51 @@ export function App() {
 <tr style={{ height: rowHeights[i] }}>
   ...
 </tr>`}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="demo-section" id="GridTableDemo">
+          <span className="demo-section-eyebrow">Grid layout · sticky header</span>
+          <h2 className="demo-section-title">GridTable</h2>
+          <p className="demo-section-desc">
+            A CSS Grid-based table — no{' '}
+            <code className="demo-code">&lt;table&gt;</code> elements. The
+            header row uses{' '}
+            <code className="demo-code">position: sticky; top: 0</code> so it
+            stays pinned while you scroll. Row heights are still pre-computed by{' '}
+            <code className="demo-code">useMeasure</code> — zero DOM reflows.
+            Scroll the table below to confirm the header stays fixed.
+          </p>
+
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <div className="demo-table-meta">
+                <span className="demo-pill">Name · 200px</span>
+                <span className="demo-pill">Role Summary · 300px</span>
+                <span className="demo-pill">Department · 220px</span>
+              </div>
+              <div className="demo-table-wrapper demo-table-wrapper--fit">
+                <GridTable
+                  rows={ROWS}
+                  headers={GRID_HEADERS}
+                  columnWidths={COLUMN_WIDTHS}
+                  renderCell={renderDeptCell}
+                />
+              </div>
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="GridTable"
+                code={`// Header pinned with position:sticky; top:0 (CSS)
+// Row heights pre-computed — zero DOM reflows
+<GridTable
+  rows={rows}
+  headers={['Name', 'Role', 'Dept']}
+  columnWidths={[200, 300, 220]}
+  renderCell={renderDeptCell}
+/>`}
               />
             </div>
           </div>
