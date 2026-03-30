@@ -7,6 +7,18 @@ import { prepareWithSegments } from '@chenglou/pretext'
 import type { PreparedTextWithSegments } from '@chenglou/pretext'
 import './demo.css'
 
+// ---------------------------------------------------------------------------
+// CodeSnippet — renders a code block with minimal manual token highlighting
+// ---------------------------------------------------------------------------
+export function CodeSnippet({ label, code }: { label: string; code: string }) {
+  return (
+    <div className="demo-snippet">
+      <div className="demo-snippet__label">{label}</div>
+      <pre className="demo-snippet__pre">{code}</pre>
+    </div>
+  )
+}
+
 // ── Department color map ──────────────────────────────────────────────────
 // Each department gets a distinct hue in oklch (uniform lightness/chroma so
 // all badges feel equally weighted — no one department "shouts").
@@ -286,127 +298,268 @@ export function App() {
 
       <main className="demo-main">
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Basic · Fixed widths</span>
-          <h2 className="demo-section-title">BasicTable</h2>
+          <span className="demo-section-eyebrow">Measurement · zero DOM reads</span>
+          <h2 className="demo-section-title">useMeasure</h2>
           <p className="demo-section-desc">
-            Fixed column widths, variable-height rows. Text wraps correctly
-            without ever measuring the DOM.
+            Computes row heights from text before the browser renders. Calls{' '}
+            <code className="demo-code">prepare()</code> once per dataset, then{' '}
+            <code className="demo-code">layout()</code> — pure arithmetic — on every
+            column-width change. No <code className="demo-code">getBoundingClientRect</code>,
+            no reflows.
           </p>
 
-          <div className="demo-table-meta">
-            <span className="demo-pill">Name · 200px</span>
-            <span className="demo-pill">Role Summary · 300px</span>
-            <span className="demo-pill">Department · 220px</span>
-          </div>
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <div className="demo-table-meta">
+                <span className="demo-pill">Name · 200px</span>
+                <span className="demo-pill">Role Summary · 300px</span>
+                <span className="demo-pill">Department · 220px</span>
+              </div>
+              <div className="demo-table-wrapper demo-table-wrapper--fit">
+                <BasicTable rows={ROWS} columnWidths={COLUMN_WIDTHS} renderCell={renderDeptCell} />
+              </div>
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="useMeasure"
+                code={`const rowHeights = useMeasure(
+  rows,
+  columnWidths,
+  { lineHeight: 20, cellPadding: 16 }
+)
 
-          <div className="demo-table-wrapper demo-table-wrapper--fit">
-            <BasicTable rows={ROWS} columnWidths={COLUMN_WIDTHS} renderCell={renderDeptCell} />
+// Apply to each <tr>:
+<tr style={{ height: rowHeights[i] }}>
+  ...
+</tr>`}
+              />
+            </div>
           </div>
         </section>
 
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Expandable · Proportional scaling</span>
-          <h2 className="demo-section-title">ExpandableTable</h2>
+          <span className="demo-section-eyebrow">Expandable · container resize</span>
+          <h2 className="demo-section-title">useExpandable</h2>
           <p className="demo-section-desc">
-            Drag the right edge of the table to resize it. All columns scale
-            proportionally and row heights update instantly — no DOM reads
-            needed.
+            Wraps <code className="demo-code">ResizeObserver</code> and fires{' '}
+            <code className="demo-code">onResize(w, h, prevW, prevH)</code> when the
+            container changes size. Combine with{' '}
+            <code className="demo-code">useMeasure</code> to scale column widths
+            proportionally and recompute row heights — no DOM reads.
+            Drag the right edge of the table to try it.
           </p>
-          <div className="demo-table-wrapper">
-            <ExpandableTable
-              rows={ROWS}
-              headers={EXPANDABLE_HEADERS}
-              defaultColumnWidths={EXPANDABLE_DEFAULT_WIDTHS}
-              renderCell={renderDeptCell}
-            />
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <div className="demo-table-wrapper">
+                <ExpandableTable
+                  rows={ROWS}
+                  headers={EXPANDABLE_HEADERS}
+                  defaultColumnWidths={EXPANDABLE_DEFAULT_WIDTHS}
+                  renderCell={renderDeptCell}
+                />
+              </div>
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="useExpandable"
+                code={`const containerRef = useExpandable({
+  onResize(w, _h, prev) {
+    setColumnWidths(cols =>
+      cols.map(c =>
+        Math.max(c * (w / prev), 60)
+      )
+    )
+  },
+})
+
+<div ref={containerRef}>
+  ...
+</div>`}
+              />
+            </div>
           </div>
         </section>
 
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Resizable · Column + row handles · Shrink-wrap</span>
-          <h2 className="demo-section-title">ResizableTable</h2>
+          <span className="demo-section-eyebrow">Resizable · drag handles</span>
+          <h2 className="demo-section-title">useResizable</h2>
           <p className="demo-section-desc">
-            Drag a column's right edge to resize it. Drag the bottom of any
-            row to set a custom height. <strong>Double-click a column handle</strong> to
-            auto-size that column to its tightest wrap-free width.
+            Manages column-width and row-height drag state. Returns{' '}
+            <code className="demo-code">getColHandleProps</code> and{' '}
+            <code className="demo-code">getRowHandleProps</code> for attach-anywhere
+            drag handles. Drag a column edge to resize it. Drag the bottom of a row
+            to override its height.{' '}
+            <strong>Double-click a column handle</strong> to auto-fit via{' '}
+            <code className="demo-code">useShrinkWrap</code>.
           </p>
-          <div className="demo-table-wrapper">
-            <ResizableTable
-              rows={ROWS}
-              headers={RESIZABLE_HEADERS}
-              defaultColumnWidths={RESIZABLE_DEFAULT_WIDTHS}
-              horizontal
-              vertical
-              shrinkWrap
-              renderCell={renderDeptCell}
-            />
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <div className="demo-table-wrapper">
+                <ResizableTable
+                  rows={ROWS}
+                  headers={RESIZABLE_HEADERS}
+                  defaultColumnWidths={RESIZABLE_DEFAULT_WIDTHS}
+                  horizontal
+                  vertical
+                  shrinkWrap
+                  renderCell={renderDeptCell}
+                />
+              </div>
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="useResizable"
+                code={`const {
+  columnWidths,
+  getColHandleProps,
+  getRowHandleProps,
+} = useResizable({
+  defaultColumnWidths: [160, 280, 160],
+  horizontal: true,
+  vertical: true,
+})
+
+// Attach to a column resize handle:
+<span {...getColHandleProps(colIndex)} />`}
+              />
+            </div>
           </div>
         </section>
 
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Ghost preview · Column drag</span>
+          <span className="demo-section-eyebrow">Ghost preview · column drag</span>
           <h2 className="demo-section-title">useResizePreview</h2>
           <p className="demo-section-desc">
-            Drag a column handle to see a ghost preview of the new row heights
-            before committing. The orange bars show where rows would break — no
-            DOM reads, computed with <code className="demo-code">layout()</code> on
-            every pointer move.
+            While a column drag is in-flight, computes per-row preview heights via{' '}
+            <code className="demo-code">layout()</code> at ~0.09 ms/row — no DOM
+            reads. Returns <code className="demo-code">previewHeights[]</code> that
+            render as a ghost layer. Real heights commit only on drag end. Drag a
+            column handle below to see it.
           </p>
-          <ResizePreviewDemo />
-        </section>
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <ResizePreviewDemo />
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="useResizePreview"
+                code={`const { previewHeights } = useResizePreview(
+  prepared,       // from prepareWithSegments()
+  previewDragState, // from useResizable
+  { columnWidths, lineHeight: 20 }
+)
 
-        <section className="demo-section">
-          <span className="demo-section-eyebrow">Virtual · 500 rows · Windowed</span>
-          <h2 className="demo-section-title">VirtualizedTable</h2>
-          <p className="demo-section-desc">
-            500 rows — only the visible rows are in the DOM at any time.
-            Because heights are calculated before rendering, the scrollbar is
-            perfectly sized from the first frame — no estimation, no layout
-            jumps.
-          </p>
-
-          <div className="demo-table-meta">
-            <span className="demo-pill">Name · 180px</span>
-            <span className="demo-pill">Role Summary · 340px</span>
-            <span className="demo-pill">Department · 160px</span>
-          </div>
-
-          <div className="demo-table-wrapper">
-            <VirtualizedTable
-              rows={VIRTUAL_ROWS}
-              columnWidths={VIRTUAL_COLUMN_WIDTHS}
-              height={400}
-              renderCell={renderDeptCell}
-            />
+// previewHeights is null when not dragging.
+// Use it for a ghost layer beside the table.`}
+              />
+            </div>
           </div>
         </section>
 
         <section className="demo-section">
-          <span className="demo-section-eyebrow">Sortable + Visibility · Sticky first column</span>
-          <h2 className="demo-section-title">ColumnControlsTable</h2>
+          <span className="demo-section-eyebrow">Virtualization · windowed render</span>
+          <h2 className="demo-section-title">useVirtualization</h2>
           <p className="demo-section-desc">
-            Toggle columns on/off with the checkboxes above the table. Click
-            any header to sort. The first column stays sticky as you scroll
-            right. Hidden columns are fully removed from layout and
-            measurement — at least one column always stays visible.
+            Given <code className="demo-code">rowHeights[]</code> from{' '}
+            <code className="demo-code">useMeasure</code>, computes the visible
+            window with binary search — no DOM reads, no{' '}
+            <code className="demo-code">ResizeObserver</code>. Because heights are
+            exact from the first frame, the scrollbar is correctly sized immediately.
+            500 rows below.
           </p>
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <div className="demo-table-meta">
+                <span className="demo-pill">Name · 180px</span>
+                <span className="demo-pill">Role Summary · 340px</span>
+                <span className="demo-pill">Department · 160px</span>
+              </div>
+              <div className="demo-table-wrapper">
+                <VirtualizedTable
+                  rows={VIRTUAL_ROWS}
+                  columnWidths={VIRTUAL_COLUMN_WIDTHS}
+                  height={360}
+                  renderCell={renderDeptCell}
+                />
+              </div>
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="useVirtualization"
+                code={`const { startIndex, endIndex,
+        totalHeight, offsets } =
+  useVirtualization({
+    rowHeights,   // from useMeasure
+    scrollTop,
+    viewportHeight: 360,
+    overscan: 3,
+  })
 
-          <div className="demo-table-meta">
-            <span className="demo-pill">Name · 190px</span>
-            <span className="demo-pill">Role Summary · 300px</span>
-            <span className="demo-pill">Department · 160px</span>
-            <span className="demo-pill">Status · 120px</span>
-            <span className="demo-pill">Location · 160px</span>
+// Inner spacer sets total scroll height:
+<div style={{ height: totalHeight }}>
+  {rows.slice(startIndex, endIndex + 1)
+    .map((row, i) => (
+      <div style={{
+        position: 'absolute',
+        top: offsets[startIndex + i],
+      }}>
+        ...
+      </div>
+    ))}
+</div>`}
+              />
+            </div>
           </div>
+        </section>
 
-          <div className="demo-table-wrapper">
-            <ColumnControlsTable
-              rows={CC_ROWS}
-              columns={CC_COLUMNS}
-              columnWidths={CC_COLUMN_WIDTHS}
-              maxHeight={320}
-              renderCell={renderCCCell}
-            />
+        <section className="demo-section">
+          <span className="demo-section-eyebrow">Visibility · Sorting · Sticky column</span>
+          <h2 className="demo-section-title">useColumnVisibility + useSorting</h2>
+          <p className="demo-section-desc">
+            <code className="demo-code">useColumnVisibility</code> manages a boolean
+            mask — hidden columns are removed from layout and measurement entirely.{' '}
+            <code className="demo-code">useSorting</code> remaps row indices without
+            mutating data, so <code className="demo-code">prepare()</code> never
+            re-runs on sort. Toggle columns with the checkboxes; click any header to
+            sort. First column stays sticky on scroll.
+          </p>
+          <div className="demo-split">
+            <div className="demo-split__table">
+              <div className="demo-table-meta">
+                <span className="demo-pill">Name · 190px</span>
+                <span className="demo-pill">Role Summary · 300px</span>
+                <span className="demo-pill">Department · 160px</span>
+                <span className="demo-pill">Status · 120px</span>
+                <span className="demo-pill">Location · 160px</span>
+              </div>
+              <div className="demo-table-wrapper">
+                <ColumnControlsTable
+                  rows={CC_ROWS}
+                  columns={CC_COLUMNS}
+                  columnWidths={CC_COLUMN_WIDTHS}
+                  maxHeight={360}
+                  renderCell={renderCCCell}
+                />
+              </div>
+            </div>
+            <div className="demo-split__code">
+              <CodeSnippet
+                label="useColumnVisibility + useSorting"
+                code={`const { visibleWidths, isVisible,
+        toggleColumn } =
+  useColumnVisibility(columnWidths)
+
+const { sortedRows, sortColumn,
+        getSortHandleProps } =
+  useSorting(rows)
+
+// Pass filtered widths to useMeasure:
+const rowHeights = useMeasure(
+  sortedRows,
+  visibleWidths,
+)`}
+              />
+            </div>
           </div>
         </section>
 
@@ -444,6 +597,7 @@ const RP_LINE_HEIGHT = 20
 const RP_CELL_PADDING = 16
 const RP_HEADERS = ['Name', 'Role Summary', 'Department']
 const RP_MIN_COL = 60
+const RP_ROWS = ROWS.slice(0, 4)
 
 function ResizePreviewDemo() {
   const { columnWidths, getColHandleProps, previewDragState } =
@@ -451,7 +605,7 @@ function ResizePreviewDemo() {
       defaultColumnWidths: RP_DEFAULT_WIDTHS,
       minColumnWidth: RP_MIN_COL,
       horizontal: true,
-      rowCount: ROWS.length,
+      rowCount: RP_ROWS.length,
     })
 
   const [fontsReady, setFontsReady] = useState(false)
@@ -459,10 +613,10 @@ function ResizePreviewDemo() {
 
   const prepared = useMemo(() => {
     if (!fontsReady) return null
-    return ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
+    return RP_ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
   }, [fontsReady])
 
-  const { rowHeights } = useMeasure(ROWS, columnWidths, { lineHeight: RP_LINE_HEIGHT, cellPadding: RP_CELL_PADDING })
+  const { rowHeights } = useMeasure(RP_ROWS, columnWidths, { lineHeight: RP_LINE_HEIGHT, cellPadding: RP_CELL_PADDING })
   const { previewHeights } = useResizePreview(prepared, previewDragState, {
     columnWidths,
     lineHeight: RP_LINE_HEIGHT,
@@ -472,56 +626,31 @@ function ResizePreviewDemo() {
   const isDragging = previewDragState !== null
 
   return (
-    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+    <div className="rp-layout">
       {/* Actual table */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="demo-table-meta" style={{ marginBottom: '8px' }}>
+      <div className="rp-layout__main">
+        <div className="demo-table-meta">
           {RP_HEADERS.map((h, i) => (
             <span key={i} className="demo-pill">{h} · {Math.round(columnWidths[i]!)}px</span>
           ))}
         </div>
-        <div className="demo-table-wrapper" style={{ position: 'relative' }}>
+        <div className="demo-table-wrapper">
           <table
-            style={
-              {
-                tableLayout: 'fixed',
-                borderCollapse: 'collapse',
-                width: columnWidths.reduce((a, b) => a + b, 0),
-                font: BODY_FONT,
-              } as React.CSSProperties
-            }
+            className="rp-table"
+            style={{ width: columnWidths.reduce((a, b) => a + b, 0) }}
           >
             <thead>
               <tr>
                 {RP_HEADERS.map((h, colIndex) => (
                   <th
                     key={colIndex}
-                    style={{
-                      width: columnWidths[colIndex],
-                      maxWidth: columnWidths[colIndex],
-                      padding: '8px',
-                      font: HEADER_FONT,
-                      textAlign: 'left',
-                      borderBottom: '2px solid oklch(30% 0 0)',
-                      position: 'relative',
-                      userSelect: 'none',
-                    }}
+                    style={{ width: columnWidths[colIndex] }}
                   >
                     {h}
                     {colIndex < RP_HEADERS.length - 1 && (
                       <span
                         {...getColHandleProps(colIndex)}
-                        style={{
-                          position: 'absolute',
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 6,
-                          cursor: 'col-resize',
-                          background: isDragging && previewDragState?.colIndex === colIndex
-                            ? 'oklch(65% 0.18 50)'
-                            : 'oklch(35% 0 0)',
-                        }}
+                        className={`rp-col-handle${isDragging && previewDragState?.colIndex === colIndex ? ' rp-col-handle--active' : ''}`}
                       />
                     )}
                   </th>
@@ -529,19 +658,12 @@ function ResizePreviewDemo() {
               </tr>
             </thead>
             <tbody>
-              {ROWS.map((row, rowIndex) => (
+              {RP_ROWS.map((row, rowIndex) => (
                 <tr key={row.id} style={{ height: rowHeights[rowIndex] }}>
                   {row.cells.map((cell, colIndex) => (
                     <td
                       key={colIndex}
-                      style={{
-                        width: columnWidths[colIndex],
-                        maxWidth: columnWidths[colIndex],
-                        padding: '8px',
-                        verticalAlign: 'top',
-                        borderBottom: '1px solid oklch(22% 0 0)',
-                        overflow: 'hidden',
-                      }}
+                      style={{ width: columnWidths[colIndex] }}
                     >
                       {renderDeptCell(cell, rowIndex, colIndex)}
                     </td>
@@ -554,60 +676,31 @@ function ResizePreviewDemo() {
       </div>
 
       {/* Ghost preview panel */}
-      <div style={{ width: 160, flexShrink: 0 }}>
-        <div
-          style={{
-            fontSize: '11px',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            color: isDragging ? 'oklch(65% 0.18 50)' : 'oklch(45% 0 0)',
-            marginBottom: '8px',
-            transition: 'color 150ms',
-          }}
-        >
+      <div className="rp-layout__preview">
+        <div className={`rp-preview-label${isDragging ? ' rp-preview-label--active' : ''}`}>
           {isDragging
             ? `Preview · col ${(previewDragState?.colIndex ?? 0) + 1} → ${Math.round(previewDragState?.currentWidth ?? 0)}px`
             : 'Drag a handle →'}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div className="rp-preview-rows">
           {rowHeights.map((committed, i) => {
             const preview = previewHeights?.[i] ?? null
             return (
               <div
                 key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  height: Math.max(committed, preview ?? 0),
-                }}
+                className="rp-preview-row"
+                style={{ height: Math.max(committed, preview ?? 0) }}
               >
                 {/* committed height bar */}
-                <div
-                  style={{
-                    width: 10,
-                    height: committed,
-                    background: 'oklch(35% 0 0)',
-                    borderRadius: 2,
-                    flexShrink: 0,
-                  }}
-                />
+                <div className="rp-bar rp-bar--committed" style={{ height: committed }} />
                 {/* preview height bar */}
                 {preview !== null && (
                   <div
-                    style={{
-                      width: 10,
-                      height: preview,
-                      background: preview > committed
-                        ? 'oklch(65% 0.18 50)'
-                        : 'oklch(55% 0.15 145)',
-                      borderRadius: 2,
-                      flexShrink: 0,
-                      transition: 'height 0ms',
-                    }}
+                    className={`rp-bar ${preview > committed ? 'rp-bar--grow' : 'rp-bar--shrink'}`}
+                    style={{ height: preview }}
                   />
                 )}
-                <span style={{ fontSize: 10, color: 'oklch(50% 0 0)' }}>
+                <span className="rp-row-label">
                   {preview !== null
                     ? `${committed}→${preview}px`
                     : `${committed}px`}
@@ -624,23 +717,46 @@ function ResizePreviewDemo() {
 function DraggableDemo() {
   return (
     <section className="demo-section">
-      <span className="demo-section-eyebrow">Draggable · Row + column reorder</span>
-      <h2 className="demo-section-title">DraggableTable</h2>
+      <span className="demo-section-eyebrow">Drag-to-reorder · rows + columns</span>
+      <h2 className="demo-section-title">useDraggable</h2>
       <p className="demo-section-desc">
-        Drag any row or column header to reorder it. Uses native browser
-        drag-and-drop — no extra library needed. Row heights stay correct
-        through every reorder.
+        Manages row and column reorder drag state using native browser
+        drag-and-drop. Returns{' '}
+        <code className="demo-code">getRowHandleProps</code> and{' '}
+        <code className="demo-code">getColHandleProps</code> for grip
+        elements. Row heights stay correct through every reorder because{' '}
+        <code className="demo-code">prepare()</code> is keyed to the original
+        data, not the display order.
       </p>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-table-wrapper">
+            <DraggableTable
+              rows={DRAGGABLE_ROWS}
+              headers={DRAGGABLE_HEADERS}
+              columnWidths={DRAGGABLE_COLUMN_WIDTHS}
+              renderCell={renderDeptCell}
+            />
+          </div>
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useDraggable"
+            code={`const { rowOrder, columnOrder,
+        getRowHandleProps,
+        getColHandleProps } =
+  useDraggable({
+    rowCount: rows.length,
+    columnCount: cols.length,
+    onRowsReorder,
+    onColumnsReorder,
+  })
 
-      <div className="demo-table-wrapper">
-        <DraggableTable
-          rows={DRAGGABLE_ROWS}
-          headers={DRAGGABLE_HEADERS}
-          columnWidths={DRAGGABLE_COLUMN_WIDTHS}
-          renderCell={renderDeptCell}
-        />
+// Render rows in visual order:
+rowOrder.map(dataIndex => rows[dataIndex])`}
+          />
+        </div>
       </div>
-
     </section>
   )
 }
@@ -674,9 +790,12 @@ function ShrinkWrapDemo() {
   }, [])
 
   // prepare() once per (rows, font) change — shared between layout and shrink-wrap.
+  // Header cells are measured with HEADER_FONT so fit accounts for column labels too.
   const prepared = useMemo<PreparedTextWithSegments[][] | null>(() => {
     if (!fontsReady) return null
-    return SW_ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
+    const headerRow = SW_HEADERS.map((h) => prepareWithSegments(h, HEADER_FONT))
+    const dataRows = SW_ROWS.map((row) => row.cells.map((cell) => prepareWithSegments(cell, BODY_FONT)))
+    return [headerRow, ...dataRows]
   }, [fontsReady])
 
   const { rowHeights } = useMeasure(SW_ROWS, columnWidths, { font: BODY_FONT })
@@ -689,73 +808,90 @@ function ShrinkWrapDemo() {
 
   return (
     <section className="demo-section">
-      <span className="demo-section-eyebrow">Shrink-wrap · Double-click to fit</span>
+      <span className="demo-section-eyebrow">Shrink-wrap · exact column fit</span>
       <h2 className="demo-section-title">useShrinkWrap</h2>
       <p className="demo-section-desc">
-        Double-click a column-resize handle to snap it to the narrowest
-        wrap-free width. Uses binary search over{' '}
-        <code className="demo-code">walkLineRanges()</code> — zero DOM
-        measurements, zero reflows.
+        Binary-searches for the minimum column width where no cell text wraps,
+        using <code className="demo-code">walkLineRanges()</code> — zero DOM
+        calls. Double-click a column handle below to snap it to its tightest
+        fit. Something <code className="demo-code">getBoundingClientRect</code>
+        -based libraries can only approximate; here it is exact.
       </p>
 
-      <div className="demo-shrinkwrap-controls">
-        <button
-          className="demo-fit-btn demo-fit-btn--reset"
-          onClick={() => setColumnWidths(SW_DEFAULT_WIDTHS)}
-        >
-          Reset widths
-        </button>
-      </div>
-
-      <div className="demo-table-meta">
-        {SW_HEADERS.map((h, i) => (
-          <span key={i} className="demo-pill">
-            {h} · {Math.round(columnWidths[i]!)}px
-          </span>
-        ))}
-      </div>
-
-      <div className="demo-table-wrapper">
-        <table
-          className="demo-sw-table"
-          style={
-            {
-              '--font-body': BODY_FONT,
-              '--font-header': HEADER_FONT,
-            } as React.CSSProperties
-          }
-        >
-          <thead>
-            <tr>
-              {SW_HEADERS.map((h, i) => (
-                <th key={i} style={{ width: columnWidths[i], position: 'relative' }}>
-                  <span className="demo-sw-header-text">{h}</span>
-                  {i < SW_HEADERS.length - 1 && (
-                    <span
-                      className="demo-col-fit-handle"
-                      onDoubleClick={() => handleFit(i)}
-                      title="Double-click to auto-fit this column"
-                      role="separator"
-                      tabIndex={0}
-                      aria-label={`Auto-fit ${h} column`}
-                    />
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {SW_ROWS.map((row, ri) => (
-              <tr key={row.id} style={{ height: rowHeights[ri] }}>
-                {row.cells.map((cell, ci) => (
-                  <td key={ci} style={{ width: columnWidths[ci] }}>
-                    {cell}
-                  </td>
-                ))}
-              </tr>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-shrinkwrap-controls">
+            <button
+              className="demo-fit-btn demo-fit-btn--reset"
+              onClick={() => setColumnWidths(SW_DEFAULT_WIDTHS)}
+            >
+              Reset widths
+            </button>
+          </div>
+          <div className="demo-table-meta">
+            {SW_HEADERS.map((h, i) => (
+              <span key={i} className="demo-pill">
+                {h} · {Math.round(columnWidths[i]!)}px
+              </span>
             ))}
-          </tbody>
-        </table>
+          </div>
+          <div className="demo-table-wrapper">
+            <table
+              className="demo-sw-table"
+            >
+              <thead>
+                <tr>
+                  {SW_HEADERS.map((h, i) => (
+                    <th key={i} style={{ width: columnWidths[i], position: 'relative' }}>
+                      <span className="demo-sw-header-text">{h}</span>
+                      {i < SW_HEADERS.length - 1 && (
+                        <span
+                          className="demo-col-fit-handle"
+                          onDoubleClick={() => handleFit(i)}
+                          title="Double-click to auto-fit this column"
+                          role="separator"
+                          tabIndex={0}
+                          aria-label={`Auto-fit ${h} column`}
+                        />
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {SW_ROWS.map((row, ri) => (
+                  <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} style={{ width: columnWidths[ci] }}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useShrinkWrap"
+            code={`const { fitColumn } =
+  useShrinkWrap(prepared, columnWidths)
+
+// On double-click of a column handle:
+function handleFit(colIndex: number) {
+  const w = fitColumn(colIndex)
+  setColumnWidths(prev =>
+    prev.map((v, i) =>
+      i === colIndex ? w : v
+    )
+  )
+}
+
+// Uses walkLineRanges() + binary search.
+// Zero DOM reads.`}
+          />
+        </div>
       </div>
     </section>
   )
@@ -836,68 +972,75 @@ function ScrollAnchorDemo() {
 
   return (
     <section className="demo-section">
-      <span className="demo-section-eyebrow">Scroll anchor · Prepend / Live feed</span>
+      <span className="demo-section-eyebrow">Scroll anchor · prepend / live feed</span>
       <h2 className="demo-section-title">useScrollAnchor</h2>
       <p className="demo-section-desc">
-        Click <em>Load older messages</em> to prepend rows, or toggle{' '}
-        <em>Live feed</em> to simulate a real-time stream. The visible content
-        stays put — <code className="demo-code">scrollTop</code> is adjusted
-        using pretext-computed offsets before the browser paints. No{' '}
-        <code className="demo-code">getBoundingClientRect</code>, no{' '}
-        <code className="demo-code">scrollHeight</code> reads.
+        When rows are prepended, computes the exact{' '}
+        <code className="demo-code">scrollTop</code> correction from pretext
+        offsets before the DOM updates — keeping the visible content stable.
+        No <code className="demo-code">getBoundingClientRect</code>, no{' '}
+        <code className="demo-code">scrollHeight</code> reads. Click{' '}
+        <em>Load older messages</em> or toggle the live feed below.
       </p>
-
-      <div className="demo-shrinkwrap-controls">
-        <button className="demo-fit-btn" onClick={handlePrepend}>
-          ↑ Load older messages
-        </button>
-        <button
-          className={`demo-fit-btn${isLive ? ' demo-fit-btn--live-active' : ''}`}
-          onClick={() => setIsLive((v) => !v)}
-        >
-          {isLive ? '⏸ Stop live feed' : '▶ Start live feed'}
-        </button>
-      </div>
-
-      <div
-        ref={scrollRef}
-        style={{
-          height: 320,
-          overflowY: 'auto',
-          border: '1px solid oklch(30% 0.02 240)',
-          borderRadius: 6,
-        }}
-      >
-        <table
-          className="demo-sw-table"
-          style={
-            {
-              '--font-body': BODY_FONT,
-              '--font-header': HEADER_FONT,
-            } as React.CSSProperties
-          }
-        >
-          <thead>
-            <tr>
-              {SA_HEADERS.map((h, i) => (
-                <th key={i} style={{ width: SA_COLUMN_WIDTHS[i] }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, ri) => (
-              <tr key={row.id} style={{ height: rowHeights[ri] }}>
-                {row.cells.map((cell, ci) => (
-                  <td key={ci} style={{ width: SA_COLUMN_WIDTHS[ci] }}>
-                    {cell}
-                  </td>
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-shrinkwrap-controls">
+            <button className="demo-fit-btn" onClick={handlePrepend}>
+              ↑ Load older messages
+            </button>
+            <button
+              className={`demo-fit-btn${isLive ? ' demo-fit-btn--live-active' : ''}`}
+              onClick={() => setIsLive((v) => !v)}
+            >
+              {isLive ? '⏸ Stop live feed' : '▶ Start live feed'}
+            </button>
+          </div>
+          <div
+            ref={scrollRef}
+            className="sa-scroll-container"
+          >
+            <table
+              className="demo-sw-table"
+            >
+              <thead>
+                <tr>
+                  {SA_HEADERS.map((h, i) => (
+                    <th key={i} style={{ width: SA_COLUMN_WIDTHS[i] }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, ri) => (
+                  <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} style={{ width: SA_COLUMN_WIDTHS[ci] }}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useScrollAnchor"
+            code={`const { prepend } =
+  useScrollAnchor(rowHeights, scrollRef)
+
+// Prepend rows without scroll jump:
+function handlePrepend() {
+  prepend(newRows)
+  setRows(prev => [...newRows, ...prev])
+}
+
+// scrollTop is corrected atomically
+// using pretext offsets — before paint.`}
+          />
+        </div>
       </div>
     </section>
   )
