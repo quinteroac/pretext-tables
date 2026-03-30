@@ -66,3 +66,6 @@ export type { UseCellNotesOptions, UseCellNotesResult } from './useCellNotes.js'
 
 export { useDynamicFont, computeDynamicRowHeights } from './useDynamicFont.js'
 export type { UseDynamicFontOptions, UseDynamicFontResult } from './useDynamicFont.js'
+
+export { useExportCanvas, renderTableToContext, renderTableToBlob } from './useExportCanvas.js'
+export type { UseExportCanvasOptions, UseExportCanvasResult } from './useExportCanvas.js'
