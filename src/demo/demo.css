@@ -1100,3 +1100,88 @@ body {
 .demo-df-table tr:hover td {
   background: var(--surface-hover);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   EXPORT CANVAS DEMO — download button + inline table
+───────────────────────────────────────────────────────────────────────────── */
+
+.demo-export-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.demo-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  background: var(--accent-dim);
+  color: var(--bright);
+  font: 13px/1.4 var(--font-mono, monospace);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms, opacity 80ms;
+}
+
+.demo-export-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+
+.demo-export-btn:active:not(:disabled) {
+  opacity: 0.8;
+}
+
+.demo-export-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.demo-export-table-wrap {
+  overflow-x: auto;
+}
+
+.demo-export-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font: 14px/1.5 var(--font-body, system-ui, sans-serif);
+}
+
+.demo-export-table th,
+.demo-export-table td {
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.demo-export-table th {
+  font-weight: 600;
+  background: var(--surface-hi);
+  color: var(--bright);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.demo-export-table td {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.demo-export-table tr:nth-child(even) td {
+  background: var(--surface-hi);
+}
+
+.demo-export-table tr:hover td {
+  background: var(--surface-hover);
+}

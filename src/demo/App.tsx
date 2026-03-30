@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes, useDynamicFont } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable, useCellNotes, useDynamicFont, useExportCanvas } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT, FONT_FAMILY_SANS, FONT_FAMILY_SERIF, FONT_FAMILY_MONO, FONT_FAMILY_SYSTEM } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
@@ -595,6 +595,8 @@ const { rowHeights } = useMeasure(
         <CellNotesDemo />
 
         <DynamicFontDemo />
+
+        <ExportCanvasDemo />
       </main>
     </div>
   )
@@ -2502,6 +2504,124 @@ function DynamicFontDemo() {
 
 // prepare() debounced 150 ms (AC02-AC03)
 // layout() runs immediately each render
+// No getBoundingClientRect, no DOM reads`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// ExportCanvasDemo — useExportCanvas: download full table as PNG
+// ---------------------------------------------------------------------------
+
+const EC_COLUMN_WIDTHS = [180, 280, 120]
+
+const EC_HEADERS = ['Researcher', 'Discovery', 'Year']
+
+const EC_ROWS: Row[] = [
+  { id: 'ec1', cells: ['Marie Curie', 'First person to win Nobel Prizes in two different sciences — Physics (1903) and Chemistry (1911) — for research on radioactivity.', '1898–1911'] },
+  { id: 'ec2', cells: ['Alan Turing', 'Formalised computation with the Turing machine model and broke the Enigma cipher, laying the groundwork for modern computer science.', '1936'] },
+  { id: 'ec3', cells: ['Rosalind Franklin', 'X-ray crystallography work produced Photo 51 — the image that revealed the double-helix structure of DNA.', '1952'] },
+  { id: 'ec4', cells: ['Tim Berners-Lee', 'Invented the World Wide Web while at CERN, proposing HTML, HTTP, and URLs as an open, decentralised information system.', '1989'] },
+  { id: 'ec5', cells: ['Katherine Johnson', 'NASA mathematician whose orbital mechanics calculations were critical for the success of the first and subsequent US crewed spaceflights.', '1953–1986'] },
+]
+
+const EC_LINE_HEIGHT = 20
+const EC_CELL_PADDING = 16
+
+function ExportCanvasDemo() {
+  const [exporting, setExporting] = useState(false)
+
+  const { exportCanvas } = useExportCanvas(EC_ROWS, EC_COLUMN_WIDTHS, BODY_FONT, {
+    lineHeight: EC_LINE_HEIGHT,
+    cellPadding: EC_CELL_PADDING,
+  })
+
+  const { rowHeights } = useMeasure(EC_ROWS, EC_COLUMN_WIDTHS, {
+    lineHeight: EC_LINE_HEIGHT,
+    cellPadding: EC_CELL_PADDING,
+    font: BODY_FONT,
+  })
+
+  const handleDownload = useCallback(async () => {
+    setExporting(true)
+    try {
+      const blob = await exportCanvas()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'table-export.png'
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
+  }, [exportCanvas])
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">PNG export · offscreen canvas · no DOM reads</span>
+      <h2 className="demo-section-title">useExportCanvas</h2>
+      <p className="demo-section-desc">
+        Renders every row to an offscreen <code className="demo-code">{'<canvas>'}</code> using{' '}
+        <code className="demo-code">layout()</code> for geometry — zero{' '}
+        <code className="demo-code">ctx.measureText</code> calls.{' '}
+        Click <strong>Download PNG</strong> to export this table as a pixel-perfect image.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <div className="demo-export-controls">
+            <button
+              className="demo-export-btn"
+              onClick={handleDownload}
+              disabled={exporting}
+            >
+              {exporting ? 'Exporting…' : '⬇ Download PNG'}
+            </button>
+          </div>
+
+          <div className="demo-export-table-wrap">
+            <table className="demo-export-table">
+              <thead>
+                <tr>
+                  {EC_HEADERS.map((h, ci) => (
+                    <th key={ci} style={{ width: EC_COLUMN_WIDTHS[ci] }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {EC_ROWS.map((row, ri) => (
+                  <tr key={row.id} style={{ height: rowHeights[ri] }}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} style={{ width: EC_COLUMN_WIDTHS[ci] }}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useExportCanvas"
+            code={`const { exportCanvas } = useExportCanvas(
+  rows, columnWidths, BODY_FONT
+)
+
+// Download button handler:
+const blob = await exportCanvas()
+const url  = URL.createObjectURL(blob)
+const a    = document.createElement('a')
+a.href     = url
+a.download = 'table-export.png'
+a.click()
+URL.revokeObjectURL(url)
+
+// All geometry from layout() — no ctx.measureText
 // No getBoundingClientRect, no DOM reads`}
           />
         </div>
