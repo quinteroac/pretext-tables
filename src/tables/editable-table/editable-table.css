@@ -1,0 +1,61 @@
+.editable-table {
+  border-collapse: collapse;
+  width: 100%;
+  font: var(--editable-table-font);
+  table-layout: fixed;
+}
+
+.editable-table thead th {
+  text-align: left;
+  padding: 0 8px 10px;
+  color: var(--text-secondary, oklch(55% 0.02 240));
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border, oklch(22% 0.02 240));
+}
+
+.editable-table tbody tr {
+  border-bottom: 1px solid var(--border, oklch(22% 0.02 240));
+  transition: height 80ms ease-out;
+}
+
+.editable-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.editable-table td {
+  padding: 0;
+  vertical-align: top;
+  overflow: hidden;
+}
+
+.editable-table__textarea {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font: inherit;
+  color: inherit;
+  line-height: 1.43; /* matches LINE_HEIGHT / font-size */
+  overflow: hidden;
+  cursor: text;
+  transition: background 120ms ease;
+}
+
+.editable-table__textarea:focus {
+  background: oklch(18% 0.015 240 / 0.6);
+  overflow: hidden;
+}
+
+.editable-table__textarea::placeholder {
+  color: var(--text-tertiary, oklch(40% 0.02 240));
+}

@@ -57,3 +57,6 @@ export type {
 
 export { useSpanningCell } from './useSpanningCell.js'
 export type { UseSpanningCellResult } from './useSpanningCell.js'
+
+export { useEditable, computeEditRowHeight } from './useEditable.js'
+export type { UseEditableOptions, EditCellProps, UseEditableResult } from './useEditable.js'

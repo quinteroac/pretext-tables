@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { BasicTable, DraggableTable, ExpandableTable, ResizableTable, VirtualizedTable, SpanningTable } from '../tables/index.js'
 import type { Row } from '../shared/types.js'
-import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells } from '../shared/hooks/index.js'
+import { useMeasure, useShrinkWrap, useResizable, useResizePreview, useScrollAnchor, useStickyColumns, useColumnControls, useInfiniteScroll, useCanvasCell, useDetachable, useMediaCells, useEditable } from '../shared/hooks/index.js'
 import type { MediaSpec } from '../shared/hooks/index.js'
 import { BODY_FONT, HEADER_FONT } from '../shared/fonts.js'
 import { prepareWithSegments } from '@chenglou/pretext'
@@ -589,6 +589,8 @@ const { rowHeights } = useMeasure(
         <SpanningTableDemo />
 
         <MediaCellsDemo />
+
+        <EditableDemo />
       </main>
     </div>
   )
@@ -1937,6 +1939,176 @@ const { drawCell } = useCanvasCell({
 
 // In a useEffect paint loop:
 drawCell(ctx, rowIndex, colIndex, x, y)`}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// EditableDemo — useEditable: inline editing with live per-keystroke heights
+// ---------------------------------------------------------------------------
+
+const EDIT_ROWS_INITIAL: Row[] = [
+  {
+    id: 'ed1',
+    cells: [
+      'Alice Johnson',
+      'Leads the frontend architecture team. Try typing in either cell to see the row grow.',
+    ],
+  },
+  {
+    id: 'ed2',
+    cells: ['Bob Martinez', 'Short note. Keep it brief, or expand — the height follows.'],
+  },
+  {
+    id: 'ed3',
+    cells: [
+      'Carol White',
+      'Manages the design system and ensures visual consistency from the component library down to individual page layouts. This row starts tall.',
+    ],
+  },
+  {
+    id: 'ed4',
+    cells: ['David Kim', 'Type here.'],
+  },
+]
+
+const EDIT_HEADERS = ['Name', 'Notes']
+const EDIT_COL_WIDTHS_DEFAULT = [180, 380]
+
+function EditableDemo() {
+  const { columnWidths, getColHandleProps } = useResizable({
+    defaultColumnWidths: EDIT_COL_WIDTHS_DEFAULT,
+    horizontal: true,
+    vertical: false,
+  })
+
+  const { previewHeights, getEditProps } = useEditable(EDIT_ROWS_INITIAL, columnWidths)
+
+  return (
+    <section className="demo-section">
+      <span className="demo-section-eyebrow">Inline editing · live height updates</span>
+      <h2 className="demo-section-title">useEditable</h2>
+      <p className="demo-section-desc">
+        Type in any cell — the row height updates on every keystroke using{' '}
+        <code className="demo-code">layout()</code> against a debounced{' '}
+        <code className="demo-code">prepare()</code> state. No{' '}
+        <code className="demo-code">getBoundingClientRect</code>, no{' '}
+        <code className="demo-code">ResizeObserver</code>, no DOM reads. Column
+        headers are drag-resizable to verify that{' '}
+        <code className="demo-code">columnWidths</code> from{' '}
+        <code className="demo-code">useResizable</code> are honoured during editing.
+      </p>
+
+      <div className="demo-split">
+        <div className="demo-split__table">
+          <table
+            className="editable-demo-table"
+            style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}
+          >
+            <thead>
+              <tr>
+                {EDIT_HEADERS.map((header, colIndex) => (
+                  <th
+                    key={colIndex}
+                    style={{
+                      width: columnWidths[colIndex],
+                      position: 'relative',
+                      textAlign: 'left',
+                      padding: '0 8px 10px',
+                      color: 'oklch(55% 0.02 240)',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      borderBottom: '1px solid oklch(22% 0.02 240)',
+                    }}
+                  >
+                    {header}
+                    {colIndex < EDIT_HEADERS.length - 1 && (
+                      <span
+                        className="resizable-table__col-handle"
+                        aria-hidden="true"
+                        {...getColHandleProps(colIndex)}
+                      />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {EDIT_ROWS_INITIAL.map((row, rowIndex) => (
+                <tr
+                  key={row.id}
+                  style={{
+                    height: previewHeights[rowIndex],
+                    borderBottom: '1px solid oklch(22% 0.02 240)',
+                    transition: 'height 80ms ease-out',
+                  }}
+                >
+                  {row.cells.map((_, colIndex) => {
+                    const editProps = getEditProps(rowIndex, colIndex)
+                    return (
+                      <td
+                        key={colIndex}
+                        style={{
+                          width: columnWidths[colIndex],
+                          maxWidth: columnWidths[colIndex],
+                          padding: 0,
+                          verticalAlign: 'top',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <textarea
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            height: '100%',
+                            padding: '8px',
+                            boxSizing: 'border-box',
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            resize: 'none',
+                            font: 'inherit',
+                            color: 'inherit',
+                            lineHeight: '1.43',
+                            overflow: 'hidden',
+                          }}
+                          aria-label={`Edit ${EDIT_HEADERS[colIndex]}, row ${rowIndex + 1}`}
+                          {...editProps}
+                        />
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="demo-split__code">
+          <CodeSnippet
+            label="useEditable"
+            code={`// Compose with useResizable (AC04)
+const { columnWidths, getColHandleProps } =
+  useResizable({ defaultColumnWidths, horizontal: true })
+
+const { previewHeights, getEditProps } =
+  useEditable(rows, columnWidths)
+
+// In render:
+<tr style={{ height: previewHeights[rowIndex] }}>
+  <td>
+    <textarea {...getEditProps(rowIndex, colIndex)} />
+  </td>
+</tr>
+
+// prepare() debounced ~150 ms (AC03)
+// layout() runs every input event (AC02)
+// No ResizeObserver, no DOM reads (AC05)`}
           />
         </div>
       </div>

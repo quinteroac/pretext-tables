@@ -18,3 +18,6 @@ export type { ColumnControlsTableProps } from './column-controls-table/index.js'
 
 export { SpanningTable } from './spanning-table/index.js'
 export type { SpanningTableProps } from './spanning-table/index.js'
+
+export { EditableTable } from './editable-table/index.js'
+export type { EditableTableProps } from './editable-table/index.js'
