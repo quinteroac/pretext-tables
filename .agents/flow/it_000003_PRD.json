@@ -1,0 +1,232 @@
+{
+  "goals": [
+    "Add `useStickyColumns`, `useInfiniteScroll`, and `useCanvasCell` to `src/shared/hooks/` following existing primitives conventions.",
+    "Wire `useStickyColumns` into the existing **\"Visibility · Sorting · Sticky column\"** showcase in the demo (`src/demo/App.tsx`) — no new table component needed.",
+    "Zero DOM measurement calls in all three hooks — all text metrics come exclusively from `@chenglou/pretext`.",
+    "Unit tests cover the critical state transitions of each hook.",
+    "Demo page is updated to showcase all three hooks."
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "useStickyColumns — frozen left-column pane",
+      "description": "As a library consumer, I want to call `useStickyColumns({ frozenCount, columnWidths })` and receive `frozenWidths` and `scrollWidths` arrays, so that I can render two panes (frozen + scrollable) that share a single `useMeasure` call and stay height-synchronized without touching the DOM.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-001-AC01",
+          "text": "`useStickyColumns({ frozenCount, columnWidths })` returns `{ frozenWidths, scrollWidths }` where `frozenWidths.length === frozenCount` and `frozenWidths.concat(scrollWidths)` equals `columnWidths`."
+        },
+        {
+          "id": "US-001-AC02",
+          "text": "`frozenWidths` and `scrollWidths` together passed as a single flat array to `useMeasure` produce one `rowHeights[]` shared by both panes."
+        },
+        {
+          "id": "US-001-AC03",
+          "text": "Changing `frozenCount` at runtime correctly re-slices the arrays without re-running `prepare()`."
+        },
+        {
+          "id": "US-001-AC04",
+          "text": "No `getBoundingClientRect`, `offsetWidth`, `offsetHeight`, or any other DOM measurement is used — column widths come from the `columnWidths` prop, not from the DOM."
+        },
+        {
+          "id": "US-001-AC05",
+          "text": "TypeScript strict — no `any`, full type coverage."
+        },
+        {
+          "id": "US-001-AC06",
+          "text": "Unit test: given `columnWidths = [100, 120, 80, 60]` and `frozenCount = 2`, asserts `frozenWidths === [100, 120]` and `scrollWidths === [80, 60]`."
+        },
+        {
+          "id": "US-001-AC07",
+          "text": "Typecheck / lint passes."
+        }
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Wire useStickyColumns into the existing sticky-column showcase",
+      "description": "As an end user of the demo, I want the existing \"Visibility · Sorting · Sticky column\" section in the demo to use `useStickyColumns`, so that the first frozen column is properly managed through the hook rather than ad-hoc CSS, and the showcase demonstrates real hook usage.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-002-AC01",
+          "text": "The existing sticky-column showcase in `src/demo/App.tsx` is refactored to call `useStickyColumns({ frozenCount: 1, columnWidths })` and use the returned `frozenWidths` / `scrollWidths` to drive the frozen and scrollable panes."
+        },
+        {
+          "id": "US-002-AC02",
+          "text": "The frozen pane renders the first column with `position: sticky; left: 0` (or equivalent CSS) and does not scroll horizontally."
+        },
+        {
+          "id": "US-002-AC03",
+          "text": "Row heights remain computed by a single `useMeasure` call using all column widths (frozen + scrollable)."
+        },
+        {
+          "id": "US-002-AC04",
+          "text": "No bespoke column-slicing or width-partition logic remains in the showcase — it all flows through `useStickyColumns`."
+        },
+        {
+          "id": "US-002-AC05",
+          "text": "No new table component is added to `src/tables/`."
+        },
+        {
+          "id": "US-002-AC06",
+          "text": "Visually verified in browser: the first column stays pinned on horizontal scroll; row heights match across panes; existing visibility-toggle and sort features still work."
+        },
+        {
+          "id": "US-002-AC07",
+          "text": "Typecheck / lint passes."
+        }
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "useInfiniteScroll — bottom-triggered page loading with pretext pre-measurement",
+      "description": "As a library consumer, I want to call `useInfiniteScroll({ onLoadMore, threshold? })` and get back `{ onScroll, isLoading }`, so that I can append new rows without a visible scroll-position jump, because their heights are measured by pretext before they enter the DOM.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-003-AC01",
+          "text": "`useInfiniteScroll({ onLoadMore, threshold? })` returns `{ onScroll, isLoading }`."
+        },
+        {
+          "id": "US-003-AC02",
+          "text": "`onLoadMore` is called when the scroll container is within `threshold` px of the bottom (default 200 px)."
+        },
+        {
+          "id": "US-003-AC03",
+          "text": "`isLoading` is `true` from the moment `onLoadMore` is called until the returned Promise resolves."
+        },
+        {
+          "id": "US-003-AC04",
+          "text": "`onLoadMore` must return a `Promise<Row[]>`; the hook pre-measures the incoming rows via `useMeasure` before appending them to state, preventing scroll-position jump."
+        },
+        {
+          "id": "US-003-AC05",
+          "text": "`onLoadMore` is not called again while `isLoading` is `true`."
+        },
+        {
+          "id": "US-003-AC06",
+          "text": "Composes cleanly with `useVirtualization` (the hook does not depend on virtualization but must not conflict with it)."
+        },
+        {
+          "id": "US-003-AC07",
+          "text": "No DOM measurement (`getBoundingClientRect`, `offsetHeight`, `scrollHeight` arithmetic) is used for cell or row sizing — only `scrollTop` and `clientHeight` are read, solely for detecting scroll position relative to the bottom."
+        },
+        {
+          "id": "US-003-AC08",
+          "text": "Unit test: calling `onScroll` with a near-bottom position triggers `onLoadMore`; calling it again before the promise resolves does not trigger a second call."
+        },
+        {
+          "id": "US-003-AC09",
+          "text": "Typecheck / lint passes."
+        }
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "useCanvasCell — pixel-accurate canvas cell rendering",
+      "description": "As a library consumer, I want to call `useCanvasCell({ prepared, columnWidths, options? })` and get back a `drawCell(ctx, rowIndex, colIndex, x, y)` function, so that I can render cell text onto a `<canvas>` at pixel-accurate positions derived from `layoutWithLines()`, enabling effects like keyword highlights, gradient text, smooth fade-out truncation, and drop shadows.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-004-AC01",
+          "text": "`useCanvasCell({ prepared, columnWidths, options? })` returns `{ drawCell }` where `drawCell(ctx, rowIndex, colIndex, x, y)` renders the cell at the given canvas offset."
+        },
+        {
+          "id": "US-004-AC02",
+          "text": "`drawCell` uses `layoutWithLines()` coordinates from `@chenglou/pretext` exclusively — `ctx.measureText` and any other Canvas measurement API are **forbidden** for positioning or sizing text."
+        },
+        {
+          "id": "US-004-AC03",
+          "text": "`prepared` input is the `PreparedTextWithSegments[][]` already produced by `useMeasure` — `useCanvasCell` does **not** call `prepare()` internally."
+        },
+        {
+          "id": "US-004-AC04",
+          "text": "`drawCell` supports at least one visual effect selectable via `options`: gradient fill, drop shadow, or smooth fade-out truncation (ellipsis fade)."
+        },
+        {
+          "id": "US-004-AC05",
+          "text": "HiDPI / device pixel ratio: `drawCell` accepts an optional `dpr` parameter (default `window.devicePixelRatio ?? 1`) and scales coordinates accordingly."
+        },
+        {
+          "id": "US-004-AC06",
+          "text": "Unit test: `drawCell` called with a mocked `CanvasRenderingContext2D` results in `fillText` being called with positions that match `layoutWithLines()` output for the same row/column."
+        },
+        {
+          "id": "US-004-AC07",
+          "text": "Typecheck / lint passes."
+        }
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Demo page update",
+      "description": "As an end user or library evaluator, I want to see `useStickyColumns`, `useInfiniteScroll`, and `useCanvasCell` demonstrated on the demo page, so that I can understand their capabilities interactively.",
+      "acceptanceCriteria": [
+        {
+          "id": "US-005-AC01",
+          "text": "Demo page includes a sticky-column section (the existing \"Visibility · Sorting · Sticky column\" showcase, now using `useStickyColumns`) with ≥ 1 frozen column and enough scrollable columns to require horizontal scrolling."
+        },
+        {
+          "id": "US-005-AC02",
+          "text": "Demo page includes an infinite-scroll section that loads additional rows when scrolled to the bottom, with a visible loading indicator."
+        },
+        {
+          "id": "US-005-AC03",
+          "text": "Demo page includes a canvas section that renders at least one cell effect (e.g. gradient fill or fade-out truncation)."
+        },
+        {
+          "id": "US-005-AC04",
+          "text": "All three sections render without console errors."
+        },
+        {
+          "id": "US-005-AC05",
+          "text": "Visually verified in browser."
+        },
+        {
+          "id": "US-005-AC06",
+          "text": "Typecheck / lint passes."
+        }
+      ]
+    }
+  ],
+  "functionalRequirements": [
+    {
+      "id": "FR-1",
+      "description": "`useStickyColumns` accepts `{ frozenCount: number; columnWidths: number[] }` and returns `{ frozenWidths: number[]; scrollWidths: number[] }`. It is a pure derivation (no internal state needed beyond the slice indices)."
+    },
+    {
+      "id": "FR-2",
+      "description": "`useStickyColumns` must not call `prepare()` or `layout()` — it only slices the `columnWidths` array."
+    },
+    {
+      "id": "FR-3",
+      "description": "`useInfiniteScroll` accepts `{ onLoadMore: () => Promise<Row[]>; threshold?: number }` and returns `{ onScroll: React.UIEventHandler; isLoading: boolean }`."
+    },
+    {
+      "id": "FR-4",
+      "description": "`useInfiniteScroll` is a pure event/flag primitive — it does not manage row state. The consumer calls `onLoadMore`, receives the new rows, and appends them to its own state. The consumer is responsible for pre-measuring incoming rows via `useMeasure` (which uses `@chenglou/pretext` internally) before rendering them."
+    },
+    {
+      "id": "FR-5",
+      "description": "`useCanvasCell` accepts `{ prepared: PreparedTextWithSegments[][] | null; columnWidths: number[]; options?: CanvasCellOptions }` and returns `{ drawCell: DrawCellFn }`."
+    },
+    {
+      "id": "FR-6",
+      "description": "`useCanvasCell` must not call `prepare()` internally — it consumes `prepared` from `useMeasure`. All positional data for canvas drawing comes from `layoutWithLines()` output; `ctx.measureText` is never called."
+    },
+    {
+      "id": "FR-7",
+      "description": "The sticky-column showcase in `src/demo/App.tsx` must use `useStickyColumns` — no bespoke column-slicing or DOM measurement logic in the demo."
+    },
+    {
+      "id": "FR-8",
+      "description": "All three hooks must be exported from `src/shared/hooks/index.ts`."
+    },
+    {
+      "id": "FR-9",
+      "description": "No new table component is added to `src/tables/` for sticky columns."
+    },
+    {
+      "id": "FR-10",
+      "description": "Font strings used in new hooks must come from `src/shared/fonts.ts` — no inline font strings."
+    }
+  ]
+}

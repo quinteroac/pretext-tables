@@ -63,28 +63,28 @@ When rows are prepended to the dataset (e.g. real-time feed, chat history), comp
 
 Each new table type is a composition of existing + new hooks. The hooks are the deliverable; the table component is the demo.
 
-### `useStickyColumns` hook + `StickyColumnsTable`
+### `useStickyColumns` hook 
 Manages a `frozenCount` of left-pinned columns. Returns separate `frozenWidths` and `scrollWidths` arrays that both feed the same `useMeasure` call, keeping row heights in sync between the frozen and scrollable sections without any DOM coordination.
 
-### `useInfiniteScroll` hook + `InfiniteScrollTable`
+### `useInfiniteScroll` hook 
 Manages page loading as the user scrolls toward the bottom. Returns an `onScroll` handler and a `isLoading` flag. Heights for incoming rows are calculated with pretext before they enter the DOM, preventing the scroll-position jump common in DOM-measurement approaches. Composes with `useVirtualization`.
 
-### `useCanvasCell` hook + `CanvasCellTable`
+### `useCanvasCell` hook 
 Returns a `drawCell(ctx, rowIndex, colIndex, x, y)` function that renders a cell's text to a `<canvas>` using `layoutWithLines()` coordinates. Enables effects impossible in HTML:
 - Keyword highlights at exact pixel positions
 - Text with gradient fill or drop shadow
 - Smooth fade-out truncation instead of `…`
 - Animated numeric counters inside cells
 
-### `useDetachable` hook + `DetachableTable`
+### `useDetachable` hook 
 Manages expand/collapse state for rows that open a child table in a panel, drawer, or modal. The parent and child are independent `useMeasure` instances — no recursive measurement. Cells remain `string[]`; the child table data is passed as a separate `getChildRows(row)` prop.
 
-### `useMediaCells` hook + `MediaTable`
+### `useMediaCells` hook 
 Supports cells that contain text alongside an image or video. Media dimensions must be provided upfront (`mediaHeight`, or `width` + `aspectRatio` for video) — this keeps row heights fully calculable by pretext without any DOM measurement. Row height becomes `textHeight + mediaHeight` when media is visible, or pure `textHeight` when hidden. The hook returns a `toggleMedia(rowId)` function and a `mediaVisible` state map. When a row's media is hidden, `layout()` recalculates the collapsed height instantly — no reflow, no ResizeObserver. Aimed at product catalogues, content tables, and media feeds where rows mix text metadata with a preview image or video thumbnail.
 
 > **Note:** arbitrary JSX inside cells remains out of scope. Only media with known dimensions (passed as data, not measured from DOM) is supported.
 
-### `useSpanningCell` hook + `SpanningTable`
+### `useSpanningCell` hook 
 Exposes the full table geometry — `totalHeight` and `offsets[]` — so a single cell can span the entire height of the table and stay pixel-aligned with each row. Useful for financial dashboards, commodity tables, and any layout where a chart, timeline, or visualization occupies a side column while text rows occupy the other columns.
 
 The hook returns:
@@ -103,6 +103,13 @@ Both values come from `computeTotalHeight()` and `computeOffsets()` — already 
   )}
 />
 ```
+
+### `useEditable` hook
+Enables inline cell editing where the row height updates **synchronously with each keystroke** — no `ResizeObserver`, no frame delay. On every `input` event, `layout()` runs on the current value (~0.09 ms) and the preview height is set in the same frame, giving a perfectly smooth row expansion as the user types.
+
+Key design constraint: `prepare()` is debounced (~150 ms) to avoid the expensive Canvas pass on every keystroke. While the debounce is pending, `layout()` runs against the previous prepared state — which is accurate for incremental edits (the common case) and only approximates for entirely new text.
+
+Returns `getEditProps(rowIndex, colIndex)` — spreads onto a `<textarea>` or `contenteditable` — plus `previewHeights[]` (same shape as `useMeasure`'s output, with the active cell's height updated live). Composable with `useResizable` so drag-resized column widths are honoured during editing.
 
 ### `useCellNotes` hook
 Accepts a `notes` map (`Record<"rowId:colIndex", string>`) and pre-measures all note texts with `prepare()` alongside the main table data. Returns `getNoteTriggerProps(rowIndex, colIndex)` for hover targets and a `<NoteTooltip>` component whose dimensions are known before it appears — so positioning is correct on the first frame with zero repositioning flash. Standard tooltip libraries measure content after mount and correct position in a follow-up paint; pretext eliminates that step entirely.

@@ -27,3 +27,18 @@ export type { ResizePreviewDragState, UseResizePreviewOptions, UseResizePreviewR
 
 export { useScrollAnchor, computeScrollDelta } from './useScrollAnchor.js'
 export type { UseScrollAnchorOptions, UseScrollAnchorResult } from './useScrollAnchor.js'
+
+export { useStickyColumns, sliceStickyColumns } from './useStickyColumns.js'
+export type { UseStickyColumnsOptions, UseStickyColumnsResult } from './useStickyColumns.js'
+
+export { useInfiniteScroll, computeDistanceFromBottom } from './useInfiniteScroll.js'
+export type { UseInfiniteScrollOptions, UseInfiniteScrollResult } from './useInfiniteScroll.js'
+
+export { useCanvasCell, createDrawCell } from './useCanvasCell.js'
+export type {
+  UseCanvasCellOptions,
+  UseCanvasCellInput,
+  UseCanvasCellResult,
+  CanvasCellEffect,
+  DrawCellFn,
+} from './useCanvasCell.js'

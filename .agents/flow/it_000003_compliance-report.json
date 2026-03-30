@@ -1,0 +1,91 @@
+{
+  "iteration": "000003",
+  "executiveSummary": "All three hooks (useStickyColumns, useInfiniteScroll, useCanvasCell) are implemented and wired into the demo. useStickyColumns and useInfiniteScroll fully satisfy their PRD requirements. Two gaps were identified: (1) useInfiniteScroll's public API adds a required `rowHeights` parameter not specified in FR-3/US-003-AC01, deviating from the stated interface; (2) all 13 useCanvasCell unit tests fail when run with `bun test` because @chenglou/pretext's `prepareWithSegments` requires a Canvas/DOM context unavailable in Bun's test runner — the hook implementation is correct but AC06 cannot be verified in CI. A minor double-scaling bug was also found in the canvas demo: `drawCell` is called with already-multiplied coordinates (`x * dpr`) while also passing `dpr`, causing the hook to apply `ctx.scale(dpr, dpr)` a second time on dpr > 1 devices.",
+  "verificationByFR": [
+    {
+      "frId": "FR-1",
+      "assessment": "comply",
+      "notes": "useStickyColumns accepts { frozenCount, columnWidths } and returns { frozenWidths, scrollWidths }. frozenWidths.length === frozenCount and concat restores the original array. Pure useMemo derivation."
+    },
+    {
+      "frId": "FR-2",
+      "assessment": "comply",
+      "notes": "Zero calls to prepare() or layout() in useStickyColumns.ts. Only array slicing via .slice()."
+    },
+    {
+      "frId": "FR-3",
+      "assessment": "partially_comply",
+      "notes": "The hook returns { onScroll, isLoading } as specified, but the input interface has a required third parameter `rowHeights: number[]` not present in the PRD spec. This was added to avoid reading scrollHeight from the DOM (see AC07), but it changes the public API contract."
+    },
+    {
+      "frId": "FR-4",
+      "assessment": "comply",
+      "notes": "useInfiniteScroll is a pure event/flag primitive — it does not manage row state. Consumer calls setRows() after onLoadMore resolves, as shown in the demo. Hook returns only onScroll and isLoading."
+    },
+    {
+      "frId": "FR-5",
+      "assessment": "comply",
+      "notes": "useCanvasCell accepts { prepared: PreparedTextWithSegments[][] | null, columnWidths: number[], options?: UseCanvasCellOptions } and returns { drawCell: DrawCellFn }. All types exported."
+    },
+    {
+      "frId": "FR-6",
+      "assessment": "comply",
+      "notes": "No prepare() call inside useCanvasCell or createDrawCell. Positions come exclusively from layoutWithLines(). ctx.measureText is never called (verified by grep)."
+    },
+    {
+      "frId": "FR-7",
+      "assessment": "comply",
+      "notes": "StickyColumnShowcase in src/demo/App.tsx calls useStickyColumns({ frozenCount: 1, columnWidths: visibleWidths }). frozenWidths and scrollWidths drive the pane split via useMeasure. No bespoke width-partition logic."
+    },
+    {
+      "frId": "FR-8",
+      "assessment": "comply",
+      "notes": "All three hooks (useStickyColumns, useInfiniteScroll, useCanvasCell) plus their helpers and types are exported from src/shared/hooks/index.ts."
+    },
+    {
+      "frId": "FR-9",
+      "assessment": "comply",
+      "notes": "src/tables/ unchanged — no new table component was added. Contains: basic-table, column-controls-table, draggable-table, expandable-table, resizable-table, virtualized-table."
+    },
+    {
+      "frId": "FR-10",
+      "assessment": "comply",
+      "notes": "useCanvasCell defaults to BODY_FONT imported from src/shared/fonts.ts. No inline font strings in any new hook. Demo uses BODY_FONT/HEADER_FONT from the same import."
+    }
+  ],
+  "verificationByUS": [
+    {
+      "usId": "US-001",
+      "assessment": "comply",
+      "notes": "All 7 ACs satisfied. Correct signature, pure slice, no DOM APIs, full TypeScript strict, unit tests pass (8/8 in bun test). AC06 test for [100,120,80,60] frozenCount=2 passes."
+    },
+    {
+      "usId": "US-002",
+      "assessment": "comply",
+      "notes": "StickyColumnShowcase uses useStickyColumns for the frozen/scrollable split. frozenWidths.concat(scrollWidths) feeds a single useMeasure call (AC03). No new src/tables/ component (AC05). Column metadata is sliced by frozenWidths.length (not by bespoke width logic), which is correct. Typecheck passes (AC07)."
+    },
+    {
+      "usId": "US-003",
+      "assessment": "partially_comply",
+      "notes": "AC01 partially fails: the actual interface is useInfiniteScroll({ onLoadMore, threshold?, rowHeights }) — `rowHeights` is a required parameter absent from the AC specification. All other ACs (AC02–AC09) are satisfied: threshold default 200px, isLoading flag, loading guard, no row state, no DOM sizing, tests pass (17/17)."
+    },
+    {
+      "usId": "US-004",
+      "assessment": "partially_comply",
+      "notes": "AC01–AC05, AC07 all satisfied by the implementation. AC06 (unit tests verifying fillText positions match layoutWithLines) fails in bun test: @chenglou/pretext's prepareWithSegments throws 'Text measurement requires OffscreenCanvas or a DOM canvas context' because Bun's test runner lacks Canvas API. All 13 useCanvasCell tests fail for this reason. The hook code is correct but AC06 is unverifiable in CI."
+    },
+    {
+      "usId": "US-005",
+      "assessment": "comply",
+      "notes": "Demo includes all three sections: sticky-column showcase (AC01), infinite-scroll section with loading spinner (AC02), canvas section with gradient effect (AC03). All sections render without console errors (AC04). Typecheck passes (AC06). Browser visual verification (AC05) is outside automated scope."
+    }
+  ],
+  "minorObservations": [
+    "useCanvasCell unit tests (AC06) fail in `bun test` because @chenglou/pretext internally calls getMeasureContext() which requires either OffscreenCanvas or document.createElement('canvas') — neither available in Bun's test runner. Fix: configure vitest with jsdom/happy-dom environment for this test file, or mock prepareWithSegments to return a synthetic PreparedTextWithSegments fixture.",
+    "useInfiniteScroll API deviation: the PRD specifies useInfiniteScroll({ onLoadMore, threshold? }) but the implementation requires a third parameter rowHeights: number[]. This was introduced to avoid reading scrollHeight from the DOM (AC07 compliance). The PRD should be updated to reflect this API shape, or rowHeights should become optional with a fallback to scrollHeight when not provided.",
+    "Double-DPR scaling bug in CanvasCellDemo: drawCell is called with `drawCell(ctx, ri, ci, x * dpr, y * dpr, dpr)` — the coordinates are already multiplied by dpr, yet the hook also applies ctx.scale(dpr, dpr) internally. On dpr > 1 devices, text renders at dpr² the expected position. Correct usage is either: drawCell(ctx, ri, ci, x, y, dpr) (logical coords + let hook scale) or drawCell(ctx, ri, ci, x * dpr, y * dpr, 1) (physical coords, no internal scaling).",
+    "Accessibility: the infinite-scroll loading indicator uses aria-live='polite' and aria-busy='true' — good. The canvas table has no accessible alternative (no aria-label, no offscreen table fallback). For library consumers building accessible UIs, useCanvasCell should document that a ARIA-labelled fallback or visually-hidden table is required.",
+    "The sticky-column pane separator (frozen vs scrollable) has no visible border or shadow divider between the two panes in the demo CSS, which may cause visual confusion about where the freeze boundary is."
+  ],
+  "conclusionsAndRecommendations": "The iteration delivers its three hook primitives and demo integrations in solid shape. useStickyColumns and useInfiniteScroll are production-quality. useCanvasCell is implementation-correct but has a failing test suite (Bun Canvas context gap) and a double-DPR scaling bug in the demo integration.\n\nRecommended actions in priority order:\n1. (Critical) Fix the double-DPR scaling in CanvasCellDemo — change `drawCell(ctx, ri, ci, x * dpr, y * dpr, dpr)` to `drawCell(ctx, ri, ci, x, y, dpr)` so logical coordinates are passed and the hook handles the single ctx.scale.\n2. (High) Fix useCanvasCell tests by adding a Canvas-capable test environment. Either switch the vitest config for this file to jsdom/happy-dom, or replace the prepareWithSegments call in tests with a manually constructed PreparedTextWithSegments fixture that does not require Canvas.\n3. (Medium) Update FR-3 / US-003-AC01 in the PRD (or the hook's JSDoc) to document the required rowHeights parameter — it is an intentional API extension, not a bug, but it should be explicitly specified.\n4. (Low) Add a visible border/shadow between the frozen and scrollable panes in the sticky-column demo CSS.\n5. (Low) Document accessibility guidance for useCanvasCell — canvas tables require an ARIA-labelled fallback table."
+}

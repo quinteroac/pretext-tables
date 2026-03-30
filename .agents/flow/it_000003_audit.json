@@ -1,0 +1,34 @@
+{
+  "iteration": "000003",
+  "refactorItems": [
+    {
+      "id": "fix-dpr-double-scale",
+      "priority": "critical",
+      "title": "Fix double-DPR scaling in CanvasCellDemo",
+      "file": "src/demo/App.tsx",
+      "description": "drawCell is called with x*dpr / y*dpr AND dpr, causing ctx.scale(dpr,dpr) to be applied twice. Change to logical coordinates so the hook's internal scale is the only one.",
+      "change": {
+        "old": "drawCell(ctx, ri, ci, x * dpr, y * dpr, dpr)",
+        "new": "drawCell(ctx, ri, ci, x, y, dpr)"
+      }
+    },
+    {
+      "id": "fix-canvas-test-env",
+      "priority": "high",
+      "title": "Fix useCanvasCell test environment so all 13 tests pass",
+      "file": "src/tests/useCanvasCell.test.ts",
+      "description": "@chenglou/pretext's prepareWithSegments requires document.createElement('canvas').getContext('2d') which is absent in Bun's default test runner. Add a jsdom environment directive at the top of the test file.",
+      "change": {
+        "addAtTopOfFile": "// @vitest-environment jsdom\n",
+        "notes": "Also ensure jsdom is installed: bun add -d jsdom @types/jsdom"
+      }
+    },
+    {
+      "id": "update-infinitescroll-jsdoc",
+      "priority": "medium",
+      "title": "Document rowHeights parameter in useInfiniteScroll",
+      "file": "src/shared/hooks/useInfiniteScroll.ts",
+      "description": "The rowHeights parameter was added to avoid scrollHeight DOM reads (AC07) but is absent from FR-3/US-003-AC01. Update JSDoc to clearly explain why it is required and show canonical wiring with useMeasure."
+    }
+  ]
+}
